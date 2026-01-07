@@ -141,7 +141,7 @@
          <button @click="showSettings = true" class="text-sakura-400 hover:text-sakura-600 hover:rotate-90 transition-all duration-500">
            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
          </button>
-         <span class="text-[10px] text-sakura-300 font-mono">v1.2.0</span>
+         <span class="text-[10px] text-sakura-300 font-mono">v1.3.0</span>
       </div>
     </aside>
 
@@ -203,13 +203,13 @@
         >
           
           <!-- Lab Tool View -->
-          <div v-if="viewMode === 'lab' && currentTool" class="w-full max-w-4xl mx-auto animate-fade-in">
+          <div v-if="viewMode === 'lab' && currentTool" class="w-full max-w-5xl mx-auto animate-fade-in">
              <LabReactivity v-if="currentTool === 'reactivity'" />
              <LabLifecycle v-if="currentTool === 'lifecycle'" />
           </div>
 
           <!-- Folder View -->
-          <div v-else-if="currentFolder" class="w-full max-w-[1600px] mx-auto">
+          <div v-else-if="currentFolder" class="w-full max-w-6xl mx-auto">
              <div class="flex items-center gap-4 mb-8 p-8 bg-white/60 rounded-[2rem] border border-white shadow-sm backdrop-blur-md">
                <span class="text-5xl bg-sakura-100 p-4 rounded-2xl shadow-inner text-sakura-500">📁</span>
                <div>
@@ -241,9 +241,13 @@
 
           <!-- Note Content View -->
           <div v-else-if="currentFile" 
-             class="w-full max-w-4xl mx-auto bg-white/70 p-8 md:p-12 lg:p-16 rounded-[2rem] shadow-sm border border-white/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-2xl transition-all duration-300"
-             :class="userSettings.fontSize === 'large' ? 'text-lg' : ''"
+             class="w-full max-w-5xl xl:max-w-6xl mx-auto bg-white/70 p-8 md:p-12 lg:p-16 rounded-[2rem] shadow-sm border border-white/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-2xl transition-all duration-300 relative"
+             :class="userSettings.fontSize === 'large' ? 'text-lg lg:text-xl' : 'lg:prose-xl'"
           >
+             <div v-if="contentLoading" class="absolute inset-0 flex items-center justify-center bg-white/50 z-20 rounded-[2rem] backdrop-blur-sm">
+               <div class="animate-spin text-4xl">🌸</div>
+             </div>
+
              <div class="mb-8 flex items-center gap-3 border-b border-gray-100 pb-6">
                 <span class="text-3xl bg-sakura-50 p-2 rounded-xl">📄</span>
                 <div>
@@ -375,7 +379,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, reactive, nextTick } from 'vue';
 import { MOCK_FILE_SYSTEM } from './constants';
-import { FileNode, NodeType, BreadcrumbItem, TocItem } from './types';
+import { NodeType } from './types';
+import type { FileNode, BreadcrumbItem, TocItem } from './types';
 import FileTree from './components/FileTree.vue';
 import LabReactivity from './components/LabReactivity.vue';
 import LabLifecycle from './components/LabLifecycle.vue';
@@ -388,6 +393,7 @@ const expandedFolders = ref<string[]>([]);
 const toc = ref<TocItem[]>([]);
 const activeHeaderId = ref<string>('');
 const loading = ref(true);
+const contentLoading = ref(false);
 const currentTool = ref<'reactivity' | 'lifecycle' | null>(null);
 
 const showSettings = ref(false);
@@ -483,12 +489,31 @@ const findNodeByPath = (nodes: FileNode[], path: string): FileNode | null => {
   return null;
 };
 
-const openFile = (file: FileNode) => {
+const openFile = async (file: FileNode) => {
   currentFile.value = file;
   currentFolder.value = null;
   currentTool.value = null;
   updateUrl(file.path);
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Dynamically fetch content if it's not loaded yet
+  if (!file.content) {
+    contentLoading.value = true;
+    try {
+      const res = await fetch(file.path);
+      if (res.ok) {
+        file.content = await res.text();
+      } else {
+        file.content = "# Error\nCould not load file.";
+      }
+    } catch (e) {
+      file.content = "# Error\nFailed to fetch content.";
+    } finally {
+      contentLoading.value = false;
+      // Trigger reactivity update since file.content changed
+      currentFile.value = { ...file }; 
+    }
+  }
 };
 
 const openFolder = (folder: FileNode) => {
@@ -497,6 +522,14 @@ const openFolder = (folder: FileNode) => {
   currentTool.value = null;
   updateUrl(folder.path);
   if (viewMode.value === 'latest') viewMode.value = 'files';
+};
+
+const navigateToBreadcrumb = (path: string) => {
+  const node = findNodeByPath(fileSystem.value, path);
+  if (node) {
+    if (node.type === NodeType.DIRECTORY) openFolder(node);
+    else openFile(node);
+  }
 };
 
 const toggleFolder = (path: string) => {

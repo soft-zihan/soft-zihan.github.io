@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { FileNode } from '../types';
+import type { FileNode } from '../types';
 
 defineOptions({
   name: 'FileTree'

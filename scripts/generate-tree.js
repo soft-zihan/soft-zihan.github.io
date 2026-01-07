@@ -38,13 +38,14 @@ function scanDirectory(dirPath, relativePath) {
         children: children
       });
     } else if (item.endsWith('.md')) {
-      const content = fs.readFileSync(fullPath, 'utf-8');
+      // NOTE: We do NOT read content here anymore to keep files.json small.
+      // Content is fetched at runtime.
       result.push({
         name: item,
         path: itemRelativePath,
         type: 'file',
-        lastModified: stat.mtime.toISOString(),
-        content: content
+        lastModified: stat.mtime.toISOString()
+        // Content is omitted
       });
     }
   }
@@ -66,7 +67,7 @@ try {
   }];
 
   fs.writeFileSync(outputFile, JSON.stringify(fileTree, null, 2));
-  console.log('✅ Successfully generated public/files.json');
+  console.log('✅ Successfully generated public/files.json (Metadata only)');
 } catch (error) {
   console.error('❌ Error generating tree:', error);
   process.exit(1);
