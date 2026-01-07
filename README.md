@@ -32,27 +32,33 @@
 .
 ├── index.html           # 页面入口 (Shell)
 ├── App.vue              # 核心应用逻辑
-├── components/
-│   ├── LabReactivity.vue # 实验台：响应式原理
-│   └── LabLifecycle.vue  # 实验台：生命周期
+├── components/          # Vue 组件
+│   ├── LabReactivity.vue # 实验台：响应式原理 (交互组件)
+│   ├── LabLifecycle.vue  # 实验台：生命周期 (交互组件)
+│   └── FileTree.vue      # 递归目录树组件
 ├── scripts/
-│   └── generate-tree.js # 核心脚本
-└── notes/               # 数据源
+│   └── generate-tree.js # 核心构建脚本 (Node.js)
+├── notes/               # 数据源 (Markdown文件)
+└── package.json         # 项目依赖与脚本配置
 ```
 
-### 2. 构建流程 (The Build Loop)
+### 2. 设计原理 (Design Principles)
+
+*   **数据驱动 (Data-Driven)**: 
+    不手动编写 HTML 列表。构建脚本扫描 `notes/` 目录，生成 `files.json`。前端 Vue 应用启动时，读取这个 JSON，动态渲染出目录树和文件列表。
+    
+*   **内容即代码 (Content as Code)**:
+    博客内容完全由 Markdown 文件决定。`VUE学习笔记` 文件夹被特殊处理，映射到前端的 "Lab" 视图，实现了内容分类的逻辑解耦。
+
+*   **组件化交互 (Component Interaction)**:
+    Lab 区域的教学组件（如生命周期演示）是内嵌的 Vue 组件。这展示了 Vue 相比传统静态博客生成器（如 Hexo/Jekyll）的优势：可以在 Markdown 内容旁边无缝嵌入复杂的交互式应用。
+
+### 3. 构建流程 (The Build Loop)
 当代码 Push 到 GitHub 时：
 1.  **Scanner**: Node.js 脚本 (`generate-tree.js`) 唤醒，递归遍历 `notes` 文件夹。
 2.  **Indexer**: 脚本读取所有 `.md` 文件的元数据（文件名、路径、修改时间），生成一个巨大的 JSON 索引文件 `files.json`。
-3.  **Publisher**: GitHub Actions 将前端代码 + `files.json` 一起打包发布到静态服务器。
-
-### 3. 运行流程 (The Runtime Loop)
-当用户访问网页时：
-1.  **Bootstrap**: Vue 应用启动。
-2.  **Hydration**: 应用立即请求 `files.json`。
-3.  **Rendering**: 
-    - 拿到 JSON 数据后，Vue 在内存中重建目录树。
-    - 如果是 Vue 相关笔记，会自动归档到 "Lab" 区域；其他笔记在首页展示。
+3.  **Bundler**: Vite 打包 Vue 代码，生成优化的 JS/CSS 静态资源。
+4.  **Publisher**: GitHub Actions 将 `dist` 目录（包含前端资源 + JSON索引 + 原始MD文件）发布到静态服务器。
 
 ---
 

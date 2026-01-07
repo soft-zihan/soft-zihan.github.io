@@ -18,7 +18,7 @@
           <div class="absolute bottom-4 right-0 bg-white rounded-full p-1 shadow-md border border-sakura-100 text-xs">🌸</div>
         </div>
         
-        <h1 class="text-xl font-bold text-sakura-800 tracking-tight z-10 cursor-pointer" @click="resetToHome">Sakura Notes</h1>
+        <h1 class="text-xl font-bold text-sakura-800 tracking-tight z-10" @click="resetToHome">Sakura Notes</h1>
         <p class="text-xs text-sakura-400 mt-1 font-medium bg-sakura-50 px-3 py-1 rounded-full z-10">Frontend & Vue Learner</p>
       </div>
 
@@ -146,7 +146,17 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
+      <!-- Decorative Background Elements for Widescreen Interest -->
+      <div class="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
+        <!-- Top Right Blob -->
+        <div class="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-br from-sakura-100/40 to-purple-100/40 blur-3xl animate-float opacity-60"></div>
+        <!-- Bottom Left Blob -->
+        <div class="absolute top-[40%] -left-[10%] w-[500px] h-[500px] rounded-full bg-gradient-to-tr from-sakura-200/30 to-sakura-50/30 blur-3xl animate-pulse-fast opacity-50" style="animation-duration: 8s;"></div>
+        <!-- Center Subtle Glow -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-white/20 blur-xl"></div>
+      </div>
+
       <div class="absolute bottom-0 right-0 pointer-events-none opacity-20 z-0 select-none">
         <svg width="600" height="600" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M250 250C250 250 300 150 400 180C400 180 320 250 250 250Z" fill="#fda4b8"/>
@@ -158,7 +168,7 @@
       </div>
 
       <!-- Navbar -->
-      <header class="h-16 bg-white/40 backdrop-blur-md border-b border-white/40 flex items-center justify-between px-6 shrink-0 z-20">
+      <header class="h-16 bg-white/40 backdrop-blur-md border-b border-white/40 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
         <div class="flex items-center text-sm overflow-x-auto no-scrollbar whitespace-nowrap mask-linear flex-1 mr-4 py-2">
           <span class="text-sakura-300 mr-2 shrink-0 text-lg cursor-pointer hover:scale-110 transition-transform" @click="resetToHome">🏠</span>
           <span class="text-sakura-200 mx-1">/</span>
@@ -194,15 +204,16 @@
       <!-- Content -->
       <div class="flex-1 flex overflow-hidden z-10">
         <div v-if="viewMode === 'lab' && currentTool" class="flex-1 overflow-y-auto custom-scrollbar p-8">
-           <div class="w-[95%] max-w-[1200px] mx-auto animate-fade-in">
+           <div class="w-[95%] max-w-[1400px] mx-auto animate-fade-in">
              <LabReactivity v-if="currentTool === 'reactivity'" />
              <LabLifecycle v-if="currentTool === 'lifecycle'" />
            </div>
         </div>
 
         <div v-else-if="currentFile" id="scroll-container" class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-4 md:p-8 relative w-full" @mouseup="handleTextSelection">
+          <!-- Main Paper Container: Increased max-width and added subtle border for paper feel -->
           <div 
-             class="w-[95%] max-w-[1800px] mx-auto bg-white/70 p-8 md:p-16 rounded-[2rem] shadow-sm border border-white/80 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-2xl transition-all duration-300"
+             class="w-[98%] max-w-[1920px] mx-auto bg-white/70 p-8 md:p-16 rounded-[2rem] shadow-sm border border-white/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-2xl transition-all duration-300"
              :class="userSettings.fontSize === 'large' ? 'text-lg' : ''"
           >
              <div class="mb-8 flex items-center gap-3 border-b border-gray-100 pb-6">
@@ -217,9 +228,12 @@
                 </div>
              </div>
 
-            <div v-html="renderedContent" class="markdown-body"></div>
+            <!-- Content Area: Center aligned with readable max-width inside the large container -->
+            <div class="max-w-[1200px] mx-auto">
+               <div v-html="renderedContent" class="markdown-body"></div>
+            </div>
             
-            <div class="mt-12 pt-8 border-t border-sakura-100 flex justify-between text-xs text-sakura-300">
+            <div class="mt-12 pt-8 border-t border-sakura-100 flex justify-between text-xs text-sakura-300 max-w-[1200px] mx-auto">
               <span class="italic">Sakura Notes</span>
               <span>Updated: {{ formatDate(currentFile.lastModified) }}</span>
             </div>
@@ -227,7 +241,7 @@
         </div>
 
         <div v-else-if="currentFolder" class="flex-1 overflow-y-auto custom-scrollbar p-8">
-           <div class="w-[95%] max-w-[1800px] mx-auto">
+           <div class="w-[95%] max-w-[1920px] mx-auto">
              <div class="flex items-center gap-4 mb-8 p-8 bg-white/60 rounded-[2rem] border border-white shadow-sm backdrop-blur-md">
                <span class="text-5xl bg-sakura-100 p-4 rounded-2xl shadow-inner text-sakura-500">📁</span>
                <div>
