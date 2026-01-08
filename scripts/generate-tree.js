@@ -12,7 +12,7 @@ const notesDir = path.join(rootDir, 'notes');
 console.log("🌸 Scanning content root:", notesDir);
 
 if (!fs.existsSync(publicDir)) {
-  fs.mkdirSync(publicDir);
+  fs.mkdirSync(publicDir, { recursive: true });
 }
 
 // Helper to recursively scan directory
@@ -49,3 +49,17 @@ function scanDirectory(dirPath, relativePath) {
       }
     } else if (item.endsWith('.md')) {
       result.push({
+        name: item,
+        path: itemRelativePath,
+        type: 'file',
+        lastModified: stat.mtime
+      });
+    }
+  }
+  
+  return result;
+}
+
+const tree = scanDirectory(notesDir, '');
+fs.writeFileSync(outputFile, JSON.stringify(tree, null, 2));
+console.log(`✨ File tree generated at ${outputFile}`);
