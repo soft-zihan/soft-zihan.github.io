@@ -3,7 +3,16 @@
 **v1.0**
 A pure static personal blog system built with Vue 3 + Tailwind CSS, designed specifically for GitHub Pages deployment.
 
+<<<<<<< HEAD
 [Live Demo](https://soft-zihan.github.io/)
+=======
+[中文文档 (Chinese)](./blob/main/README_zh.md)
+
+This is a pure static personal blog system based on Vue 3 + Tailwind CSS, designed for GitHub Pages deployment.
+It requires no complex backend server, adopting a **Metadata Indexing + Runtime Fetching** architecture for an extremely lightweight static blog experience.
+
+[Live Demo](https://github.com/soft-zihan)
+>>>>>>> 1489ccb9b290caca569c3378e1af93dfaa73270a
 
 ---
 
@@ -46,4 +55,14 @@ We welcome your contributions! If you'd like to share notes or contribute code:
 2.  Create `.md` files inside the `notes` folder in the project root.
 3.  Push your code. Select GitHub Actions for the source in your repository's Pages settings. Each push will trigger an automatic build and deploy to Pages.
 
+<<<<<<< HEAD
 Hope this project becomes your little garden for organizing knowledge and sharing life 🌸
+=======
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+Enjoy writing! 🌸
+>>>>>>> 1489ccb9b290caca569c3378e1af93dfaa73270a
