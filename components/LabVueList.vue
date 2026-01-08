@@ -47,10 +47,10 @@
     </div>
 
     <!-- UI View -->
-    <div v-else class="flex flex-col xl:flex-row gap-8 animate-fade-in">
+    <div v-else class="flex flex-col lg:flex-row gap-6 animate-fade-in">
         
-        <!-- List Area (v-for) -->
-        <div class="flex-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-0 overflow-hidden flex flex-col min-h-[300px] shadow-lg">
+        <!-- List Area (v-for) - Takes more space -->
+        <div class="flex-[2] bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-0 overflow-hidden flex flex-col min-h-[350px] shadow-lg">
              <div class="bg-teal-50 dark:bg-teal-900/20 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                  <h4 class="font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
                     <span class="text-2xl">👥</span>
@@ -59,7 +59,7 @@
                 <span class="text-xs bg-white dark:bg-gray-700 border border-teal-200 dark:border-gray-600 px-2 py-0.5 rounded text-teal-600 dark:text-teal-300 font-bold">{{ items.length }} Records</span>
              </div>
              
-             <div class="flex-1 p-0 overflow-y-auto max-h-[400px] custom-scrollbar">
+             <div class="flex-1 p-0 overflow-y-auto max-h-[350px] custom-scrollbar">
                  <table class="w-full text-sm text-left">
                     <thead class="text-xs text-gray-500 uppercase bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
                         <tr>
@@ -116,10 +116,10 @@
              </div>
         </div>
 
-        <!-- Form Area (v-model) -->
-        <div class="w-full xl:w-80 bg-gray-50 dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-fit">
-            <h4 class="font-bold text-gray-700 dark:text-gray-200 mb-6 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
-                <span class="text-xl">📝</span>
+        <!-- Form Area (v-model) - Compact sidebar -->
+        <div class="w-full lg:w-72 xl:w-80 bg-gray-50 dark:bg-gray-900 p-5 rounded-xl border border-gray-200 dark:border-gray-700 flex flex-col h-fit">
+            <h4 class="font-bold text-gray-700 dark:text-gray-200 mb-5 flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-3">
+                <span class="text-lg">📝</span>
                 <span>{{ t.lab_vue_add }}</span>
             </h4>
             

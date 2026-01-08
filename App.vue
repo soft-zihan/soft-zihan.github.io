@@ -1,7 +1,7 @@
 
 <template>
   <!-- Dynamic Petals Container -->
-  <PetalBackground v-if="showParticles" :speed="userSettings.petalSpeed" />
+  <PetalBackground v-if="showParticles" :speed="userSettings.petalSpeed" :isDark="isDark" />
 
   <div class="flex flex-col md:flex-row w-full h-full max-w-[2560px] mx-auto overflow-hidden bg-white/30 dark:bg-gray-900/60 backdrop-blur-[2px] font-sans transition-colors duration-500" :class="[userSettings.fontFamily === 'serif' ? 'font-serif' : 'font-sans', isDark ? 'dark' : '']">
     
@@ -30,6 +30,9 @@
 
     <!-- Main Content Wrapper -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
+      <!-- Wallpaper Layer (behind decorations, excluding sidebar) -->
+      <WallpaperLayer :is-dark="isDark" :light-url="wallpaperLightUrl" :dark-url="wallpaperDarkUrl" />
+
       <!-- Decorative Background Elements -->
       <div class="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
         <div class="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-sakura-100/40 to-purple-100/30 dark:from-sakura-900/10 dark:to-purple-900/10 blur-3xl animate-float opacity-60"></div>
@@ -260,6 +263,7 @@ import type { FileNode, BreadcrumbItem, TocItem } from './types';
 import LabDashboard from './components/LabDashboard.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
+import WallpaperLayer from './components/WallpaperLayer.vue';
 import AppSidebar from './components/AppSidebar.vue';
 import AppHeader from './components/AppHeader.vue';
 import FolderView from './components/FolderView.vue';
@@ -270,10 +274,51 @@ const savedLang = localStorage.getItem('sakura_lang');
 const lang = ref<'en' | 'zh'>((savedLang === 'en' || savedLang === 'zh') ? savedLang : 'zh');
 const t = computed(() => I18N[lang.value]);
 
-const toggleLang = () => {
-  lang.value = lang.value === 'en' ? 'zh' : 'en';
-  localStorage.setItem('sakura_lang', lang.value);
-  resetToHome();
+const toggleLang = async () => {
+  const oldLang = lang.value;
+  const newLang = oldLang === 'en' ? 'zh' : 'en';
+  lang.value = newLang;
+  localStorage.setItem('sakura_lang', newLang);
+  
+  // Preserve current state during language switch
+  // 1. If in lab mode, stay in lab mode (LabDashboard is language-aware)
+  if (viewMode.value === 'lab' && currentTool.value === 'dashboard') {
+    // Lab dashboard will automatically update with new lang prop
+    return;
+  }
+  
+  // 2. If viewing a folder, stay in folder view (folders exist in both lang roots)
+  if (currentFolder.value && !currentFile.value) {
+    // Keep folder view, UI will update via reactive lang/t
+    return;
+  }
+  
+  // 3. If viewing a file (note), we need to refresh because note files differ between languages
+  if (currentFile.value) {
+    // Try to find equivalent file in new language root
+    const oldPath = currentFile.value.path;
+    const pathParts = oldPath.split('/');
+    
+    // Replace language root (first segment) with new language
+    if (pathParts[0] === oldLang) {
+      pathParts[0] = newLang;
+      const newPath = pathParts.join('/');
+      const newNode = findNodeByPath(fileSystem.value, newPath);
+      
+      if (newNode && newNode.type === NodeType.FILE) {
+        // Found equivalent file in new language
+        await openFile(newNode);
+        return;
+      }
+    }
+    
+    // If no equivalent file found, go home
+    resetToHome();
+    return;
+  }
+  
+  // 4. If on home screen, stay on home (already reactive via lang/t)
+  // No action needed, UI will update automatically
 };
 
 // Theme
@@ -314,6 +359,10 @@ const userSettings = reactive({
   fontFamily: localStorage.getItem('sakura_fontfamily') || 'sans',
   petalSpeed: localStorage.getItem('sakura_petalspeed') || 'slow' // 'slow' | 'fast'
 });
+
+// Wallpaper URLs (user to place files in project; hardcoded paths)
+const wallpaperLightUrl = '/image/wallpaper-light.jpg';
+const wallpaperDarkUrl = '/image/wallpaper-dark.jpg';
 
 watch(() => userSettings.fontSize, (v) => localStorage.setItem('sakura_fontsize', v));
 watch(() => userSettings.fontFamily, (v) => localStorage.setItem('sakura_fontfamily', v));
@@ -703,13 +752,19 @@ const handleContentClick = async (e: MouseEvent) => {
   const link = target.closest('a');
   if (link) {
     const href = link.getAttribute('href');
-    // Updated condition to support clicking source code files (.vue, .ts, .js, .json)
-    if (href && !href.startsWith('http') && !href.startsWith('//') && 
-       (href.endsWith('.md') || href.endsWith('.vue') || href.endsWith('.ts') || href.endsWith('.js') || href.endsWith('.json'))) {
+    const isSupportedInternal = (raw?: string) => {
+      if (!raw) return false;
+      if (raw.startsWith('http') || raw.startsWith('//')) return false;
+      const lower = raw.toLowerCase();
+      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss'];
+      return exts.some(ext => lower.endsWith(ext));
+    };
+
+    if (isSupportedInternal(href)) {
       e.preventDefault(); // Stop Browser Jump
       
       let targetPath = '';
-      const isCodeFile = !href.endsWith('.md');
+      const isCodeFile = !href.toLowerCase().endsWith('.md');
 
       if (href.startsWith('/')) {
           // Absolute path from root (e.g. /source.md -> source.md)

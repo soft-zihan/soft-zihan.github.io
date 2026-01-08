@@ -23,6 +23,32 @@
       </div>
     </div>
 
+        <div class="flex flex-wrap items-center gap-3 mb-6">
+            <div class="flex items-center gap-2 text-[11px] text-gray-600 dark:text-gray-200 bg-indigo-50 dark:bg-gray-900 px-3 py-2 rounded-lg border border-indigo-100 dark:border-gray-700 shadow-sm">
+                <span class="font-bold text-indigo-600 dark:text-indigo-300">{{ t.lab_html_tokens }}</span>
+                <span class="px-2 py-1 rounded bg-white/80 dark:bg-gray-800/80 font-mono text-[11px] text-gray-700 dark:text-gray-100">{{ tokens.length }}</span>
+                <span class="font-bold text-indigo-600 dark:text-indigo-300">DOM</span>
+                <span class="px-2 py-1 rounded bg-white/80 dark:bg-gray-800/80 font-mono text-[11px] text-gray-700 dark:text-gray-100">{{ domNodeCount }}</span>
+                <span class="text-[10px] text-gray-400 dark:text-gray-400">{{ viewMode === 'preview' ? t.lab_html_preview : t.lab_html_tree }}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <button 
+                    v-for="preset in presets" 
+                    :key="preset.label"
+                    @click="applyPreset(preset.code)"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-indigo-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-indigo-300 dark:hover:border-indigo-500 shadow-sm text-gray-700 dark:text-gray-200"
+                >
+                    {{ preset.label }}
+                </button>
+                <button 
+                    @click="resetToMinimal"
+                    class="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:border-gray-400 text-gray-600 dark:text-gray-300 shadow-sm"
+                >
+                    Reset
+                </button>
+            </div>
+        </div>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Editor Column -->
@@ -86,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { I18N } from '../constants';
 import _ from 'lodash';
 import { h } from 'vue';
@@ -118,6 +144,13 @@ interface DomNode {
 const tokens = ref<Token[]>([]);
 const domTree = ref<DomNode | null>(null);
 const sandboxIframe = ref<HTMLIFrameElement | null>(null);
+
+const countNodes = (node: DomNode | null): number => {
+    if (!node) return 0;
+    return 1 + node.children.reduce((acc, child) => acc + countNodes(child), 0);
+};
+
+const domNodeCount = computed(() => Math.max(countNodes(domTree.value) - 1, 0));
 
 // A very basic HTML Tokenizer (Regex based for demo)
 const tokenize = (html: string): Token[] => {
@@ -196,26 +229,81 @@ const parseHtml = _.debounce(() => {
         const toks = tokenize(htmlCode.value);
         tokens.value = toks;
         domTree.value = buildTree(toks);
-        updateIframe();
     } catch (e) {
-        console.error("Parse Error");
+        tokens.value = [];
+        domTree.value = null;
+        console.error("Parse Error", e);
+    } finally {
+        updateIframe();
     }
 }, 300);
 
 const updateIframe = () => {
     if (!sandboxIframe.value) return;
-    const doc = sandboxIframe.value.contentDocument;
-    if (doc) {
-        doc.open();
-        doc.write(`
-            <style>
-                body { font-family: sans-serif; padding: 20px; color: #333; }
-                * { outline: 1px dashed rgba(0,0,0,0.1); } /* Visual Aid */
-            </style>
-            ${htmlCode.value}
-        `);
-        doc.close();
+    const safeHtml = (htmlCode.value || '').trim() || '<p class="placeholder">⚠️ Empty input — nothing to render</p>';
+    const styleBlock = `
+        <style>
+            :root { color-scheme: light; }
+            body { font-family: 'Segoe UI', sans-serif; padding: 20px; color: #1f2937; line-height: 1.5; background: linear-gradient(135deg, #f8fafc, #eef2ff); }
+            * { outline: 1px dashed rgba(0,0,0,0.08); }
+            .placeholder { color: #9ca3af; font-style: italic; padding: 12px 16px; border: 1px dashed #d1d5db; background: #fff; border-radius: 12px; }
+            .card { max-width: 320px; border-radius: 16px; box-shadow: 0 15px 45px rgba(0,0,0,0.12); padding: 16px; background: white; }
+            h1, h2, h3, h4 { color: #111827; }
+        </style>
+    `;
+    sandboxIframe.value.srcdoc = `${styleBlock}${safeHtml}`;
+};
+
+watch(viewMode, (mode) => {
+    if (mode === 'preview') {
+        nextTick(() => updateIframe());
     }
+});
+
+const presets = [
+    {
+        label: '语义化卡片',
+        code: `<article class="card">
+  <h2>Semantic Card</h2>
+  <p>Combine <strong>structure</strong> with <em>emphasis</em>.</p>
+  <button>Call To Action</button>
+</article>`
+    },
+    {
+        label: '表单结构',
+        code: `<form class="card">
+  <h3>Mini Form</h3>
+  <label>Name <input placeholder="Jane" /></label>
+  <label>Email <input type="email" placeholder="you@example.com" /></label>
+  <button type="submit">Submit</button>
+</form>`
+    },
+    {
+        label: '列表与媒体',
+        code: `<section class="card">
+  <h3>Travel List</h3>
+  <ul>
+    <li>🗼 Tokyo</li>
+    <li>🗽 New York</li>
+    <li>🪩 Berlin</li>
+  </ul>
+  <img src="https://picsum.photos/320/140" alt="preview" />
+</section>`
+    }
+];
+
+const applyPreset = (code: string) => {
+    htmlCode.value = code.trim();
+    viewMode.value = 'preview';
+    parseHtml();
+};
+
+const resetToMinimal = () => {
+    htmlCode.value = `<div class="card">
+  <h3>Hello World</h3>
+  <p>This is a <b>bold</b> statement.</p>
+</div>`;
+    parseHtml();
 };
 
 // Recursive Tree Component using Functional Component pattern for recursion

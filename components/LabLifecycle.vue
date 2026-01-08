@@ -1,7 +1,7 @@
 
 <template>
-  <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-blue-100 dark:border-gray-700 shadow-sm backdrop-blur-md mt-6">
-    <h3 class="text-xl font-bold text-blue-800 dark:text-blue-300 mb-4 flex items-center gap-2">
+  <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-blue-100 dark:border-gray-700 shadow-sm backdrop-blur-md">
+    <h3 class="text-lg font-bold text-blue-800 dark:text-blue-300 mb-4 flex items-center gap-2">
       {{ t.lab_lifecycle_title }}
     </h3>
     

@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-pink-100 dark:border-gray-700 shadow-sm backdrop-blur-md h-full flex flex-col">
-    <h3 class="text-xl font-bold text-pink-800 dark:text-pink-300 mb-2 flex items-center gap-2">
+    <h3 class="text-lg font-bold text-pink-800 dark:text-pink-300 mb-2 flex items-center gap-2">
       {{ t.lab_class_title }}
     </h3>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">{{ t.lab_class_info }}</p>

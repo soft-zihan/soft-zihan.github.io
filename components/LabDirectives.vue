@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-teal-100 dark:border-gray-700 shadow-sm backdrop-blur-md mt-6">
-    <h3 class="text-xl font-bold text-teal-800 dark:text-teal-300 mb-4 flex items-center gap-2">
+  <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-teal-100 dark:border-gray-700 shadow-sm backdrop-blur-md h-full flex flex-col">
+    <h3 class="text-lg font-bold text-teal-800 dark:text-teal-300 mb-4 flex items-center gap-2">
       {{ t.lab_directives_title }}
     </h3>
     <p class="text-xs text-gray-500 dark:text-gray-400 mb-6">{{ t.lab_directives_info }}</p>

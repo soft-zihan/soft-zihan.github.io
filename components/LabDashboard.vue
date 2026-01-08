@@ -28,6 +28,11 @@
       <!-- Tab 1: Web Foundation (HTML/CSS/JS) -->
       <div v-if="activeTab === 'foundation'" class="space-y-12 animate-fade-in">
         
+        <!-- Part 0: Code Evolution Journey (NEW - Entry Point for Beginners) -->
+        <section>
+          <LabCodeEvolution :lang="lang" />
+        </section>
+
         <!-- Part 1: Web Standards Triad Visualization -->
         <section class="max-w-4xl mx-auto">
           <div class="bg-white/90 dark:bg-gray-800/90 rounded-3xl p-8 border border-sakura-100 dark:border-gray-700 shadow-xl relative overflow-hidden">
@@ -142,53 +147,60 @@
       <!-- Tab 2: Vue Core -->
       <div v-else-if="activeTab === 'vue'" class="space-y-12 animate-fade-in">
          
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
-           <section>
-              <h2 class="text-xl font-bold text-teal-600 dark:text-teal-400 mb-4 flex items-center gap-2">
-                <span class="text-2xl">📋</span> {{ t.lab_vue_list_title }}
-              </h2>
-              <LabVueList :lang="lang" />
-            </section>
-
-             <!-- New Class & Style Section -->
-            <section>
-                <h2 class="text-xl font-bold text-pink-600 dark:text-pink-400 mb-4 flex items-center gap-2">
-                  <span class="text-2xl">💅</span> {{ t.lab_class_title }}
-                </h2>
-                <LabClassStyle :lang="lang" />
-            </section>
-        </div>
-
+        <!-- Part 1: Reactivity - Vue's Core Foundation -->
         <section>
            <h2 class="text-xl font-bold text-purple-600 dark:text-purple-400 mb-4 flex items-center gap-2">
              <span class="text-2xl">🧪</span> {{ t.lab_reactivity }}
+             <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-0.5 rounded-full ml-2">{{ lang === 'zh' ? '核心基础' : 'Core' }}</span>
            </h2>
            <LabReactivity :lang="lang" />
         </section>
 
-        <!-- New Props & Emit Section -->
-        <section>
-            <h2 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-2">
-              <span class="text-2xl">📡</span> {{ t.lab_props_title }}
-            </h2>
-            <LabPropsEmit :lang="lang" />
-        </section>
-
+        <!-- Part 2: Directives & Class/Style Binding (Side by Side) -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
           <section>
             <h2 class="text-xl font-bold text-teal-600 dark:text-teal-400 mb-4 flex items-center gap-2">
               <span class="text-2xl">👁️</span> {{ t.lab_directives }}
+              <span class="text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-300 px-2 py-0.5 rounded-full ml-2">v-if / v-show</span>
             </h2>
             <LabDirectives :lang="lang" />
           </section>
 
           <section>
-            <h2 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
-              <span class="text-2xl">🎢</span> {{ t.lab_lifecycle }}
-            </h2>
-            <LabLifecycle :lang="lang" />
+              <h2 class="text-xl font-bold text-pink-600 dark:text-pink-400 mb-4 flex items-center gap-2">
+                <span class="text-2xl">💅</span> {{ t.lab_class_title }}
+                <span class="text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-300 px-2 py-0.5 rounded-full ml-2">:class / :style</span>
+              </h2>
+              <LabClassStyle :lang="lang" />
           </section>
         </div>
+
+        <!-- Part 3: List Rendering - Full Width (Employee Management System) -->
+        <section>
+            <h2 class="text-xl font-bold text-teal-600 dark:text-teal-400 mb-4 flex items-center gap-2">
+              <span class="text-2xl">📋</span> {{ t.lab_vue_list_title }}
+              <span class="text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-300 px-2 py-0.5 rounded-full ml-2">v-for / v-model</span>
+            </h2>
+            <LabVueList :lang="lang" />
+        </section>
+
+        <!-- Part 4: Component Communication -->
+        <section>
+            <h2 class="text-xl font-bold text-indigo-600 dark:text-indigo-400 mb-4 flex items-center gap-2">
+              <span class="text-2xl">📡</span> {{ t.lab_props_title }}
+              <span class="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-0.5 rounded-full ml-2">Props ↓ Emit ↑</span>
+            </h2>
+            <LabPropsEmit :lang="lang" />
+        </section>
+
+        <!-- Part 5: Lifecycle -->
+        <section>
+          <h2 class="text-xl font-bold text-blue-600 dark:text-blue-400 mb-4 flex items-center gap-2">
+            <span class="text-2xl">🎢</span> {{ t.lab_lifecycle }}
+            <span class="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 px-2 py-0.5 rounded-full ml-2">{{ lang === 'zh' ? '组件生命周期' : 'Component Lifecycle' }}</span>
+          </h2>
+          <LabLifecycle :lang="lang" />
+        </section>
       </div>
       
        <!-- Tab 3: Network -->
@@ -229,6 +241,7 @@ import LabAjax from './LabAjax.vue';
 import LabVueList from './LabVueList.vue';
 import LabPropsEmit from './LabPropsEmit.vue';
 import LabClassStyle from './LabClassStyle.vue';
+import LabCodeEvolution from './LabCodeEvolution.vue';
 
 const props = defineProps<{
   lang: 'en' | 'zh';
