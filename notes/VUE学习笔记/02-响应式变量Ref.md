@@ -27,7 +27,7 @@ Vue 3 引入了 **响应式系统**，核心思想是：**数据变了，视图�
 
 * **定义**: `const isDark = ref(false);`
 * **原理**: Vue 将 boolean 值包裹在一个对象中，通过 `.value` 属性进行读写拦截。
-* **源码实战 ([`App.vue](/components/App.vue)`)**:
+* **源码实战 ([App.vue](/components/App.vue))**:
 
   ```typescript
   // 定义一个响应式变量

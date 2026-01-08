@@ -30,7 +30,7 @@ const props = defineProps<{
 
 ## 2. Emit：孩子给父亲的报告
 
-当用户点击 [FileTree](/components/FileTree) 里的某个文件时，`FileTree` 只是一个展示组件，它不知道怎么打开文件。
+当用户点击 [FileTree](/components/FileTree.vue) 里的某个文件时，`FileTree` 只是一个展示组件，它不知道怎么打开文件。
 所以，它必须**发出通知**。
 
 ```typescript

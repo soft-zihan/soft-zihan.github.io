@@ -67,13 +67,13 @@ Replaces `addEventListener`.
 ## 5. v-if vs v-show
 
 * **v-if**: **Real Destroy/Create**.
-  * *Example*: [LabVueList.vue](/LabVueList.vue) - Showing "Male" (1) vs "Female" (2) tags.
+  * *Example*: [LabVueList.vue](/components/LabVueList.vue) - Showing "Male" (1) vs "Female" (2) tags.
     ```html
     <span v-if="item.gender === 1">Male</span>
     <span v-else-if="item.gender === 2">Female</span>
     ```
 * **v-show**: **CSS Toggle** (`display: none`).
-  * *Example*: [LabVueList.vue](/LabVueList.vue) - Showing Job Title.
+  * *Example*: [LabVueList.vue](/components/LabVueList.vue) - Showing Job Title.
     ```html
     <span v-show="item.job === 1">Lecturer</span>
     ```
