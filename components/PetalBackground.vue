@@ -67,7 +67,7 @@ let nextId = 0;
 
 // Config
 const MAX_PETALS = 50; 
-const MAX_LANDED = 80; // Increased for "fuller" pile
+const MAX_LANDED = 300; // Increased for "fuller" pile
 // Distribution: Bias towards 0 (bottom). 
 // Using power of random to cluster near 0. Math.pow(random, 3) makes most values small.
 const getLandingOffset = () => Math.pow(Math.random(), 3) * 60; 
