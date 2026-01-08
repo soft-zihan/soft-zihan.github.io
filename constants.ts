@@ -1,11 +1,12 @@
+
 export const I18N = {
   en: {
     loading: "Loading Sakura Notes...",
     subtitle: "For every reader",
     tab_latest: "Latest",
     tab_files: "Files",
-    tab_lab: "Visual Learning",
-    lab_dashboard: "Learning Center",
+    tab_lab: "Laboratory",
+    lab_dashboard: "Visual Learning Center",
     lab_dashboard_desc: "Visualize code, understand logic",
     lab_tools: "Visual Playground",
     lab_resources: "Learning Resources",
@@ -49,6 +50,11 @@ export const I18N = {
     quiz_good: "Great job! Keep practicing.",
     quiz_try: "Don't give up! Review the notes.",
     
+    // Resources Categories
+    res_cat_platform: "Interactive Platforms",
+    res_cat_frontend_games: "Frontend Games",
+    res_cat_vue_projects: "Vue Mini Projects",
+
     // General
     no_notes: "No notes found in 'en' folder.",
     no_vue_notes: "Course notes folder not found.",
@@ -105,7 +111,7 @@ export const I18N = {
     subtitle: "献给所有读者",
     tab_latest: "最新",
     tab_files: "归档",
-    tab_lab: "可视化学习",
+    tab_lab: "实验室",
     lab_dashboard: "可视化学习中心",
     lab_dashboard_desc: "看见代码，理解逻辑",
     lab_tools: "交互演示",
@@ -149,6 +155,11 @@ export const I18N = {
     quiz_perfect: "太强了！全知全能的忍者！",
     quiz_good: "干得漂亮！继续保持。",
     quiz_try: "别灰心！复习一下笔记再来。",
+
+    // Resources Categories
+    res_cat_platform: "互动学习平台",
+    res_cat_frontend_games: "前端游戏化学习",
+    res_cat_vue_projects: "Vue 实战项目",
 
     // General
     no_notes: "在 'zh' 文件夹下暂无笔记",
