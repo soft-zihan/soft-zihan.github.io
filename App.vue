@@ -87,7 +87,17 @@
           
           <!-- Lab Tool View (Unified Dashboard) -->
           <div v-if="viewMode === 'lab' && currentTool === 'dashboard'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
-             <LabDashboard :lang="lang" />
+             <LabDashboard :lang="lang" @select-lab="selectTool" />
+          </div>
+
+          <!-- Lab: Event Handling -->
+          <div v-else-if="viewMode === 'lab' && currentTool === 'event-handling'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
+             <LabEventHandling :lang="lang" />
+          </div>
+
+          <!-- Lab: Slot System -->
+          <div v-else-if="viewMode === 'lab' && currentTool === 'slot'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
+             <LabSlot :lang="lang" />
           </div>
 
           <!-- Folder View Component -->
@@ -261,6 +271,8 @@ import { I18N } from './constants';
 import { NodeType } from './types';
 import type { FileNode, BreadcrumbItem, TocItem } from './types';
 import LabDashboard from './components/LabDashboard.vue';
+import LabEventHandling from './components/LabEventHandling.vue';
+import LabSlot from './components/LabSlot.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
 import WallpaperLayer from './components/WallpaperLayer.vue';
@@ -340,7 +352,7 @@ const toc = ref<TocItem[]>([]);
 const activeHeaderId = ref<string>('');
 const loading = ref(true);
 const contentLoading = ref(false);
-const currentTool = ref<'dashboard' | null>(null);
+const currentTool = ref<'dashboard' | 'event-handling' | 'slot' | null>(null);
 const showParticles = ref(true);
 const toastMessage = ref('');
 const lightboxImage = ref<string | null>(null);
@@ -627,7 +639,7 @@ const openFolder = (folder: FileNode) => {
 };
 
 const selectTool = (tool: string) => {
-  currentTool.value = tool as 'dashboard';
+  currentTool.value = tool as 'dashboard' | 'event-handling' | 'slot';
   currentFile.value = null;
   currentFolder.value = null;
 };

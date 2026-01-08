@@ -201,6 +201,32 @@
           </h2>
           <LabLifecycle :lang="lang" />
         </section>
+
+        <!-- Quick Navigation to New Labs -->
+        <div class="mt-16 pt-12 border-t border-gray-300 dark:border-gray-700">
+          <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-6 flex items-center gap-2">
+            <span class="text-2xl">🚀</span> {{ lang === 'zh' ? '最新实验室' : 'New Labs' }}
+          </h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button 
+              @click="$emit('select-lab', 'event-handling')"
+              class="group p-6 rounded-xl border-2 border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all text-left hover:scale-105 transform"
+            >
+              <div class="text-2xl mb-2">🖱️</div>
+              <h4 class="font-bold text-blue-700 dark:text-blue-300 mb-1">{{ lang === 'zh' ? '事件处理' : 'Event Handling' }}</h4>
+              <p class="text-sm text-blue-600 dark:text-blue-400">{{ lang === 'zh' ? '@click、修饰符、键盘事件' : '@click, modifiers, keyboard' }}</p>
+            </button>
+            
+            <button 
+              @click="$emit('select-lab', 'slot')"
+              class="group p-6 rounded-xl border-2 border-green-300 dark:border-green-600 bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/40 transition-all text-left hover:scale-105 transform"
+            >
+              <div class="text-2xl mb-2">🎁</div>
+              <h4 class="font-bold text-green-700 dark:text-green-300 mb-1">{{ lang === 'zh' ? '插槽系统' : 'Slot System' }}</h4>
+              <p class="text-sm text-green-600 dark:text-green-400">{{ lang === 'zh' ? '基础、具名、作用域插槽' : 'Default, named, scoped' }}</p>
+            </button>
+          </div>
+        </div>
       </div>
       
        <!-- Tab 3: Network -->
@@ -237,6 +263,10 @@ import LabLifecycle from './LabLifecycle.vue';
 import LabHtml from './LabHtml.vue';
 import LabJs from './LabJs.vue';
 import LabDom from './LabDom.vue';
+
+defineEmits<{
+  'select-lab': [lab: 'event-handling' | 'slot'];
+}>();
 import LabAjax from './LabAjax.vue';
 import LabVueList from './LabVueList.vue';
 import LabPropsEmit from './LabPropsEmit.vue';

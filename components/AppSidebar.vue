@@ -60,13 +60,39 @@
             <!-- Unified Lab Dashboard Link -->
             <div 
               @click="$emit('select-tool', 'dashboard')"
-              class="p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 cursor-pointer hover:bg-white dark:hover:bg-gray-800 hover:shadow-md transition-all mb-4 flex items-center gap-3 bg-indigo-50/50 dark:bg-gray-800/30"
+              class="p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/30 cursor-pointer hover:bg-white dark:hover:bg-gray-800 hover:shadow-md transition-all mb-2 flex items-center gap-3 bg-indigo-50/50 dark:bg-gray-800/30"
               :class="{'ring-2 ring-indigo-300 dark:ring-indigo-700 bg-white dark:bg-gray-800': currentTool === 'dashboard'}"
             >
               <span class="text-xl">🎛️</span>
               <div class="flex-1">
                 <div class="text-sm font-bold text-indigo-900 dark:text-indigo-300">{{ t.lab_dashboard }}</div>
                 <div class="text-[10px] text-indigo-500 dark:text-indigo-400">{{ t.lab_dashboard_desc }}</div>
+              </div>
+            </div>
+
+            <!-- Event Handling Lab -->
+            <div 
+              @click="$emit('select-tool', 'event-handling')"
+              class="p-3 rounded-xl border border-blue-100 dark:border-blue-900/30 cursor-pointer hover:bg-white dark:hover:bg-gray-800 hover:shadow-md transition-all mb-2 flex items-center gap-3"
+              :class="{'ring-2 ring-blue-300 dark:ring-blue-700 bg-white dark:bg-gray-800': currentTool === 'event-handling'}"
+            >
+              <span class="text-xl">🖱️</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold text-blue-900 dark:text-blue-300 truncate">{{ lang === 'zh' ? '事件处理' : 'Events' }}</div>
+                <div class="text-[10px] text-blue-500 dark:text-blue-400 truncate">@click, {{ lang === 'zh' ? '修饰符' : 'modifiers' }}</div>
+              </div>
+            </div>
+
+            <!-- Slot System Lab -->
+            <div 
+              @click="$emit('select-tool', 'slot')"
+              class="p-3 rounded-xl border border-green-100 dark:border-green-900/30 cursor-pointer hover:bg-white dark:hover:bg-gray-800 hover:shadow-md transition-all mb-4 flex items-center gap-3"
+              :class="{'ring-2 ring-green-300 dark:ring-green-700 bg-white dark:bg-gray-800': currentTool === 'slot'}"
+            >
+              <span class="text-xl">🎁</span>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-bold text-green-900 dark:text-green-300 truncate">{{ lang === 'zh' ? '插槽' : 'Slots' }}</div>
+                <div class="text-[10px] text-green-500 dark:text-green-400 truncate">{{ lang === 'zh' ? '组件复用' : 'component reuse' }}</div>
               </div>
             </div>
 

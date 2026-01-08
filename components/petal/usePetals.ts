@@ -101,8 +101,8 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
     // landing via grid
     if (p.y > h - p.size) {
       const idx = Math.max(0, Math.min(pileHeights.length - 1, Math.floor(p.x / colWidth.value)));
-      const landingY = pileBaselineY.value - pileHeights[idx] - p.size * 1.0;
-      p.y = landingY;
+      const landingY = pileBaselineY.value - pileHeights[idx] - p.size;
+      p.y = Math.max(p.y, landingY); // Prevent floating: only set once, then lock
       p.isLanded = true;
       p.rotation = Math.random() * 360;
       pileHeights[idx] += p.size * 0.85; // accumulate
