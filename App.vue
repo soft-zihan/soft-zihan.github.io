@@ -91,7 +91,7 @@
 
           <!-- Settings -->
           <button @click="showSettings = true" class="p-2 text-gray-400 hover:text-sakura-600 dark:hover:text-sakura-400 hover:rotate-90 transition-all duration-500" :title="t.settings_title">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
           </button>
         </div>
       </header>
@@ -485,38 +485,53 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
 const markedLoaded = ref(false);
 
+const setupMarkedRenderer = () => {
+    // @ts-ignore
+    if (!window.marked) return;
+    
+    // Check if we've already configured marked to avoid recursion/loops
+    // @ts-ignore
+    if (window.marked._isConfigured) return;
+    
+    try {
+        // @ts-ignore
+        const renderer = new window.marked.Renderer();
+        renderer.heading = function(text: string, level: number) {
+           const id = text.toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
+           return `<h${level} id="${id}">${text}</h${level}>`;
+        };
+        // @ts-ignore
+        window.marked.use({ renderer });
+        // @ts-ignore
+        window.marked._isConfigured = true;
+    } catch (e) {
+        console.error("Failed to setup marked renderer:", e);
+    }
+};
+
 const waitForMarked = async () => {
     // @ts-ignore
     if (window.marked) {
+        setupMarkedRenderer();
         markedLoaded.value = true;
         return;
     }
     // Simple polling to wait for CDN
     let attempts = 0;
-    while(attempts < 20) {
+    while(attempts < 30) {
         await new Promise(r => setTimeout(r, 100));
         // @ts-ignore
         if (window.marked) {
+            setupMarkedRenderer();
             markedLoaded.value = true;
             return;
         }
         attempts++;
     }
-};
-
-const setupMarkedRenderer = () => {
-    // @ts-ignore
-    if (!window.marked) return;
-    // @ts-ignore
-    const renderer = new window.marked.Renderer();
-    renderer.heading = function(text: string, level: number) {
-       const id = text.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
-       return `<h${level} id="${id}">${text}</h${level}>`;
-    };
-    // @ts-ignore
-    window.marked.use({ renderer });
+    // Timeout fallback (user will see raw content)
+    console.warn("Marked.js load timed out.");
 };
 
 const renderedContent = computed(() => {
@@ -524,7 +539,6 @@ const renderedContent = computed(() => {
   if (!markedLoaded.value && !currentFile.value?.isSource) return currentFile.value?.content || 'Loading renderer...';
   if (!currentFile.value?.content) return '';
 
-  setupMarkedRenderer();
   let rawContent = currentFile.value.content;
   if (currentFile.value.path) {
     // Determine the base folder of the current note
@@ -564,8 +578,14 @@ const renderedContent = computed(() => {
         return `src="${resolvePath(src)}"`;
     });
   }
-  // @ts-ignore
-  return window.marked ? window.marked.parse(rawContent) : rawContent;
+  
+  try {
+      // @ts-ignore
+      return window.marked ? window.marked.parse(rawContent) : rawContent;
+  } catch (e) {
+      console.error("Marked render error:", e);
+      return `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`;
+  }
 });
 
 const activeIndicatorTop = computed(() => {
