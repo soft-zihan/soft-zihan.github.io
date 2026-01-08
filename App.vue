@@ -37,64 +37,22 @@
         <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" style="background-image: radial-gradient(#9f123f 1px, transparent 1px); background-size: 32px 32px;"></div>
       </div>
 
-      <!-- Navbar -->
-      <header class="h-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border-b border-white/40 dark:border-gray-700/40 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm transition-all duration-300 hover:bg-white/60 dark:hover:bg-gray-900/60">
-        <div class="flex items-center text-sm overflow-x-auto no-scrollbar whitespace-nowrap mask-linear flex-1 mr-4 py-2">
-          <span class="text-sakura-300 dark:text-sakura-500 mr-2 shrink-0 text-lg cursor-pointer hover:scale-110 transition-transform" @click="resetToHome">🏠</span>
-          <span class="text-sakura-200 dark:text-gray-700 mx-1">/</span>
-          <!-- Language Root Indicator -->
-          <span class="font-bold text-sakura-500 dark:text-sakura-400 bg-sakura-50 dark:bg-sakura-900/20 px-2 py-0.5 rounded mr-2">{{ lang }}</span>
-          
-          <template v-if="viewMode === 'lab' && currentTool">
-             <span class="mx-2 text-sakura-300 dark:text-gray-600">›</span>
-             <span class="text-purple-600 dark:text-purple-400 font-bold bg-purple-50 dark:bg-purple-900/30 px-2 py-1 rounded-md">{{ t.tab_lab }}</span>
-             <span class="mx-2 text-sakura-300 dark:text-gray-600">›</span>
-             <span class="text-gray-500 dark:text-gray-400">
-                {{ t.lab_dashboard }}
-             </span>
-          </template>
-          <template v-else v-for="(item, index) in breadcrumbs" :key="item.path">
-            <span v-if="index > 0" class="mx-2 text-sakura-300 dark:text-gray-600">›</span>
-            <span 
-              @click="navigateToBreadcrumb(item.path)"
-              class="cursor-pointer transition-colors px-2 py-1 rounded-md"
-              :class="index === breadcrumbs.length - 1 ? 'font-bold text-sakura-600 dark:text-sakura-400 bg-sakura-50/50 dark:bg-sakura-900/30' : 'text-gray-500 dark:text-gray-400 hover:text-sakura-500 hover:bg-sakura-50/50 dark:hover:bg-gray-800'"
-            >
-              {{ item.name }}
-            </span>
-          </template>
-        </div>
-
-        <div class="flex gap-2 shrink-0 items-center">
-          <!-- Particles Toggle -->
-           <button @click="showParticles = !showParticles" class="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors flex items-center justify-center relative group" :title="showParticles ? 'Hide petals' : 'Show petals'">
-             <span class="text-lg transition-all duration-300" :class="{'opacity-100 filter-none': showParticles, 'opacity-40 grayscale': !showParticles}">🌸</span>
-           </button>
-           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-
-          <!-- Action Buttons -->
-          <template v-if="currentFile">
-             <!-- View Source Toggle (Only for Notes, Source files are always raw) -->
-             <button v-if="!currentFile.isSource" @click="isRawMode = !isRawMode" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold" :title="isRawMode ? t.view_render : t.view_source">
-                <span class="text-lg">{{ isRawMode ? '👁️' : '🖊️' }}</span>
-             </button>
-
-            <button @click="copyLink" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold" :title="t.copy_link">
-              <span class="text-lg">🔗</span>
-            </button>
-            <button @click="downloadSource" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold" :title="t.download">
-              <span>DL</span>
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-            </button>
-            <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
-          </template>
-
-          <!-- Settings -->
-          <button @click="showSettings = true" class="p-2 text-gray-400 hover:text-sakura-600 dark:hover:text-sakura-400 hover:rotate-90 transition-all duration-500" :title="t.settings_title">
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-          </button>
-        </div>
-      </header>
+      <!-- Header Component -->
+      <AppHeader
+        :lang="lang"
+        :t="t"
+        :breadcrumbs="breadcrumbs"
+        :view-mode="viewMode"
+        :current-tool="currentTool"
+        :current-file="currentFile"
+        v-model:showParticles="showParticles"
+        v-model:isRawMode="isRawMode"
+        @reset="resetToHome"
+        @navigate="navigateToBreadcrumb"
+        @copy-link="copyLink"
+        @download="downloadSource"
+        @open-settings="showSettings = true"
+      />
 
       <!-- Content Area -->
       <div class="flex-1 flex overflow-hidden z-10 relative">
@@ -129,36 +87,13 @@
              <LabDashboard :lang="lang" />
           </div>
 
-          <!-- Folder View -->
-          <div v-else-if="currentFolder" class="w-full max-w-6xl mx-auto">
-             <div class="flex items-center gap-4 mb-8 p-8 bg-white/60 dark:bg-gray-800/60 rounded-[2rem] border border-white dark:border-gray-700 shadow-xl backdrop-blur-md">
-               <span class="text-5xl bg-sakura-100 dark:bg-sakura-900/50 p-4 rounded-2xl shadow-inner text-sakura-500">📁</span>
-               <div>
-                 <h2 class="text-3xl font-bold text-sakura-900 dark:text-sakura-100">{{ currentFolder.name }}</h2>
-                 <p class="text-sakura-500 dark:text-sakura-400 mt-1 font-medium">{{ currentFolder.children?.length || 0 }} items inside</p>
-               </div>
-             </div>
-             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-               <div 
-                  v-for="child in sortedFolderChildren" 
-                  :key="child.path"
-                  @click="child.type === 'directory' ? openFolder(child) : openFile(child)"
-                  class="folder-card bg-white/60 dark:bg-gray-800/60 p-6 rounded-2xl shadow-md border border-white/70 dark:border-gray-700 hover:shadow-xl hover:shadow-sakura-100/30 dark:hover:shadow-black/40 hover:bg-white dark:hover:bg-gray-800 hover:border-sakura-200 dark:hover:border-sakura-800 cursor-pointer transition-all duration-300 flex flex-col h-48 backdrop-blur-sm group relative overflow-hidden"
-               >
-                 <div class="absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br from-sakura-50 to-transparent dark:from-sakura-900/30 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
-                 <div class="flex items-start justify-between mb-4 relative z-10">
-                   <span class="text-5xl group-hover:scale-110 transition-transform drop-shadow-sm">{{ child.type === 'directory' ? '📂' : (child.isSource ? '💻' : '📝') }}</span>
-                   <span v-if="child.type === 'file'" class="text-[10px] text-sakura-500 dark:text-sakura-400 bg-sakura-50 dark:bg-gray-900 px-2 py-1 rounded-full font-bold">{{ formatDate(child.lastModified) }}</span>
-                 </div>
-                 <div class="mt-auto relative z-10">
-                   <h3 class="font-bold text-gray-700 dark:text-gray-200 truncate text-lg group-hover:text-sakura-600 dark:group-hover:text-sakura-400 transition-colors" :title="child.name">{{ child.name.replace('.md', '') }}</h3>
-                   <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate font-medium">
-                     {{ child.type === 'directory' ? `${child.children?.length || 0} items` : (child.isSource ? 'Source Code' : 'Markdown Note') }}
-                   </p>
-                 </div>
-               </div>
-             </div>
-          </div>
+          <!-- Folder View Component -->
+          <FolderView 
+            v-else-if="currentFolder"
+            :current-folder="currentFolder"
+            @open-folder="openFolder"
+            @open-file="openFile"
+          />
 
           <!-- Note Content View -->
           <div v-else-if="currentFile" 
@@ -326,7 +261,8 @@ import LabDashboard from './components/LabDashboard.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
 import AppSidebar from './components/AppSidebar.vue';
-// Use ESM import from importmap in index.html
+import AppHeader from './components/AppHeader.vue';
+import FolderView from './components/FolderView.vue';
 import { marked } from 'marked';
 
 // i18n with Persistence
@@ -463,14 +399,6 @@ const labFolder = computed(() => {
   return folder;
 });
 
-const sortedFolderChildren = computed(() => {
-  if (!currentFolder.value || !currentFolder.value.children) return [];
-  return [...currentFolder.value.children].sort((a, b) => {
-    if (a.type === b.type) return a.name.localeCompare(b.name);
-    return a.type === NodeType.DIRECTORY ? -1 : 1;
-  });
-});
-
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const path = currentPath.value;
   if (!path) return [];
@@ -543,8 +471,6 @@ const updateRenderedContent = async () => {
     }
 
     try {
-        // marked.parse can be async in v12+ if async extensions are used, 
-        // though standard usage is often sync. Using await covers both.
         renderedHtml.value = await marked.parse(rawContent);
     } catch (e) {
         console.error("Marked render error:", e);
@@ -940,3 +866,4 @@ onMounted(async () => {
     loading.value = false;
   }
 });
+</script>
