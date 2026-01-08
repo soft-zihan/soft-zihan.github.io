@@ -2,7 +2,7 @@
 # 05. Lifecycle & Network Requests (Ajax) 🌸
 
 > **Goal**: Understand Ajax, Axios, and the `mounted` lifecycle hook.
-> **Ref**: [📖 source-2.md Chapter 4 & 5](/source-2.md)
+> **Ref**: [📖 Vue Lifecycle](https://vuejs.org/guide/essentials/lifecycle.html)
 
 ## 1. What is Ajax?
 
@@ -12,7 +12,7 @@
 
 ## 2. Axios & Async / Await
 
-`source-2.md` recommends Axios over native `XMLHttpRequest`. It also recommends `async/await` to avoid Callback Hell.
+Vue ecosystem recommends Axios over native `XMLHttpRequest`. It also recommends `async/await` to avoid Callback Hell.
 
 **Source Code ([components/LabAjax.vue](/components/LabAjax.vue))**:
 

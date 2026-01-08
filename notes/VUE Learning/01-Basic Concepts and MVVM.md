@@ -2,11 +2,11 @@
 # 01. Web Standards & Vue Architecture 🌸
 
 > **Goal**: Understand the Web Standards Triad, Vue as a Progressive Framework, and SPA bootstrapping.
-> **Ref**: [📖 HTML Source (source.md)](/source.md), [📖 Vue Source (source-2.md)](/source-2.md)
+> **Ref**: [📖 MDN HTML](https://developer.mozilla.org/en-US/docs/Web/HTML), [📖 Vue Guide](https://vuejs.org/guide/introduction.html)
 
 ## 1. The Web Standards Triad
 
-As described in `source.md`, modern web development relies on three pillars. Here is how they apply to **Sakura Notes**:
+Modern web development relies on three pillars. Here is how they apply to **Sakura Notes**:
 
 1.  **HTML (Structure)**: 
     *   *Theory*: The skeleton. Defines WHAT is on the page.
@@ -20,7 +20,7 @@ As described in `source.md`, modern web development relies on three pillars. Her
 
 ## 2. Vue: The Progressive Framework
 
-Vue is a **progressive** framework for **building user interfaces** (`source-2.md`).
+Vue is a **progressive** framework for **building user interfaces**.
 
 ### "Data-Driven View"
 In traditional JS, you manually touch the DOM. In Vue, you only touch **Data**.
@@ -35,7 +35,7 @@ const fileSystem = ref([]);
 ```
 
 ### "Progressive"
-*   **Partial**: You can use Vue in just one HTML file (like the Quick Start in `source-2.md`).
+*   **Partial**: You can use Vue in just one HTML file.
 *   **Full Stack**: Or build a full engineering project like this blog (Vite + Vue 3).
 
 ## 3. Bootstrapping

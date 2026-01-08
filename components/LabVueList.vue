@@ -74,7 +74,7 @@
                         <tr v-if="items.length === 0">
                             <td colspan="5" class="px-4 py-8 text-center text-gray-400 italic">{{ t.lab_vue_empty }}</td>
                         </tr>
-                        <!-- v-for loop matching source-2.md example -->
+                        <!-- v-for loop -->
                         <tr 
                             v-for="(item, index) in items" 
                             :key="item.id"
@@ -88,7 +88,7 @@
                                 {{ item.name }}
                             </td>
                             <td class="px-4 py-3">
-                                <!-- Logic from source-2.md: Gender 1=Male, 2=Female -->
+                                <!-- Logic: Gender 1=Male, 2=Female -->
                                 <span v-if="item.gender === 1" class="bg-blue-100 text-blue-800 text-[10px] px-2 py-0.5 rounded border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
                                     {{ t.lab_gender_1 }}
                                 </span>
@@ -98,7 +98,7 @@
                                 <span v-else class="text-gray-400 text-xs">Unknown</span>
                             </td>
                             <td class="px-4 py-3">
-                                <!-- Logic from source-2.md: Job 1=Lecturer, 2=Teacher, 3=Other -->
+                                <!-- Logic: Job 1=Lecturer, 2=Teacher, 3=Other -->
                                 <div class="flex items-center gap-1">
                                     <span v-show="item.job === 1" class="text-purple-600 dark:text-purple-400 font-medium text-xs">🧑‍🏫 {{ t.lab_job_1 }}</span>
                                     <span v-show="item.job === 2" class="text-orange-600 dark:text-orange-400 font-medium text-xs">🧢 {{ t.lab_job_2 }}</span>
@@ -194,7 +194,7 @@ const newItem = reactive({
     job: 1
 });
 
-// Initial data mocking source-2.md examples exactly
+// Initial data
 const items = ref<Employee[]>([
     { id: 1, name: '谢逊 (Xie Xun)', gender: 1, job: 1 },
     { id: 2, name: '韦一笑 (Wei Yixiao)', gender: 1, job: 1 },

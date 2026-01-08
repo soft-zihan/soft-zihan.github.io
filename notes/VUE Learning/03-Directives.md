@@ -2,7 +2,7 @@
 # 03. The Directive Family 🌸
 
 > **Goal**: Master common directives: `v-for`, `v-bind`, `v-model`, `v-on`, `v-if/show`.
-> **Ref**: [📖 source-2.md Chapter 3](/source-2.md)
+> **Ref**: [📖 Vue Template Syntax](https://vuejs.org/guide/essentials/template-syntax.html)
 
 Directives (`v-` prefix) are Vue's template superpowers. Let's look at **Laboratory -> Employee Management** ([components/LabVueList.vue](/components/LabVueList.vue)) examples.
 
@@ -12,7 +12,7 @@ Loops through arrays.
 
 *   **Syntax**: `v-for="(item, index) in list" :key="item.id"`
 *   **Source Code ([components/LabVueList.vue](/components/LabVueList.vue))**:
-    Matching the Employee List example from `source-2.md`:
+    Matching the Employee List example:
     ```html
     <tr v-for="(item, index) in items" :key="item.id">
         <td>{{ index + 1 }}</td>
@@ -56,7 +56,7 @@ Syncs Form Input <-> JS Data.
 
 ## 4. v-on (@): Event Listening
 
-Replaces `addEventListener` from `source-1.md`.
+Replaces `addEventListener`.
 
 *   **Syntax**: `<button @click="handleClick">`
 *   **Source Code ([components/LabVueList.vue](/components/LabVueList.vue))**:

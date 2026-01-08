@@ -184,15 +184,15 @@ type Question = {
   }
 };
 
-// --- Data: Questions based on source.md, source-1.md, source-2.md ---
+// --- Data: Questions ---
 const allQuestions: Question[] = [
-  // HTML/CSS (source.md)
+  // HTML/CSS
   { 
     category: 'basic', 
     correct: 0, 
     content: {
-      en: { text: "What is HTML responsible for?", options: ["Structure", "Presentation", "Behavior", "Database"], explanation: "As per Source.md, HTML defines the structure (What is on the page)." },
-      zh: { text: "HTML 在网页开发中负责什么？", options: ["结构 (Structure)", "表现 (Presentation)", "行为 (Behavior)", "数据库"], explanation: "根据 Source.md，HTML 负责网页的骨架和结构。" }
+      en: { text: "What is HTML responsible for?", options: ["Structure", "Presentation", "Behavior", "Database"], explanation: "HTML defines the structure (What is on the page)." },
+      zh: { text: "HTML 在网页开发中负责什么？", options: ["结构 (Structure)", "表现 (Presentation)", "行为 (Behavior)", "数据库"], explanation: "HTML 负责网页的骨架和结构。" }
     }
   },
   { 
@@ -211,7 +211,7 @@ const allQuestions: Question[] = [
       zh: { text: "哪种语言赋予网页“行为” (Behavior)？", options: ["HTML", "CSS", "JavaScript", "SQL"], explanation: "JS 是网页的肌肉/灵魂，定义页面如何与用户交互。" }
     }
   },
-  // JS (source-1.md)
+  // JS
   { 
     category: 'js', 
     correct: 2, 
@@ -236,7 +236,7 @@ const allQuestions: Question[] = [
       zh: { text: "如何将 JSON 字符串转为 JS 对象？", options: ["JSON.parse()", "JSON.stringify()", "JSON.toObject()", "JSON.read()"], explanation: "JSON.parse() 用于解析 JSON 字符串。" }
     }
   },
-  // Vue (source-2.md)
+  // Vue
   { 
     category: 'vue', 
     correct: 1, 

@@ -2,11 +2,11 @@
 # 02. JS Variables & Reactivity System 🌸
 
 > **Goal**: Review JS variables (`let`, `const`) and understand Vue's Reactivity (`ref`, `reactive`).
-> **Ref**: [📖 JS Source (source-1.md)](/source-1.md), [📖 Vue Source (source-2.md)](/source-2.md)
+> **Ref**: [📖 MDN JS](https://developer.mozilla.org/en-US/docs/Web/JavaScript), [📖 Vue Reactivity](https://vuejs.org/guide/essentials/reactivity-fundamentals.html)
 
 ## 1. JS Basics Review
 
-According to `source-1.md`, JS is loosely typed.
+JS is loosely typed.
 
 *   **Variables**: 
     *   `let`: Mutable (Recommended).

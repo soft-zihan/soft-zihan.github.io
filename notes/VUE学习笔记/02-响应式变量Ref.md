@@ -2,11 +2,11 @@
 # 02. JS 变量与响应式系统 🌸
 
 > **学习目标**: 回顾 JS 变量声明 (`let`, `const`)，理解 Vue 的响应式原理 (`ref`, `reactive`) 及计算属性。
-> **参考教材**: [📖 JS 基础 (source-1.md)](/source-1.md), [📖 Vue 基础 (source-2.md)](/source-2.md)
+> **参考教材**: [📖 JS 基础 (MDN)](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript), [📖 Vue 基础](https://cn.vuejs.org/)
 
 ## 1. JS 基础回顾：变量与类型
 
-根据 `source-1.md`，JavaScript 是一门弱类型语言。
+JavaScript 是一门弱类型语言。
 
 *   **声明变量**: 
     *   `let`: 定义可变变量 (推荐)。
@@ -59,7 +59,7 @@ Vue 3 引入了 **响应式系统**，核心思想是：**数据变了，视图�
 
 ## 3. 计算属性 (Computed)
 
-在 `source-1.md` 中我们学了函数。在 Vue 中，如果我们想根据现有的数据**算**出一个新值，最好使用 `computed`。
+在 JS 中我们学了函数。在 Vue 中，如果我们想根据现有的数据**算**出一个新值，最好使用 `computed`。
 
 **源码实战 (`App.vue`)**:
 我们需要根据当前的路径 `currentPath` 生成面包屑导航数据。

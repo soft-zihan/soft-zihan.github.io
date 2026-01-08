@@ -74,16 +74,18 @@
             </div>
          </div>
 
-        <div class="relative flex-1 bg-white dark:bg-gray-800 p-4 rounded-b-lg border border-gray-200 dark:border-gray-600 overflow-hidden shadow-inner">
-           <!-- Rendered Content with Scoped Styles -->
-           <div 
-             class="html-visualizer-sandbox h-full w-full overflow-auto custom-scrollbar transition-opacity duration-300" 
-             :class="{'debug-mode': debugMode, 'opacity-50 blur-[1px]': renderStep < 4}"
-             v-html="renderedCode"
-           ></div>
+        <div class="relative flex-1 bg-white dark:bg-gray-800 rounded-b-lg border border-gray-200 dark:border-gray-600 overflow-hidden shadow-inner flex flex-col">
+           
+           <!-- Iframe Sandbox -->
+           <iframe 
+             ref="sandboxIframe"
+             class="w-full flex-1 border-none bg-white transition-opacity duration-300"
+             :class="{'opacity-50 blur-[1px]': renderStep < 4}"
+             sandbox="allow-scripts" 
+           ></iframe>
 
            <!-- Loading Overlay Simulation -->
-           <div v-if="renderStep < 4" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+           <div v-if="renderStep < 4" class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
               <div class="bg-black/70 text-white px-4 py-2 rounded-lg text-xs font-mono animate-pulse">
                  ⚙️ Kernel Working...
               </div>
@@ -96,7 +98,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { I18N } from '../constants';
 import _ from 'lodash';
 
@@ -106,57 +108,120 @@ const props = defineProps<{
 
 const t = computed(() => I18N[props.lang]);
 const debugMode = ref(false);
+const sandboxIframe = ref<HTMLIFrameElement | null>(null);
 
 // Kernel Simulation State
 const renderProgress = ref(100);
 const renderStep = ref(4); // 0: Idle, 1: Parse, 2: DOM, 3: Style/Layout, 4: Paint
 const renderStatusText = ref('Idle');
 
-// Templates based on Source.md concepts
+// Templates
 const templates = {
-  news: `<!-- News Article Structure -->
-<article style="font-family: serif; max-width: 400px; margin: 0 auto;">
-  <h1 style="color: #333; border-bottom: 2px solid #d00;">Frontend News</h1>
-  <p style="color: #666; font-style: italic;">Published on: 2023-11-18</p>
+  news: `
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  article { max-width: 400px; margin: 0 auto; }
+  h1 { color: #333; border-bottom: 2px solid #d00; }
+  .date { color: #666; font-style: italic; font-size: 0.9em; }
+  img { width: 100%; border-radius: 8px; margin: 10px 0; }
+  p { line-height: 1.6; }
+  .btn { display: inline-block; background: #d00; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; }
+</style>
+<article>
+  <h1>Frontend News</h1>
+  <p class="date">Published on: 2023-11-18</p>
   
-  <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&q=80" style="width: 100%; border-radius: 8px; margin: 10px 0;" />
+  <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&q=80" />
   
-  <p style="line-height: 1.6;">
+  <p>
     HTML provides the structure, while CSS handles the presentation. 
     Notice how this text is styled to be readable.
   </p>
   
-  <a href="#" style="display: inline-block; background: #d00; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">Read More</a>
+  <a href="#" class="btn">Read More</a>
 </article>`,
   
-  card: `<div style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px; background: #fafafa; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-  <img src="https://ui-avatars.com/api/?name=Sakura+Vue&background=f43f72&color=fff" style="width: 60px; height: 60px; border-radius: 50%;" />
+  card: `
+<style>
+  body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 40px; }
+  .card { 
+    border: 1px solid #ddd; 
+    border-radius: 12px; 
+    padding: 16px; 
+    display: flex; 
+    align-items: center; 
+    gap: 16px; 
+    background: #fafafa; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    max-width: 300px;
+  }
+  .avatar { width: 60px; height: 60px; border-radius: 50%; }
+  h3 { margin: 0; color: #333; }
+  p { margin: 5px 0 0 0; color: #777; font-size: 14px; }
+  .tags { margin-top: 8px; }
+  .tag { padding: 2px 8px; border-radius: 10px; font-size: 10px; margin-right: 5px; }
+  .html { background: #e0f2fe; color: #0284c7; }
+  .css { background: #fce7f3; color: #db2777; }
+</style>
+<div class="card">
+  <img src="https://ui-avatars.com/api/?name=Sakura+Vue&background=f43f72&color=fff" class="avatar" />
   <div>
-    <h3 style="margin: 0; color: #333;">Sakura Vue</h3>
-    <p style="margin: 5px 0 0 0; color: #777; font-size: 14px;">Frontend Developer</p>
-    <div style="margin-top: 8px;">
-       <span style="background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 10px; font-size: 10px;">HTML</span>
-       <span style="background: #fce7f3; color: #db2777; padding: 2px 8px; border-radius: 10px; font-size: 10px;">CSS</span>
+    <h3>Sakura Vue</h3>
+    <p>Frontend Developer</p>
+    <div class="tags">
+       <span class="tag html">HTML</span>
+       <span class="tag css">CSS</span>
     </div>
   </div>
 </div>`,
 
-  list: `<h3 style="color: #4f46e5;">My Learning Path</h3>
-<ul style="padding-left: 20px;">
-  <li style="margin-bottom: 8px;">
+  list: `
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  h3 { color: #4f46e5; }
+  ul { padding-left: 20px; }
+  li { margin-bottom: 8px; }
+  .current { color: #db2777; font-weight: bold; }
+  .pending { color: #9ca3af; }
+</style>
+<h3>My Learning Path</h3>
+<ul>
+  <li>
     <strong>HTML5</strong> - Structure
   </li>
-  <li style="margin-bottom: 8px; color: #db2777;">
+  <li class="current">
     <strong>CSS3</strong> - Presentation (Current)
   </li>
-  <li style="color: #9ca3af;">
+  <li class="pending">
     JavaScript - Behavior (Pending)
   </li>
 </ul>`
 };
 
 const htmlCode = ref(templates.news);
-const renderedCode = ref(templates.news);
+
+const generateDebugCss = () => `
+  <style>
+    * { outline: 1px dashed rgba(99, 102, 241, 0.5) !important; position: relative; }
+    *:hover { outline: 2px solid #f43f72 !important; background-color: rgba(244, 63, 114, 0.05); cursor: default; }
+  </style>
+`;
+
+const updateIframe = () => {
+    if (!sandboxIframe.value) return;
+    
+    const doc = sandboxIframe.value.contentDocument;
+    if (!doc) return;
+
+    let content = htmlCode.value;
+    if (debugMode.value) {
+        content += generateDebugCss();
+    }
+
+    doc.open();
+    doc.write(content);
+    doc.close();
+};
 
 // Simulation Logic
 const updateRender = () => {
@@ -182,7 +247,8 @@ const updateRender = () => {
                 renderStep.value = 4;
                 renderProgress.value = 100;
                 renderStatusText.value = t.value.lab_html_status_paint;
-                renderedCode.value = htmlCode.value; // Actually apply HTML
+                
+                updateIframe();
                 
                 setTimeout(() => {
                     renderStatusText.value = t.value.lab_html_status_idle;
@@ -199,38 +265,12 @@ const setTemplate = (key: keyof typeof templates) => {
   updateRender();
 };
 
+watch(debugMode, () => {
+    updateIframe();
+});
+
 onMounted(() => {
     renderStatusText.value = t.value.lab_html_status_idle;
+    nextTick(() => updateIframe());
 });
 </script>
-
-<style scoped>
-/* 
-  Debug Mode Styles using :deep() to penetrate v-html content
-*/
-.html-visualizer-sandbox.debug-mode :deep(*) {
-  outline: 1px dashed rgba(99, 102, 241, 0.5) !important; /* Indigo */
-  position: relative;
-}
-
-.html-visualizer-sandbox.debug-mode :deep(*):hover {
-  outline: 2px solid #f43f72 !important; /* Sakura */
-  background-color: rgba(244, 63, 114, 0.05);
-  cursor: default;
-}
-
-/* Tooltip on hover in debug mode */
-.html-visualizer-sandbox.debug-mode :deep(*):hover::after {
-  content: "<" attr(tagName) ">"; /* Note: standard CSS can't grab tagName easily without JS, this is pseudo */
-  content: "Element";
-  position: absolute;
-  top: -15px;
-  left: 0;
-  background: #f43f72;
-  color: white;
-  font-size: 10px;
-  padding: 1px 4px;
-  border-radius: 2px;
-  z-index: 10;
-}
-</style>

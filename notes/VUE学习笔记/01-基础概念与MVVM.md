@@ -2,11 +2,10 @@
 # 01. Web 标准与 Vue 架构解析 🌸
 
 > **学习目标**: 理解 Web 标准三剑客，掌握 Vue 渐进式框架的概念，了解单页面应用 (SPA) 的启动流程。
-> **参考教材**: [📖 HTML & CSS 源码 (source.md)](/source.md), [📖 Vue 基础源码 (source-2.md)](/source-2.md)
 
 ## 1. Web 标准三剑客 (The Triad)
 
-正如 `source.md` 教程中所述，Web 开发的基础是三项核心技术。在 **Sakura Notes** 这个项目中，它们的分工如下：
+Web 开发的基础是三项核心技术。在 **Sakura Notes** 这个项目中，它们的分工如下：
 
 1.  **HTML (结构 Structure)**: 
     *   *理论*: 负责网页的骨架，定义页面有什么内容。
@@ -20,7 +19,7 @@
 
 ## 2. Vue：渐进式框架
 
-Vue (读音 /vjuː/) 是一款用于**构建用户界面**的**渐进式**框架 (参考 `source-2.md` 第一章)。
+Vue (读音 /vjuː/) 是一款用于**构建用户界面**的**渐进式**框架。
 
 ### 什么是“数据驱动视图”？
 在传统的开发中，我们需要手动操作 DOM (例如 `document.getElementById('id').innerHTML = ...`)。
@@ -37,7 +36,7 @@ const fileSystem = ref([]);
 
 ### 什么是“渐进式”？
 你不需要一开始就使用全家桶。
-*   **局部改造**: 就像 `source-2.md` 快速入门中演示的，你可以只在一个 HTML 文件中引入 Vue。
+*   **局部改造**: 你可以只在一个 HTML 文件中引入 Vue。
 *   **工程化开发**: 也可以像本项目一样，使用 Vite + Vue 3 + TypeScript 构建一个完整的现代化应用。
 
 ## 3. 项目启动流程 (Bootstrapping)

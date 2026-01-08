@@ -23,7 +23,7 @@
     <!-- Tab 1: Basics (Variables & Types) -->
     <div v-if="activeTab === 'basics'" class="animate-fade-in space-y-8">
        <p class="text-xs text-gray-500 dark:text-gray-400">
-         {{ lang === 'zh' ? '对应 source-1.md：JS 是一门弱类型语言，变量类型由值决定。' : 'Ref source-1.md: JS is a loosely typed language. Variable types are determined by their values.' }}
+         {{ lang === 'zh' ? 'JS 是一门弱类型语言，变量类型由值决定。' : 'JS is a loosely typed language. Variable types are determined by their values.' }}
        </p>
 
        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">

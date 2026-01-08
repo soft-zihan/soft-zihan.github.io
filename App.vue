@@ -182,7 +182,7 @@
             <div 
               v-if="!currentFile.isSource && !isRawMode"
               id="markdown-viewer"
-              v-html="renderedContent" 
+              v-html="renderedHtml" 
               class="markdown-body dark:text-gray-300 selection:bg-sakura-200 dark:selection:bg-sakura-900"
               @click="handleContentClick"
               @mouseup="handleSelection"
@@ -326,6 +326,8 @@ import LabDashboard from './components/LabDashboard.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
 import AppSidebar from './components/AppSidebar.vue';
+// Use ESM import from importmap in index.html
+import { marked } from 'marked';
 
 // i18n with Persistence
 const savedLang = localStorage.getItem('sakura_lang');
@@ -458,8 +460,6 @@ const labFolder = computed(() => {
       return null;
   }
   const folder = findFolderByName(fileSystem.value);
-  
-  // Note: Source code logic moved to internal link handling, not shown in main tree
   return folder;
 });
 
@@ -483,110 +483,74 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   });
 });
 
-const markedLoaded = ref(false);
-
+// Marked Configuration
 const setupMarkedRenderer = () => {
-    // @ts-ignore
-    if (!window.marked) return;
-    
-    // Check if we've already configured marked to avoid recursion/loops
-    // @ts-ignore
-    if (window.marked._isConfigured) return;
-    
-    try {
-        // @ts-ignore
-        const renderer = new window.marked.Renderer();
-        renderer.heading = function(text: string, level: number) {
-           const id = text.toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
-           return `<h${level} id="${id}">${text}</h${level}>`;
-        };
-        // @ts-ignore
-        window.marked.use({ renderer });
-        // @ts-ignore
-        window.marked._isConfigured = true;
-    } catch (e) {
-        console.error("Failed to setup marked renderer:", e);
-    }
+  const renderer = new marked.Renderer();
+  renderer.heading = function(text, level) {
+      const id = text.toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
+      return `<h${level} id="${id}">${text}</h${level}>`;
+  };
+  marked.setOptions({ renderer });
 };
 
-const waitForMarked = async () => {
-    // @ts-ignore
-    if (window.marked) {
-        setupMarkedRenderer();
-        markedLoaded.value = true;
+// Async Rendering Logic
+const renderedHtml = ref('');
+
+const updateRenderedContent = async () => {
+    if (!currentFile.value?.content) {
+        renderedHtml.value = '';
         return;
     }
-    // Simple polling to wait for CDN
-    let attempts = 0;
-    while(attempts < 30) {
-        await new Promise(r => setTimeout(r, 100));
-        // @ts-ignore
-        if (window.marked) {
-            setupMarkedRenderer();
-            markedLoaded.value = true;
-            return;
-        }
-        attempts++;
-    }
-    // Timeout fallback (user will see raw content)
-    console.warn("Marked.js load timed out.");
-};
-
-const renderedContent = computed(() => {
-  // If marked not loaded yet, or no content, return empty or raw
-  if (!markedLoaded.value && !currentFile.value?.isSource) return currentFile.value?.content || 'Loading renderer...';
-  if (!currentFile.value?.content) return '';
-
-  let rawContent = currentFile.value.content;
-  if (currentFile.value.path) {
-    // Determine the base folder of the current note
-    const parentDirParts = currentFile.value.path.split('/');
-    parentDirParts.pop(); // remove filename
-    // Join parts to get directory path relative to root
-    const parentDir = parentDirParts.join('/'); 
-    const serverPrefix = 'notes/'; 
     
-    // Improved Image Replacement Logic for GitHub Pages
-    const resolvePath = (relPath: string) => {
-      // Ignore absolute paths or HTTP links
-      if (relPath.startsWith('http') || relPath.startsWith('/') || relPath.startsWith('data:')) return relPath;
-      
-      const parts = relPath.split('/');
-      const parentParts = parentDir.split('/').filter(p => p); 
-      
-      for (const part of parts) {
-        if (part === '.') continue;
-        if (part === '..') {
-          if (parentParts.length > 0) parentParts.pop();
-        } else {
-          parentParts.push(part);
-        }
-      }
-      
-      return `${serverPrefix}${parentParts.join('/')}`;
-    };
+    // If it's source or raw mode, we don't render md
+    if (currentFile.value.isSource || isRawMode.value) return;
 
-    // Replace Markdown Images
-    rawContent = rawContent.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, relPath) => {
-      return `![${alt}](${resolvePath(relPath)})`;
-    });
+    let rawContent = currentFile.value.content;
 
-    // Replace HTML Img Src
-    rawContent = rawContent.replace(/src="([^"]+)"/g, (match, src) => {
-        return `src="${resolvePath(src)}"`;
-    });
-  }
-  
-  try {
-      // @ts-ignore
-      return window.marked ? window.marked.parse(rawContent) : rawContent;
-  } catch (e) {
-      console.error("Marked render error:", e);
-      return `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`;
-  }
-});
+    // Image Path Resolution
+    if (currentFile.value.path) {
+        const parentDirParts = currentFile.value.path.split('/');
+        parentDirParts.pop(); // remove filename
+        const parentDir = parentDirParts.join('/'); 
+        const serverPrefix = 'notes/'; 
+        
+        const resolvePath = (relPath: string) => {
+            if (relPath.startsWith('http') || relPath.startsWith('/') || relPath.startsWith('data:')) return relPath;
+            
+            const parts = relPath.split('/');
+            const parentParts = parentDir.split('/').filter(p => p); 
+            
+            for (const part of parts) {
+                if (part === '.') continue;
+                if (part === '..') {
+                    if (parentParts.length > 0) parentParts.pop();
+                } else {
+                    parentParts.push(part);
+                }
+            }
+            return `${serverPrefix}${parentParts.join('/')}`;
+        };
+
+        rawContent = rawContent.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, relPath) => {
+            return `![${alt}](${resolvePath(relPath)})`;
+        });
+
+        rawContent = rawContent.replace(/src="([^"]+)"/g, (match, src) => {
+            return `src="${resolvePath(src)}"`;
+        });
+    }
+
+    try {
+        // marked.parse can be async in v12+ if async extensions are used, 
+        // though standard usage is often sync. Using await covers both.
+        renderedHtml.value = await marked.parse(rawContent);
+    } catch (e) {
+        console.error("Marked render error:", e);
+        renderedHtml.value = `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`;
+    }
+};
 
 const activeIndicatorTop = computed(() => {
   if (!activeHeaderId.value) return 0;
@@ -638,8 +602,6 @@ const fetchFileContent = async (file: FileNode): Promise<string> => {
     try {
         let res = await fetch(fetchPath);
         if (!res.ok) {
-           // Fallback: try unencoded path (some local servers or specific configs might behave differently)
-           // or if file path has spaces that were not auto-encoded by browser in the first place (rare)
            console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
            res = await fetch(`./notes/${file.path}`);
         }
@@ -664,17 +626,17 @@ const openFile = async (file: FileNode) => {
   
   selectionMenu.value.show = false;
 
-  // Ensure marked is ready
-  if (!file.isSource && !markedLoaded.value) await waitForMarked();
-
   if (!file.content) {
     contentLoading.value = true;
     file.content = await fetchFileContent(file);
     contentLoading.value = false;
     currentFile.value = { ...file }; 
-    if (!file.isSource) nextTick(() => generateToc());
-  } else {
-    if (!file.isSource) nextTick(() => generateToc());
+  }
+  
+  // Trigger rendering logic
+  if (!file.isSource) {
+      await updateRenderedContent();
+      nextTick(() => generateToc());
   }
 };
 
@@ -925,8 +887,11 @@ const scrollToHeader = (id: string) => {
   }
 };
 
-watch(currentFile, () => {
-    if (!currentFile.value?.isSource) generateToc();
+watch(currentFile, async () => {
+    if (!currentFile.value?.isSource) {
+        await updateRenderedContent();
+        nextTick(() => generateToc());
+    }
 });
 
 onMounted(async () => {
@@ -939,8 +904,8 @@ onMounted(async () => {
 
   if (isDark.value) document.documentElement.classList.add('dark');
   
-  // Start waiting for marked immediately
-  waitForMarked();
+  // Setup marked renderer
+  setupMarkedRenderer();
   
   try {
     // Explicitly using ./files.json to ensure relative fetch
@@ -975,4 +940,3 @@ onMounted(async () => {
     loading.value = false;
   }
 });
-</script>
