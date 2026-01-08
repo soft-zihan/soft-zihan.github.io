@@ -1,87 +1,68 @@
 
-# 05. Rhythm of Life: Lifecycle Hooks 🌸
+# 05. Lifecycle & Network Requests (Ajax) 🌸
 
-> How is `files.json` loaded when the page refreshes?
-> How is the Table of Contents (TOC) generated when clicking an article?
-> This involves **Lifecycle**.
+> **Goal**: Understand Ajax, Axios, and the `mounted` lifecycle hook.
+> **Ref**: `source-2.md` Chapter 4 & 5
 
-## 1. onMounted: The Moment of Birth
+## 1. What is Ajax?
 
-Open the bottom of `src/App.vue` and you will see:
+*   **Concept**: Asynchronous JavaScript And XML.
+*   **Role**: Exchanging data with a server without reloading the page.
+*   **Demo**: Check the **Lab -> Network & Async** tab for a visualization of the "Province-City-Area" flow.
 
-```typescript
-onMounted(async () => {
-  // 1. Set Dark Mode
-  if (isDark.value) document.documentElement.classList.add('dark');
-  
-  // 2. Core: Fetch file list
-  const res = await fetch('./files.json');
-  fileSystem.value = await res.json();
+## 2. Axios & Async / Await
+
+`source-2.md` recommends Axios over native `XMLHttpRequest`. It also recommends `async/await` to avoid Callback Hell.
+
+**Source Code (`components/LabAjax.vue`)**:
+
+**Callback Hell (The Old Way)**:
+```javascript
+axios.get('/province').then(res => {
+    const pid = res.data.id;
+    axios.get(`/city?pid=${pid}`).then(res => {
+        // Nested... hard to read.
+    });
 });
 ```
 
-`onMounted` is the most commonly used hook. It executes immediately after the **component is mounted (DOM has been generated)**.
-This is suitable for initialization work, such as making network requests to get data.
-
-## 2. nextTick: Wait a Moment
-
-In the `openFile` function, there is a very special hook:
-
-```typescript
-const openFile = async (file) => {
-  // 1. Get article content
-  file.content = await fetch(path).then(res => res.text());
-  
-  // 2. Generate TOC
-  nextTick(() => {
-     generateToc();
-  });
+**Async / Await (The Modern Way)**:
+```javascript
+async function getData() {
+    // Looks synchronous, reads easily.
+    const p = await axios.get('/province');
+    const pid = p.data.id;
+    
+    const c = await axios.get(`/city?pid=${pid}`);
 }
 ```
 
-Why use `nextTick`?
-1. When we assign `file.content`, Vue's reactivity system is triggered.
-2. Vue starts preparing to update the DOM (render Markdown into HTML).
-3. **But! DOM updates are asynchronous.** When this line of code finishes executing, the HTML on the webpage hasn't actually changed yet.
-4. If we call `generateToc` directly at this time to look for `<h1>` tags, we won't find them.
+## 3. Key Hook: onMounted (mounted)
 
-`nextTick` means: **Wait until Vue finishes updating the DOM, then execute my callback function.**
-This ensures that when generating the TOC, the article headers are already rendered on the page.
+Vue instances have a lifecycle. `onMounted` is the standard place for initial data fetching.
 
-## 3. onUnmounted: Cleanup the Battlefield
+*   **Timing**: After the HTML is rendered and the DOM is ready.
+*   **Usage**: "Auto-loading" data when page opens.
 
-Although `App.vue` as the root component is rarely unmounted, we often use this hook in `Lab` components.
-
-For example, in `LabQuizGame.vue`, we start a timer (`setInterval`). If the user switches to another page before the game ends, we MUST destroy this timer, otherwise it will keep running in the background and consume memory.
+**Source Code (`App.vue`)**:
+Fetching the file list when the blog loads:
 
 ```typescript
-// LabQuizGame.vue Pseudo code
-onUnmounted(() => {
-  clearInterval(timerInterval); // Stop timer when component is destroyed
+import { onMounted } from 'vue';
+
+onMounted(async () => {
+  try {
+    // Go fetch data immediately after app is ready
+    const res = await fetch('./files.json');
+    fileSystem.value = await res.json();
+  } catch (e) {
+    console.error("Failed to load");
+  }
 });
 ```
 
-**Principle**: If you create a timer or add a `window.addEventListener` in `onMounted`, you must clean them up in `onUnmounted`.
+## 4. Summary
 
-## 4. watch: Secret Observation
-
-We also use `watch` to listen to user settings:
-
-```typescript
-watch(() => userSettings.fontSize, (newValue) => {
-  localStorage.setItem('sakura_fontsize', newValue);
-});
-```
-
-`watch` is used to listen to a reactive variable. Whenever the user changes the font size, we automatically save it to the browser cache (LocalStorage). This way, the setting remains when the user refreshes the page next time.
-
-## Conclusion
-
-Congratulations! By analyzing the source code of this blog, you have mastered the core concepts of Vue 3:
-1. **SPA Structure** (index.html, main.ts, App.vue)
-2. **Reactivity** (ref/reactive)
-3. **Directives** (v-for, v-if vs v-show)
-4. **Component Communication** (Props, Emit)
-5. **Lifecycle** (onMounted, onUnmounted, nextTick)
-
-Now, try modifying the files in `notes/` and start your own Vue journey! 🌸
+1.  **Ajax**: Makes pages dynamic and fast.
+2.  **Async/Await**: Makes async code readable.
+3.  **Mounted**: The "Start Button" for your data requests.

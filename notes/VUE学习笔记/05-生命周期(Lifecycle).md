@@ -1,87 +1,72 @@
 
-# 05. 生命的律动：Lifecycle 钩子 🌸
+# 05. 生命周期与网络请求 (Ajax) 🌸
 
-> 页面刷新时，Vue 是怎么把 `files.json` 加载出来的？
-> 点击文章时，目录 (TOC) 是怎么生成的？
-> 这涉及到了 **生命周期 (Lifecycle)**。
+> **学习目标**: 理解 Ajax 异步请求，掌握 Axios 的使用，理解 Vue 生命周期钩子 `mounted`。
+> **参考教材**: `source-2.md` 第四、五章 (Ajax, 生命周期)
 
-## 1. onMounted：出生时刻
+## 1. 什么是 Ajax？
 
-打开 `src/App.vue` 的最底部，你会看到：
+*   **概念**: Asynchronous JavaScript And XML（异步 JavaScript 和 XML）。
+*   **作用**: 在不刷新整个页面的情况下，与服务器交换数据并更新部分网页。
+*   **实战**: 在 **Sakura Lab -> 网络与异步** 中，你可以看到“省-市-区”三级联动的全过程可视化。
 
-```typescript
-onMounted(async () => {
-  // 1. 设置暗黑模式
-  if (isDark.value) document.documentElement.classList.add('dark');
-  
-  // 2. 核心：获取文件列表
-  const res = await fetch('./files.json');
-  fileSystem.value = await res.json();
+## 2. Axios 与 Async / Await
+
+`source-2.md` 推荐使用 Axios 来代替原生的 Ajax，并使用 `async/await` 来解决回调地狱。
+
+**源码实战 (`components/LabAjax.vue`)**:
+在这个组件中，我们模拟了教材中的代码逻辑：
+
+**回调地狱 (Callback Hell) 写法**:
+```javascript
+axios.get('/province').then(res => {
+    const pid = res.data.id;
+    axios.get(`/city?pid=${pid}`).then(res => {
+        // 层层嵌套，代码难以维护...
+    });
 });
 ```
 
-`onMounted` 是最常用的钩子。它在 **组件挂载完成（DOM 已经生成）** 后立即执行。
-这里适合做初始化的工作，比如发网络请求获取数据。
-
-## 2. nextTick：稍等片刻
-
-在 `openFile` 函数中，有一个很特殊的钩子：
-
-```typescript
-const openFile = async (file) => {
-  // 1. 获取文章内容
-  file.content = await fetch(path).then(res => res.text());
-  
-  // 2. 生成目录 TOC
-  nextTick(() => {
-     generateToc();
-  });
+**Async / Await (优雅) 写法**:
+```javascript
+// async 声明异步函数
+async function getData() {
+    // await 等待请求完成
+    const p = await axios.get('/province');
+    const pid = p.data.id;
+    
+    // 代码看起来像同步一样清晰
+    const c = await axios.get(`/city?pid=${pid}`);
 }
 ```
 
-为什么要用 `nextTick`？
-1. 当我们赋值 `file.content` 时，Vue 的响应式系统被触发。
-2. Vue 开始准备更新 DOM（把 Markdown 渲染成 HTML）。
-3. **但是！DOM 更新是异步的。** 这行代码执行完时，网页上的 HTML 其实还没变。
-4. 如果此时直接调用 `generateToc` 去查找 `<h1>` 标签，是找不到的。
+## 3. 关键钩子：onMounted (mounted)
 
-`nextTick` 的意思是：**等 Vue 把 DOM 更新完之后，再执行我的回调函数。**
-这样我们就能确保在生成目录时，文章标题已经在页面上渲染好了。
+Vue 实例有一个完整的生命周期（创建 -> 挂载 -> 更新 -> 销毁）。
+`onMounted` (对应 Vue 2 的 `mounted`) 是最常用的钩子。
 
-## 3. onUnmounted：清理战场
+*   **触发时机**: HTML 页面渲染完成，DOM 树已经生成。
+*   **用途**: 发送初始化的 Ajax 请求。
 
-虽然 `App.vue` 作为根组件很少被卸载，但我们在 `Lab`（实验室）组件中经常使用这个钩子。
-
-例如，在 `LabQuizGame.vue`（答题游戏）中，我们开启了一个定时器 (setInterval)。如果用户在游戏还没结束时就切换到了其他页面，我们必须销毁这个定时器，否则它会在后台一直跑，占用内存。
+**源码实战 (`App.vue`)**:
+我们的博客在加载时，需要去获取 `files.json` 文件列表：
 
 ```typescript
-// LabQuizGame.vue 伪代码
-onUnmounted(() => {
-  clearInterval(timerInterval); // 组件销毁时，停止计时
+import { onMounted } from 'vue';
+
+onMounted(async () => {
+  try {
+    // 页面挂载完成后，立即去服务器获取文件列表
+    const res = await fetch('./files.json');
+    fileSystem.value = await res.json();
+  } catch (e) {
+    console.error("加载失败");
+  }
 });
 ```
 
-**原则**：如果你在 `onMounted` 里创建了定时器或添加了 `window.addEventListener`，一定要在 `onUnmounted` 里清理掉它们。
+## 4. 总结
 
-## 4. watch：暗中观察
-
-我们还用到了 `watch` 来监听用户的设置：
-
-```typescript
-watch(() => userSettings.fontSize, (newValue) => {
-  localStorage.setItem('sakura_fontsize', newValue);
-});
-```
-
-`watch` 用于监听一个响应式变量。每当用户修改字体大小时，我们自动把它保存到浏览器缓存 (LocalStorage) 中。这样用户下次刷新页面，设置依然还在。
-
-## 结语
-
-恭喜你！通过分析这个博客的源码，你已经掌握了 Vue 3 的核心概念：
-1. **SPA 结构** (index.html, main.ts, App.vue)
-2. **响应式 ref/reactive** (数据驱动视图)
-3. **指令魔法** (v-for, v-if vs v-show)
-4. **组件通信** (Props, Emit)
-5. **生命周期** (onMounted, onUnmounted, nextTick)
-
-现在，试着修改一下 `notes/` 里的文件，开始你自己的 Vue 之旅吧！🌸
+1.  **Ajax**: 让网页“局部刷新”，体验更丝滑。
+2.  **Async/Await**: 让异步代码读起来像同步代码，拒绝回调地狱。
+3.  **Mounted**: 就像 Java 中的构造函数或者初始块，是页面“出生”后执行的第一件事，适合用来加载数据。

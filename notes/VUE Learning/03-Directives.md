@@ -1,75 +1,90 @@
 
-# 03. Directive Magic: FileTree Analysis 🌸
+# 03. The Directive Family 🌸
 
-> Our file tree on the left can be nested infinitely. How is this achieved?
-> This chapter will explain Vue template directives using `components/FileTree.vue`.
+> **Goal**: Master common directives: `v-for`, `v-bind`, `v-model`, `v-on`, `v-if/show`.
+> **Ref**: `source-2.md` Chapter 3
 
-## 1. v-for: Loop Rendering
+Directives (`v-` prefix) are Vue's template superpowers. Let's look at **Laboratory -> Employee Management** (`components/LabVueList.vue`) examples.
 
-Open `src/components/FileTree.vue`.
+## 1. v-for: List Rendering
 
-The file tree is essentially an array, and we need to draw every item in that array. This is where `v-for` comes in.
+Loops through arrays.
 
-```html
-<ul>
-  <li v-for="node in nodes" :key="node.path">
-    <!-- Content -->
-  </li>
-</ul>
-```
+*   **Syntax**: `v-for="(item, index) in list" :key="item.id"`
+*   **Source Code (`components/LabVueList.vue`)**:
+    Matching the Employee List example from `source-2.md`:
+    ```html
+    <tr v-for="(item, index) in items" :key="item.id">
+        <td>{{ index + 1 }}</td>
+        <td>{{ item.name }}</td>
+        ...
+    </tr>
+    ```
+    **Key**: `:key` is mandatory. It's the ID card for each node, ensuring efficient DOM updates.
 
-This code means: Iterate through the `nodes` array and generate an `<li>` tag for each `node`.
-`:key` is very important; it gives each node a unique ID. If the data changes, Vue can use the key to precisely find the element to modify instead of brutally re-rendering the entire list.
+## 2. v-bind (:): Dynamic Attributes
 
-## 2. v-if vs v-show: Conditional Rendering
+Makes HTML attributes dynamic.
 
-In the FileTree component, we use both. The difference between them is a classic interview question:
+*   **Syntax**: `<img :src="user.avatar">`
+*   **Source Code (`components/AppSidebar.vue`)**:
+    Dynamic class binding:
+    ```html
+    <button 
+      :class="viewMode === 'latest' ? 'bg-white shadow' : 'text-gray-400'"
+    >
+      Latest
+    </button>
+    ```
 
-### v-if (Real Conditional Rendering)
-```html
-<div v-if="node.type === 'directory'">...</div>
-<div v-else>...</div>
-```
-Vue will **completely destroy or recreate** the DOM element based on `node.type`. Since a node cannot be both a folder and a file, `v-if` is suitable here.
+## 3. v-model: Two-way Binding
 
-### v-show (CSS Toggle)
-Look at the folder expand/collapse code:
-```html
-<div v-show="isOpen(node.path)">
-  <!-- Children content -->
-</div>
-```
-Here we use `v-show`.
-*   **Principle**: Vue does not remove the DOM; it just adds `display: none` CSS style to the element.
-*   **Why?** Users might frequently click expand/collapse. If we used `v-if`, Vue would have to repeatedly create and destroy the DOM, which is costly. `v-show` simply toggles CSS, which is extremely fast.
+Syncs Form Input <-> JS Data.
 
-## 3. Recursive Components: Infinite Nesting
-
-What if a folder contains subfolders?
-`FileTree.vue` does something very cool: **It calls itself inside its own template.**
-
-```html
-<div v-if="node.type === 'directory'">
-    <!-- ...Folder Title... -->
+*   **Syntax**: `<input v-model="username">`
+*   **Source Code (`components/LabVueList.vue`)**:
+    ```html
+    <!-- Name Input -->
+    <input v-model="newItem.name" type="text" />
     
-    <!-- Recursive Call! Pass children nodes to itself -->
-    <FileTree 
-      :nodes="node.children" 
-    />
-</div>
-```
+    <!-- Job Select -->
+    <select v-model="newItem.job">
+        <option :value="1">Lecturer</option>
+        <option :value="2">Teacher</option>
+    </select>
+    ```
 
-This is a recursive component. As long as `node.children` has content, it will keep rendering downwards, thus achieving an infinite directory tree.
+## 4. v-on (@): Event Listening
 
-## 4. v-bind (:) and v-on (@)
+Replaces `addEventListener` from `source-1.md`.
 
-Notice the colons and at symbols in the code:
+*   **Syntax**: `<button @click="handleClick">`
+*   **Source Code (`components/LabVueList.vue`)**:
+    ```html
+    <button @click="addItem">Add Employee</button>
+    ```
 
-*   `:nodes="node.children"`
-    *   Full name `v-bind:nodes`.
-    *   Meaning: Pass the JS variable `node.children` to the component's props.
-*   `@click="toggleFolder"`
-    *   Full name `v-on:click`.
-    *   Meaning: When a click happens, execute the `toggleFolder` function in JS.
+## 5. v-if vs v-show
 
-These two directives form the cornerstone of Vue component interaction: **Properties Pass Down, Events Bubble Up**. We will explain component communication in detail in the next chapter.
+*   **v-if**: **Real Destroy/Create**.
+    *   *Example*: `LabVueList.vue` - Showing "Male" (1) vs "Female" (2) tags.
+        ```html
+        <span v-if="item.gender === 1">Male</span>
+        <span v-else-if="item.gender === 2">Female</span>
+        ```
+*   **v-show**: **CSS Toggle** (`display: none`).
+    *   *Example*: `LabVueList.vue` - Showing Job Title.
+        ```html
+        <span v-show="item.job === 1">Lecturer</span>
+        ```
+
+## Summary
+
+| Directive | Short | Purpose |
+| :--- | :--- | :--- |
+| `v-bind` | `:` | Dynamic Attributes |
+| `v-on` | `@` | Event Listeners |
+| `v-model` | - | Two-way Binding |
+| `v-for` | - | Loops (Needs Key) |
+| `v-if` | - | Conditional Render (Heavy) |
+| `v-show` | - | CSS Toggle (Light) |

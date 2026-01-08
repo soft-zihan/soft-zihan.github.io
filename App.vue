@@ -37,7 +37,7 @@
       </div>
 
       <!-- Navbar -->
-      <header class="h-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border-b border-white/40 dark:border-gray-700/40 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm">
+      <header class="h-16 bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border-b border-white/40 dark:border-gray-700/40 flex items-center justify-between px-6 shrink-0 z-20 shadow-sm transition-all duration-300 hover:bg-white/60 dark:hover:bg-gray-900/60">
         <div class="flex items-center text-sm overflow-x-auto no-scrollbar whitespace-nowrap mask-linear flex-1 mr-4 py-2">
           <span class="text-sakura-300 dark:text-sakura-500 mr-2 shrink-0 text-lg cursor-pointer hover:scale-110 transition-transform" @click="resetToHome">🏠</span>
           <span class="text-sakura-200 dark:text-gray-700 mx-1">/</span>
@@ -130,7 +130,7 @@
 
           <!-- Folder View -->
           <div v-else-if="currentFolder" class="w-full max-w-6xl mx-auto">
-             <div class="flex items-center gap-4 mb-8 p-8 bg-white/95 dark:bg-gray-800/95 rounded-[2rem] border border-white dark:border-gray-700 shadow-xl backdrop-blur-md">
+             <div class="flex items-center gap-4 mb-8 p-8 bg-white/60 dark:bg-gray-800/60 rounded-[2rem] border border-white dark:border-gray-700 shadow-xl backdrop-blur-md">
                <span class="text-5xl bg-sakura-100 dark:bg-sakura-900/50 p-4 rounded-2xl shadow-inner text-sakura-500">📁</span>
                <div>
                  <h2 class="text-3xl font-bold text-sakura-900 dark:text-sakura-100">{{ currentFolder.name }}</h2>
@@ -142,7 +142,7 @@
                   v-for="child in sortedFolderChildren" 
                   :key="child.path"
                   @click="child.type === 'directory' ? openFolder(child) : openFile(child)"
-                  class="folder-card bg-white/90 dark:bg-gray-800/90 p-6 rounded-2xl shadow-md border border-white/70 dark:border-gray-700 hover:shadow-xl hover:shadow-sakura-100/30 dark:hover:shadow-black/40 hover:bg-white dark:hover:bg-gray-800 hover:border-sakura-200 dark:hover:border-sakura-800 cursor-pointer transition-all duration-300 flex flex-col h-48 backdrop-blur-sm group relative overflow-hidden"
+                  class="folder-card bg-white/60 dark:bg-gray-800/60 p-6 rounded-2xl shadow-md border border-white/70 dark:border-gray-700 hover:shadow-xl hover:shadow-sakura-100/30 dark:hover:shadow-black/40 hover:bg-white dark:hover:bg-gray-800 hover:border-sakura-200 dark:hover:border-sakura-800 cursor-pointer transition-all duration-300 flex flex-col h-48 backdrop-blur-sm group relative overflow-hidden"
                >
                  <div class="absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br from-sakura-50 to-transparent dark:from-sakura-900/30 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
                  <div class="flex items-start justify-between mb-4 relative z-10">
@@ -161,11 +161,14 @@
 
           <!-- Note Content View -->
           <div v-else-if="currentFile" 
-             class="w-full max-w-4xl xl:max-w-5xl mx-auto bg-white/95 dark:bg-gray-900/95 p-8 md:p-12 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-sakura-200/50 dark:border-gray-700 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-2xl transition-all duration-300 relative"
+             class="w-full max-w-4xl xl:max-w-5xl mx-auto bg-white/80 dark:bg-gray-900/80 p-8 md:p-12 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-sakura-200/50 dark:border-gray-700 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
              :class="fontSizeClass"
           >
              <div v-if="contentLoading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-20 rounded-[2rem] backdrop-blur-sm">
-               <div class="animate-spin text-4xl">🌸</div>
+               <div class="flex flex-col items-center gap-4">
+                  <div class="animate-spin text-4xl">🌸</div>
+                  <div class="text-sm font-bold text-sakura-500 animate-pulse">Fetching Content...</div>
+               </div>
              </div>
 
              <!-- Simplified Header (Title Only) -->
@@ -195,13 +198,13 @@
         <!-- Empty State / Home -->
         <div v-else class="flex-1 flex flex-col items-center justify-center text-sakura-300 dark:text-gray-600 animate-fade-in p-6 text-center">
             <div class="relative group cursor-default">
-               <div class="text-[12rem] mb-6 opacity-90 animate-float drop-shadow-2xl filter saturate-150">🌸</div>
+               <div class="text-[12rem] mb-6 opacity-90 animate-float drop-shadow-2xl filter saturate-150 transform hover:scale-105 transition-transform duration-700">🌸</div>
                <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-48 h-8 bg-sakura-800/20 dark:bg-sakura-900/40 blur-2xl rounded-full group-hover:w-64 transition-all duration-500"></div>
             </div>
             <h2 class="text-5xl font-bold text-sakura-600 dark:text-sakura-400 mb-4 tracking-tight drop-shadow-sm">{{ t.welcome_title }}</h2>
             <p class="text-sakura-400 dark:text-gray-400 max-w-lg mx-auto leading-relaxed text-lg">
               {{ t.welcome_desc }}<br>
-              <span class="text-sm opacity-70 bg-white/50 dark:bg-gray-800 px-4 py-1 rounded-full mt-2 inline-block">{{ t.welcome_tags }}</span>
+              <span class="text-sm opacity-70 bg-white/50 dark:bg-gray-800 px-4 py-1 rounded-full mt-2 inline-block border border-white/50 dark:border-gray-700">{{ t.welcome_tags }}</span>
             </p>
         </div>
 
@@ -238,7 +241,7 @@
           </div>
 
           <!-- Decorative / Meta Info -->
-          <div class="mt-auto bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-white/60 dark:border-gray-700 shadow-sm">
+          <div class="mt-auto bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-white/60 dark:border-gray-700 shadow-sm backdrop-blur-sm">
              <div class="text-[10px] uppercase font-bold text-sakura-400 dark:text-gray-500 mb-2">{{ t.note_details }}</div>
              <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
                <div class="flex justify-between"><span>{{ t.words }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentFile.content?.length || 0 }}</span></div>
@@ -462,20 +465,38 @@ const renderedContent = computed(() => {
   if (currentFile.value.path) {
     const parentDir = currentFile.value.path.substring(0, currentFile.value.path.lastIndexOf('/'));
     const serverPrefix = 'notes/'; 
-    rawContent = rawContent.replace(/!\[(.*?)\]\((?!http)(.*?)\)/g, (match, alt, relPath) => {
-      let cleanPath = relPath.startsWith('./') ? relPath.slice(2) : relPath;
-      let newPath = '';
-      if (cleanPath.startsWith('../')) {
-         newPath = `${serverPrefix}${parentDir}/${cleanPath}`;
-      } else {
-         newPath = `${serverPrefix}${parentDir}/${cleanPath}`;
+    
+    // Improved Image Replacement Logic
+    // Matches ![]() Markdown images and normal HTML <img src=""> (if any)
+    // Supports ./image.png, ../image.png, image.png
+    
+    const resolvePath = (relPath: string) => {
+      // Ignore absolute paths or HTTP links
+      if (relPath.startsWith('http') || relPath.startsWith('/') || relPath.startsWith('data:')) return relPath;
+      
+      const parts = relPath.split('/');
+      const parentParts = parentDir.split('/').filter(p => p); // current file's folder
+      
+      for (const part of parts) {
+        if (part === '.') continue;
+        if (part === '..') {
+          if (parentParts.length > 0) parentParts.pop();
+        } else {
+          parentParts.push(part);
+        }
       }
-      return `![${alt}](${newPath})`;
+      // Reconstruct path relative to root notes/
+      return `${serverPrefix}${parentParts.join('/')}`;
+    };
+
+    // Replace Markdown Images
+    rawContent = rawContent.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, relPath) => {
+      return `![${alt}](${resolvePath(relPath)})`;
     });
-    rawContent = rawContent.replace(/src="(\.\/)?([^"]+\.(png|jpg|jpeg|gif|webp|svg))"/g, (match, prefix, filename) => {
-        if (filename.startsWith('http')) return match;
-        const newPath = `${serverPrefix}${parentDir}/${filename}`;
-        return `src="${newPath}"`;
+
+    // Replace HTML Img Src
+    rawContent = rawContent.replace(/src="([^"]+)"/g, (match, src) => {
+        return `src="${resolvePath(src)}"`;
     });
   }
   // @ts-ignore
@@ -521,19 +542,22 @@ const openFile = async (file: FileNode) => {
   if (!file.content) {
     contentLoading.value = true;
     try {
-      // Use encodeURIComponent for parts to handle special chars like '🌐' or spaces
+      // CRITICAL FIX: Ensure fetch path is explicitly relative './' and encoded correctly
+      // This solves 404s on GitHub Pages when path contains special chars or when served from root
       const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
-      const fetchPath = `notes/${encodedPath}`;
+      const fetchPath = `./notes/${encodedPath}`;
       
       const res = await fetch(fetchPath);
       if (res.ok) {
         file.content = await res.text();
         nextTick(() => generateToc());
       } else {
-        file.content = "# Error\nCould not load file. " + res.statusText + "\n\nPath tried: " + fetchPath;
+        console.error(`Fetch failed for ${fetchPath}: ${res.status}`);
+        file.content = `# Error Loading Note\n\n**Status:** ${res.status} ${res.statusText}\n\n**Path:** \`${fetchPath}\`\n\nPlease check your internet connection or verify the file exists on GitHub.`;
       }
-    } catch (e) {
-      file.content = "# Error\nFailed to fetch content.";
+    } catch (e: any) {
+      console.error(e);
+      file.content = `# Network Error\n\nFailed to fetch content.\n\n\`${e.message}\``;
     } finally {
       contentLoading.value = false;
       currentFile.value = { ...file }; 
@@ -771,15 +795,14 @@ onMounted(async () => {
   if (isDark.value) document.documentElement.classList.add('dark');
   
   try {
+    // Explicitly using ./files.json to ensure relative fetch
     const res = await fetch(`./files.json?t=${Date.now()}`);
     if (res.ok) {
       fileSystem.value = await res.json();
       const params = new URLSearchParams(window.location.search);
-      const targetPath = params.get('path'); // URLSearchParams automatically decodes values (e.g. %20 -> space)
+      const targetPath = params.get('path'); 
       
       if (targetPath) {
-        // Do NOT call decodeURIComponent again, as params.get() already does it.
-        // Double decoding causes issues with % symbols in filenames.
         const node = findNodeByPath(fileSystem.value, targetPath);
         if (node) {
           if (targetPath.includes('VUE学习笔记') || targetPath.includes('VUE Learning')) viewMode.value = 'lab';
@@ -787,6 +810,8 @@ onMounted(async () => {
           node.type === NodeType.FILE ? openFile(node) : openFolder(node);
         }
       }
+    } else {
+       console.error("Failed to load files.json, status:", res.status);
     }
   } catch (e) {
     console.error("Failed to load file system", e);

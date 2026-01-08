@@ -1,3 +1,4 @@
+
 <template>
   <div class="bg-white/90 dark:bg-gray-800/90 rounded-2xl shadow-xl overflow-hidden border-2 border-orange-100 dark:border-gray-700 max-w-2xl mx-auto transition-all duration-500 relative min-h-[500px] flex flex-col">
     
@@ -183,291 +184,129 @@ type Question = {
   }
 };
 
-// --- Data: 50 Questions Pool (Dual Language) ---
+// --- Data: Questions based on source.md, source-1.md, source-2.md ---
 const allQuestions: Question[] = [
-  // HTML/CSS (Basic)
+  // HTML/CSS (source.md)
   { 
     category: 'basic', 
     correct: 0, 
     content: {
-      en: { text: "What does the <a> tag stand for?", options: ["Anchor", "Article", "Aside", "Application"], explanation: "<a> stands for Anchor, defining a hyperlink." },
-      zh: { text: "<a> 标签代表什么？", options: ["锚点 (Anchor)", "文章 (Article)", "旁注 (Aside)", "应用 (Application)"], explanation: "<a> 代表 Anchor，用于定义超链接。" }
+      en: { text: "What is HTML responsible for?", options: ["Structure", "Presentation", "Behavior", "Database"], explanation: "As per Source.md, HTML defines the structure (What is on the page)." },
+      zh: { text: "HTML 在网页开发中负责什么？", options: ["结构 (Structure)", "表现 (Presentation)", "行为 (Behavior)", "数据库"], explanation: "根据 Source.md，HTML 负责网页的骨架和结构。" }
+    }
+  },
+  { 
+    category: 'basic', 
+    correct: 1, 
+    content: {
+      en: { text: "What is CSS responsible for?", options: ["Structure", "Presentation", "Behavior", "Server logic"], explanation: "CSS (Cascading Style Sheets) controls the presentation and styling." },
+      zh: { text: "CSS 负责什么？", options: ["结构", "表现 (样式/皮肤)", "交互行为", "后端逻辑"], explanation: "CSS 负责页面的表现，如颜色、布局、大小。" }
     }
   },
   { 
     category: 'basic', 
     correct: 2, 
     content: {
-      en: { text: "Which HTML5 tag is used for semantic navigation?", options: ["<div class='nav'>", "<navigation>", "<nav>", "<menu>"], explanation: "<nav> is the correct semantic tag for navigation links." },
-      zh: { text: "哪个 HTML5 标签用于语义化导航？", options: ["<div class='nav'>", "<navigation>", "<nav>", "<menu>"], explanation: "<nav> 是定义导航链接区域的正确语义标签。" }
+      en: { text: "Which language provides page 'Behavior'?", options: ["HTML", "CSS", "JavaScript", "SQL"], explanation: "JavaScript is the soul that provides interactivity (Behavior)." },
+      zh: { text: "哪种语言赋予网页“行为” (Behavior)？", options: ["HTML", "CSS", "JavaScript", "SQL"], explanation: "JS 是网页的肌肉/灵魂，定义页面如何与用户交互。" }
     }
   },
+  // JS (source-1.md)
   { 
-    category: 'basic', 
+    category: 'js', 
     correct: 2, 
     content: {
-      en: { text: "Which CSS property changes text color?", options: ["font-color", "text-color", "color", "foreground"], explanation: "The 'color' property sets the color of the text." },
-      zh: { text: "哪个 CSS 属性改变文字颜色？", options: ["font-color", "text-color", "color", "foreground"], explanation: "'color' 属性用于设置文本颜色。" }
+      en: { text: "What is the output of: typeof null ?", options: ["null", "undefined", "object", "number"], explanation: "This is a known quirk in JS. typeof null returns 'object'." },
+      zh: { text: "JS 中 typeof null 的结果是什么？", options: ["null", "undefined", "object", "number"], explanation: "这是 JS 的一个历史遗留特性，typeof null 返回 'object'。" }
     }
   },
   { 
-    category: 'basic', 
+    category: 'js', 
     correct: 1, 
     content: {
-      en: { text: "How do you center a flex item horizontally?", options: ["align-items: center", "justify-content: center", "text-align: center", "vertical-align: middle"], explanation: "In a flex row, 'justify-content' controls horizontal alignment." },
-      zh: { text: "如何在 Flex 布局中水平居中元素？", options: ["align-items: center", "justify-content: center", "text-align: center", "vertical-align: middle"], explanation: "在默认的 Flex 行布局中，'justify-content' 控制主轴（水平）对齐。" }
+      en: { text: "Difference between == and === ?", options: ["No difference", "== converts type, === checks type & value", "=== converts type", "Both check type"], explanation: "== performs type coercion (1 == '1'), === does not (1 !== '1')." },
+      zh: { text: "== 和 === 的区别是？", options: ["没区别", "== 会转换类型，=== 严格比较类型和值", "=== 会转换类型", "都比较类型"], explanation: "== 是宽松相等（进行隐式类型转换），=== 是严格相等（值和类型都必须相同）。" }
     }
   },
   { 
-    category: 'basic', 
-    correct: 1, 
-    content: {
-      en: { text: "What is the Box Model order (inside out)?", options: ["Content > Margin > Border > Padding", "Content > Padding > Border > Margin", "Border > Content > Padding > Margin", "Padding > Content > Margin > Border"], explanation: "Content is core, surrounded by Padding, then Border, then Margin." },
-      zh: { text: "盒模型从内到外的顺序是什么？", options: ["内容 > 外边距 > 边框 > 内边距", "内容 > 内边距 > 边框 > 外边距", "边框 > 内容 > 内边距 > 外边距", "内边距 > 内容 > 外边距 > 边框"], explanation: "最内层是内容，被内边距包围，然后是边框，最后是外边距。" }
-    }
-  },
-  { 
-    category: 'basic', 
-    correct: 1, 
-    content: {
-      en: { text: "Which unit is relative to the root HTML element font size?", options: ["em", "rem", "px", "%"], explanation: "'rem' stands for Root EM." },
-      zh: { text: "哪个单位是相对于根 HTML 元素字体大小的？", options: ["em", "rem", "px", "%"], explanation: "'rem' 代表 Root EM，即相对于根元素的 em。" }
-    }
-  },
-  { 
-    category: 'basic', 
-    correct: 1, 
-    content: {
-      en: { text: "Which selector has the highest specificity?", options: [".class", "#id", "div", "*"], explanation: "ID selectors (#) have higher specificity than classes and tags." },
-      zh: { text: "下列哪个选择器优先级最高？", options: [".class", "#id", "div", "*"], explanation: "ID 选择器 (#) 的优先级高于类选择器、标签选择器和通配符。" }
-    }
-  },
-  { 
-    category: 'basic', 
+    category: 'js', 
     correct: 0, 
     content: {
-      en: { text: "How to make a grid with 3 equal columns?", options: ["display: grid; grid-template-columns: 1fr 1fr 1fr;", "display: grid; columns: 3;", "display: flex; flex: 3;", "grid-columns: auto auto auto;"], explanation: "1fr 1fr 1fr creates three equal fractional columns." },
-      zh: { text: "如何创建一个三列等宽的 Grid 布局？", options: ["display: grid; grid-template-columns: 1fr 1fr 1fr;", "display: grid; columns: 3;", "display: flex; flex: 3;", "grid-columns: auto auto auto;"], explanation: "1fr 1fr 1fr 会创建三个相等的比例空间列。" }
+      en: { text: "How to parse a JSON string?", options: ["JSON.parse()", "JSON.stringify()", "JSON.toObject()", "JSON.read()"], explanation: "JSON.parse() converts a JSON string into a JavaScript object." },
+      zh: { text: "如何将 JSON 字符串转为 JS 对象？", options: ["JSON.parse()", "JSON.stringify()", "JSON.toObject()", "JSON.read()"], explanation: "JSON.parse() 用于解析 JSON 字符串。" }
     }
   },
-  { 
-    category: 'basic', 
-    correct: 2, 
-    content: {
-      en: { text: "Which pseudo-class selects the mouse-over state?", options: [":active", ":focus", ":hover", ":visited"], explanation: ":hover applies when the user mouses over an element." },
-      zh: { text: "哪个伪类用于选中鼠标悬停状态？", options: [":active", ":focus", ":hover", ":visited"], explanation: ":hover 在用户鼠标悬停在元素上时生效。" }
-    }
-  },
-  { 
-    category: 'basic', 
-    correct: 1, 
-    content: {
-      en: { text: "What is the default display value of <div>?", options: ["inline", "block", "inline-block", "flex"], explanation: "<div> is a block-level element by default." },
-      zh: { text: "<div> 的默认 display 属性值是什么？", options: ["inline", "block", "inline-block", "flex"], explanation: "<div> 是块级元素，默认为 block。" }
-    }
-  },
-
-  // JavaScript (JS)
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "Which keyword creates a constant variable?", options: ["var", "let", "const", "final"], explanation: "'const' declares variables that cannot be reassigned." },
-      zh: { text: "哪个关键字用于声明常量？", options: ["var", "let", "const", "final"], explanation: "'const' 声明的变量引用不能被重新赋值。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 1, 
-    content: {
-      en: { text: "What is 'Closure'?", options: ["A function closing the app", "A function remembering its lexical scope", "A block of code inside {}", "An object method"], explanation: "A closure gives a function access to its outer function's scope even after the outer function has returned." },
-      zh: { text: "什么是“闭包” (Closure)？", options: ["关闭应用的函数", "能记住其词法作用域的函数", "{} 中的代码块", "对象方法"], explanation: "闭包允许函数访问其外部作用域，即使外部函数已经执行完毕。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "What does '===' operator do?", options: ["Assignment", "Loose equality (value only)", "Strict equality (value & type)", "Reference check"], explanation: "=== checks both value and type without type coercion." },
-      zh: { text: "'===' 运算符的作用是？", options: ["赋值", "宽松相等 (仅值)", "严格相等 (值和类型)", "引用检查"], explanation: "=== 会同时检查值和类型，不会进行类型转换。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "Which array method returns a new array with transformed elements?", options: ["forEach", "filter", "map", "reduce"], explanation: ".map() creates a new array by applying a function to every element." },
-      zh: { text: "哪个数组方法返回一个转换元素后的新数组？", options: ["forEach", "filter", "map", "reduce"], explanation: ".map() 通过对每个元素应用函数来创建一个新数组。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "What is the output of: console.log(typeof null)?", options: ["'null'", "'undefined'", "'object'", "'number'"], explanation: "This is a historical bug in JS. typeof null returns 'object'." },
-      zh: { text: "console.log(typeof null) 的输出是什么？", options: ["'null'", "'undefined'", "'object'", "'number'"], explanation: "这是 JS 的历史遗留 Bug，typeof null 返回 'object'。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 1, 
-    content: {
-      en: { text: "How do you handle asynchronous code in modern JS?", options: ["Callbacks only", "Promise & async/await", "XMLHttpRequest", "Threads"], explanation: "Promises and async/await are the modern standard for async operations." },
-      zh: { text: "现代 JS 如何处理异步代码？", options: ["仅回调函数", "Promise & async/await", "XMLHttpRequest", "多线程"], explanation: "Promise 和 async/await 是处理异步操作的现代标准。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "What keyword refers to the object executing the current function?", options: ["self", "it", "this", "me"], explanation: "'this' refers to the context object." },
-      zh: { text: "哪个关键字指向执行当前函数的对象？", options: ["self", "it", "this", "me"], explanation: "'this' 指向当前的执行上下文对象。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 1, 
-    content: {
-      en: { text: "How to parse a JSON string into an object?", options: ["JSON.stringify()", "JSON.parse()", "JSON.object()", "JSON.toObj()"], explanation: "JSON.parse() converts a JSON string to a JS object." },
-      zh: { text: "如何将 JSON 字符串解析为对象？", options: ["JSON.stringify()", "JSON.parse()", "JSON.object()", "JSON.toObj()"], explanation: "JSON.parse() 用于将 JSON 字符串转换为 JavaScript 对象。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 1, 
-    content: {
-      en: { text: "What is Event Bubbling?", options: ["Events stop at target", "Events go from target up to window", "Events go from window down to target", "Creating a custom event"], explanation: "Bubbling propagates the event from the target element up to the root." },
-      zh: { text: "什么是事件冒泡 (Event Bubbling)？", options: ["事件在目标处停止", "事件从目标向上传播到 Window", "事件从 Window 向下传播到目标", "创建自定义事件"], explanation: "冒泡是指事件从触发的目标元素开始，逐级向上传播到根节点。" }
-    }
-  },
-  { 
-    category: 'js', 
-    correct: 2, 
-    content: {
-      en: { text: "Which is NOT a primitive type?", options: ["String", "Boolean", "Array", "Symbol"], explanation: "Array is a subtype of Object in JS." },
-      zh: { text: "下列哪个不是基本数据类型 (Primitive Type)？", options: ["String", "Boolean", "Array", "Symbol"], explanation: "Array 在 JS 中属于对象 (Object) 类型。" }
-    }
-  },
-
-  // Vue Core & Ecosystem (Vue)
+  // Vue (source-2.md)
   { 
     category: 'vue', 
     correct: 1, 
     content: {
-      en: { text: "Which function creates reactive state for primitives?", options: ["reactive()", "ref()", "computed()", "watch()"], explanation: "ref() is used for primitives (and objects), reactive() is essentially for objects." },
-      zh: { text: "哪个函数用于为基本类型创建响应式状态？", options: ["reactive()", "ref()", "computed()", "watch()"], explanation: "ref() 用于基本类型（也可用于对象），而 reactive() 主要用于对象。" }
+      en: { text: "Vue is a _____ framework.", options: ["Regressive", "Progressive", "Backend", "Static"], explanation: "Vue is a 'Progressive' framework, meaning you can use it gradually." },
+      zh: { text: "Vue 是一个 ______ 框架。", options: ["退步式", "渐进式 (Progressive)", "后端", "静态"], explanation: "Vue 是渐进式框架，意味着你可以只在页面的一部分使用它，也可以构建整个应用。" }
     }
   },
   { 
     category: 'vue', 
     correct: 2, 
     content: {
-      en: { text: "How do you emit an event in <script setup>?", options: ["this.$emit", "defineProps", "defineEmits", "useEmit"], explanation: "defineEmits is the compiler macro used in script setup." },
-      zh: { text: "在 <script setup> 中如何触发事件？", options: ["this.$emit", "defineProps", "defineEmits", "useEmit"], explanation: "defineEmits 是 script setup 中用于定义和触发事件的编译器宏。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "Which directive creates two-way binding?", options: ["v-bind", "v-model", "v-on", "v-sync"], explanation: "v-model implements two-way binding for form inputs and components." },
-      zh: { text: "哪个指令实现双向数据绑定？", options: ["v-bind", "v-model", "v-on", "v-sync"], explanation: "v-model 用于在表单输入和组件上实现双向绑定。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 2, 
-    content: {
-      en: { text: "Which hook runs after DOM is rendered?", options: ["onCreated", "onSetup", "onMounted", "onUpdated"], explanation: "onMounted is called after the component is mounted to the DOM." },
-      zh: { text: "哪个钩子在 DOM 渲染完成后执行？", options: ["onCreated", "onSetup", "onMounted", "onUpdated"], explanation: "onMounted 在组件挂载到 DOM 之后调用。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 2, 
-    content: {
-      en: { text: "Difference between v-if and v-show?", options: ["v-show removes element", "v-if toggles CSS display", "v-if removes element", "No difference"], explanation: "v-if physically adds/removes the element; v-show just toggles 'display: none'." },
-      zh: { text: "v-if 和 v-show 的区别是？", options: ["v-show 移除元素", "v-if 切换 CSS display", "v-if 移除元素", "没有区别"], explanation: "v-if 真实地从 DOM 中添加/移除元素；v-show 只是切换 'display: none'。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "Shorthand for v-bind?", options: ["@", ":", "#", "$"], explanation: ":href is shorthand for v-bind:href." },
-      zh: { text: "v-bind 的缩写是？", options: ["@", ":", "#", "$"], explanation: ":href 是 v-bind:href 的缩写。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "What is Pinia used for?", options: ["Routing", "State Management", "Styling", "Testing"], explanation: "Pinia is the official state management library for Vue." },
-      zh: { text: "Pinia 的用途是什么？", options: ["路由", "状态管理", "样式", "测试"], explanation: "Pinia 是 Vue 官方推荐的状态管理库。" }
+      en: { text: "Which directive loops through an array?", options: ["v-loop", "v-each", "v-for", "v-map"], explanation: "Syntax: v-for='item in items'." },
+      zh: { text: "哪个指令用于遍历数组？", options: ["v-loop", "v-each", "v-for", "v-map"], explanation: "v-for 指令用于基于数组渲染列表。" }
     }
   },
   { 
     category: 'vue', 
     correct: 0, 
     content: {
-      en: { text: "Which component keeps dynamic components alive?", options: ["<keep-alive>", "<live>", "<cache>", "<persist>"], explanation: "<keep-alive> caches component instances." },
-      zh: { text: "哪个组件可以缓存动态组件？", options: ["<keep-alive>", "<live>", "<cache>", "<persist>"], explanation: "<keep-alive> 用于缓存组件实例，避免销毁。" }
+      en: { text: "Syntax for two-way binding?", options: ["v-model", "v-bind", "v-on", "v-connect"], explanation: "v-model creates a two-way binding on form inputs." },
+      zh: { text: "双向数据绑定的指令是？", options: ["v-model", "v-bind", "v-on", "v-connect"], explanation: "v-model 用于在表单元素上创建双向数据绑定。" }
     }
   },
   { 
     category: 'vue', 
     correct: 1, 
     content: {
-      en: { text: "In Vue Router, how to create a link?", options: ["<a href='...'>", "<router-link>", "<go-to>", "<link>"], explanation: "<router-link> (or RouterLink) creates a navigational link." },
-      zh: { text: "在 Vue Router 中如何创建链接？", options: ["<a href='...'>", "<router-link>", "<go-to>", "<link>"], explanation: "<router-link> 用于创建导航链接，防止页面刷新。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "What is the purpose of 'computed'?", options: ["Side effects", "Caching derived state", "Fetching data", "Defining constants"], explanation: "Computed properties cache results based on dependencies." },
-      zh: { text: "'computed' 的主要目的是？", options: ["副作用", "缓存派生状态", "获取数据", "定义常量"], explanation: "计算属性基于依赖进行缓存，只有依赖变化时才重新计算。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "What replaces 'this' in Composition API?", options: ["self", "Nothing (variables directly)", "ctx", "scope"], explanation: "In Composition API, we use variables directly within the setup scope." },
-      zh: { text: "组合式 API 中什么替代了 'this'？", options: ["self", "无 (直接使用变量)", "ctx", "scope"], explanation: "在组合式 API (setup) 中，我们直接定义和使用变量，不需要 'this'。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 1, 
-    content: {
-      en: { text: "How to pass content into a component?", options: ["Props", "Slots", "Emits", "Provide"], explanation: "Slots allow passing template content into a component." },
-      zh: { text: "如何将模板内容传入组件？", options: ["Props", "Slots (插槽)", "Emits", "Provide"], explanation: "Slots (插槽) 允许我们将内容分发到组件内部。" }
-    }
-  },
-  { 
-    category: 'vue', 
-    correct: 2, 
-    content: {
-      en: { text: "Which directive loops over an array?", options: ["v-loop", "v-map", "v-for", "v-each"], explanation: "v-for='item in items' is the loop directive." },
-      zh: { text: "哪个指令用于遍历数组？", options: ["v-loop", "v-map", "v-for", "v-each"], explanation: "v-for='item in items' 是 Vue 的循环指令。" }
+      en: { text: "What is the shorthand for v-bind?", options: ["@", ": (colon)", "#", "$"], explanation: "v-bind:href can be written as :href." },
+      zh: { text: "v-bind 的缩写是什么？", options: ["@", ": (冒号)", "#", "$"], explanation: "v-bind:src 可以简写为 :src。" }
     }
   },
   { 
     category: 'vue', 
     correct: 0, 
     content: {
-      en: { text: "What is 'Prop Drilling' solution in Vue?", options: ["Provide/Inject", "Props", "Emits", "Refs"], explanation: "Provide/Inject allows passing data deep into the component tree without prop drilling." },
-      zh: { text: "解决 'Prop Drilling' (层层传递) 的方案是？", options: ["Provide/Inject", "Props", "Emits", "Refs"], explanation: "Provide/Inject 允许跨层级传递数据，避免逐层透传 Props。" }
+      en: { text: "What is the shorthand for v-on?", options: ["@", ":", "&", "^"], explanation: "v-on:click can be written as @click." },
+      zh: { text: "v-on 的缩写是什么？", options: ["@", ":", "&", "^"], explanation: "v-on:click 可以简写为 @click。" }
+    }
+  },
+  { 
+    category: 'vue', 
+    correct: 2, 
+    content: {
+      en: { text: "Which hook is called when the component is mounted?", options: ["created", "setup", "mounted", "updated"], explanation: "mounted() is called after the component has been mounted to the DOM. Best for Ajax." },
+      zh: { text: "哪个生命周期钩子表示组件已挂载完成？", options: ["created", "setup", "mounted", "updated"], explanation: "mounted 表示 DOM 渲染完成，通常在此处发送 Ajax 请求初始化数据。" }
     }
   },
   { 
     category: 'vue', 
     correct: 1, 
     content: {
-      en: { text: "Vue 3's build tool?", options: ["Webpack", "Vite", "Gulp", "Grunt"], explanation: "Vite is the default, ultra-fast build tool for Vue 3." },
-      zh: { text: "Vue 3 默认的构建工具是？", options: ["Webpack", "Vite", "Gulp", "Grunt"], explanation: "Vite 是 Vue 3 默认的极速构建工具。" }
+      en: { text: "v-if vs v-show: Which one modifies 'display:none'?", options: ["v-if", "v-show", "Both", "Neither"], explanation: "v-if adds/removes elements. v-show toggles CSS display property." },
+      zh: { text: "v-if 和 v-show：哪个通过 'display:none' 控制？", options: ["v-if", "v-show", "都是", "都不是"], explanation: "v-show 只是切换 CSS 的 display 属性，v-if 是真正地创建或销毁 DOM 元素。" }
+    }
+  },
+  { 
+    category: 'vue', 
+    correct: 3, 
+    content: {
+      en: { text: "Which library is recommended for Ajax in Vue?", options: ["jQuery", "Fetch API", "XMLHttpRequest", "Axios"], explanation: "Axios is the most popular promise-based HTTP client for Vue." },
+      zh: { text: "在 Vue 中推荐使用哪个库发送 Ajax 请求？", options: ["jQuery", "Fetch API", "XMLHttpRequest", "Axios"], explanation: "Axios 是一个基于 Promise 的 HTTP 客户端，Vue 官方推荐使用它来代替 vue-resource。" }
+    }
+  },
+  { 
+    category: 'vue', 
+    correct: 0, 
+    content: {
+      en: { text: "What is 'Interpolation' syntax?", options: ["{{ }}", "[[ ]]", "<? ?>", "<% %>"], explanation: "Mustache syntax {{ message }} is used for text interpolation." },
+      zh: { text: "插值表达式的语法是什么？", options: ["{{ }}", "[[ ]]", "<? ?>", "<% %>"], explanation: "Vue 使用 Mustache 语法 (双大括号) 进行文本插值。" }
     }
   }
 ];
@@ -515,9 +354,9 @@ const startGame = (cat: Category) => {
   // Filter & Shuffle
   let pool = cat === 'all' 
     ? allQuestions 
-    : allQuestions.filter(q => q.category === cat || (cat === 'vue' && q.category === 'basic')); // Fallback slightly if not enough
+    : allQuestions.filter(q => q.category === cat || (cat === 'vue' && q.category === 'basic')); 
   
-  if (pool.length < 5) pool = allQuestions; // Safety net
+  if (pool.length < 5) pool = allQuestions; 
 
   // Pick 10 random questions
   activeQuestions.value = _.sampleSize(pool, 10);
@@ -539,7 +378,7 @@ const startTimer = () => {
   timer.value = 15;
   selectedAnswer.value = null;
   feedback.value = '';
-  hiddenOptions.value = []; // Reset hidden options
+  hiddenOptions.value = []; 
   
   clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -554,11 +393,9 @@ const handleTimeout = () => {
   clearInterval(timerInterval);
   selectedAnswer.value = -1; // -1 indicates timeout/no selection
   feedback.value = "⏰ Time's up!";
-  streak.value = 0; // Reset streak
+  streak.value = 0; 
   
-  // Add to review
   if (currentQuestion.value) {
-      // Store reference to original question object
       reviewList.value.push({
         question: activeQuestions.value[currentQuestionIndex.value],
         userAnswer: -1
@@ -581,7 +418,6 @@ const selectAnswer = (idx: number) => {
     streak.value++;
     if (streak.value > maxStreak.value) maxStreak.value = streak.value;
     
-    // Calculate Score: Base 100 + Time Bonus + Streak Bonus
     const timeBonus = timer.value * 10;
     const streakBonus = (streak.value - 1) * 20;
     totalScore.value += (100 + timeBonus + streakBonus);
@@ -590,7 +426,6 @@ const selectAnswer = (idx: number) => {
   } else {
     streak.value = 0;
     feedback.value = "✗ Wrong!";
-    // Add to review
     reviewList.value.push({
       question: activeQuestions.value[currentQuestionIndex.value],
       userAnswer: idx
@@ -616,7 +451,6 @@ const use5050 = () => {
   const correct = currentQuestion.value.correct;
   const wrongIndices = [0, 1, 2, 3].filter(i => i !== correct);
   
-  // Randomly hide 2 wrong answers
   const toHide = _.sampleSize(wrongIndices, 2);
   hiddenOptions.value = toHide;
 };

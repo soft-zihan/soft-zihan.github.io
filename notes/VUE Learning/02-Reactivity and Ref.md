@@ -1,90 +1,75 @@
 
-# 02. Reactivity System: App.vue Analysis 🌸
+# 02. JS Variables & Reactivity System 🌸
 
-> Why does the content change automatically when I click the left menu? Why does the whole webpage color change when I toggle "Dark Mode"?
-> This is the magic of **Reactivity**.
+> **Goal**: Review JS variables (`let`, `const`) and understand Vue's Reactivity (`ref`, `reactive`).
+> **Ref**: `source-1.md`, `source-2.md`
 
-## 1. Look at the code in App.vue
+## 1. JS Basics Review
 
-Open `src/App.vue` and find the `<script setup>` section. You will see code like this:
+According to `source-1.md`, JS is loosely typed.
+
+*   **Variables**: 
+    *   `let`: Mutable (Recommended).
+    *   `const`: Immutable reference (Recommended).
+    *   `var`: Old school (Avoid).
+*   **Types**: Primitives (string, number, boolean...) and Objects.
+
+**Pain Point**: In vanilla JS, changing a variable (`let name = "Sakura"`) does **not** update the HTML. You must verify and update the DOM manually.
+
+## 2. Vue's Magic: Ref & Reactive
+
+Vue 3 introduces a **Reactivity System**. Core concept: **Data changes, View updates automatically.**
+
+### Ref (For Primitives)
+Wraps a primitive in an object.
+
+*   **Definition**: `const isDark = ref(false);`
+*   **Mechanism**: Access/Modify via `.value`.
+*   **Source Code (`App.vue`)**:
+    ```typescript
+    const isDark = ref(false); 
+    
+    // JS modification (Must use .value)
+    const toggleTheme = (val) => {
+        isDark.value = val; 
+    };
+    ```
+    *Note: No `.value` needed in HTML templates `{{ isDark }}`.*
+
+### Reactive (For Objects)
+Uses ES6 **Proxy** to watch objects deeply.
+
+*   **Definition**: `const settings = reactive({ fontSize: 'normal' });`
+*   **Source Code (`components/LabVueList.vue`)**:
+    ```typescript
+    const newItem = reactive({
+        name: '',
+        gender: 1, // 1:Male, 2:Female
+        job: 1     // 1:Lecturer, 2:Teacher
+    });
+    
+    // Modify like a normal object
+    newItem.name = 'Xie Xun';
+    ```
+
+## 3. Computed Properties
+
+If you want to **calculate** a value based on other data, use `computed`.
+
+**Source Code (`App.vue`)**:
+Generating breadcrumbs from `currentPath`.
 
 ```typescript
-import { ref, reactive } from 'vue';
-
-// 1. ref: Suitable for primitive types (number, string, boolean)
-const currentFile = ref(null);
-const isDark = ref(false);
-
-// 2. reactive: Suitable for Objects
-const userSettings = reactive({
-  fontSize: 'normal',
-  fontFamily: 'sans'
+const breadcrumbs = computed(() => {
+  const path = currentPath.value; // Dependency
+  if (!path) return [];
+  // Logic...
+  return parts; 
 });
 ```
 
-## 2. Ref vs Reactive
+**Benefit**: `computed` results are **cached**. They only re-run if dependencies change.
 
-In Vue 3, we mainly use these two tools to define "alive" data:
+## 4. Lab Experience
 
-*   **ref()**: Stands for Reference. It's like a box that wraps the data.
-    *   **In JS**: You MUST use `.value`, e.g., `isDark.value = true`.
-    *   **In Template**: You DO NOT need `.value`, e.g., `{{ isDark }}`, Vue unwraps it automatically.
-*   **reactive()**: Specifically for Objects.
-    *   **In JS**: No `.value` needed, read/write like a normal object, e.g., `userSettings.fontSize = 'large'`.
-
-## 3. Real-world Analysis: Component Communication
-
-In this blog, the **Settings Modal** (`SettingsModal.vue`) is responsible for toggling the theme, but the `isDark` state actually lives in `App.vue`. How does this work?
-
-### Parent (App.vue)
-```typescript
-const isDark = ref(false);
-const toggleTheme = (val) => { 
-  // NOTE: Modifying a ref in <script> requires .value
-  isDark.value = val; 
-}
-```
-
-In HTML:
-```html
-<SettingsModal 
-  :is-dark="isDark" 
-  @toggle-theme="toggleTheme" 
-/>
-```
-
-### Child (SettingsModal.vue)
-```typescript
-// Send signal to parent
-emit('toggle-theme', true);
-```
-
-When you click "Dark Mode" in the modal, the child emits a signal. The parent receives it, updates `isDark.value`, and Vue automatically updates the class of the entire page.
-
-## 4. Real-world Analysis: Opening a File
-
-```typescript
-const currentFile = ref(null);
-
-const openFile = (file) => {
-  currentFile.value = file; // The core task is just one thing: modify currentFile
-}
-```
-
-In the HTML template, we use the `v-if` directive:
-
-```html
-<div v-if="currentFile">
-  <!-- Show Article Content -->
-  <h1>{{ currentFile.name }}</h1>
-</div>
-<div v-else>
-  <!-- Show Welcome Page -->
-  <h1>Welcome Home</h1>
-</div>
-```
-
-Because `currentFile` is reactive, once it changes from `null` to a file object, Vue instantly destroys the "Welcome Page" and creates the "Article Content Page".
-
-**Pro Tip**:
-The most common mistake for beginners is forgetting `.value` inside `<script>`. If you see `console.log` printing a `RefImpl` object, it means you forgot to unwrap it with `.value`.
+Go to **Laboratory -> Vue Core -> Reactivity** (`LabReactivity.vue`) to experience how data drives the DOM.

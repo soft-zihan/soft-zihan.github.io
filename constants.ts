@@ -16,19 +16,73 @@ export const I18N = {
     // Categories
     cat_foundation: "Web Foundation",
     cat_vue: "Vue Core",
+    cat_network: "Network & Async",
     cat_challenge: "Challenge",
 
+    // Web Standards Tool
+    lab_standards_title: "The Web Standards Triad",
+    lab_standards_desc: "Understanding the role of HTML, CSS, and JavaScript based on W3C standards.",
+    lab_st_html: "HTML (Structure)",
+    lab_st_css: "CSS (Presentation)",
+    lab_st_js: "JS (Behavior)",
+    lab_st_info_html: "HTML is the skeleton. It defines WHAT is on the page.",
+    lab_st_info_css: "CSS is the skin/clothing. It defines HOW it looks.",
+    lab_st_info_js: "JS is the muscle/soul. It defines HOW it interacts.",
+
     // HTML/JS Tools
-    lab_html_title: "HTML DOM & Box Model",
-    lab_html_info: "Type HTML to see the structure. Toggle 'Debug Mode' to visualize element boundaries.",
+    lab_html_title: "Browser Kernel Simulator",
+    lab_html_info: "Type HTML/CSS to see how the browser kernel parses and renders the page.",
     lab_html_mode: "Mode",
     lab_html_debug: "Structure (Debug)",
     lab_html_preview: "Render (Preview)",
+    lab_html_process: "Kernel Status",
+    lab_html_status_idle: "Idle",
+    lab_html_status_parse: "Parsing HTML...",
+    lab_html_status_dom: "Building DOM Tree...",
+    lab_html_status_style: "Calculating Styles...",
+    lab_html_status_paint: "Painting Pixels...",
     
     lab_js_title: "JS Event Propagation",
     lab_js_info: "Click the boxes to visualize Event Capturing and Bubbling phases.",
     lab_js_log: "Event Log",
     lab_js_clear: "Clear",
+
+    // DOM Lab (New)
+    lab_dom_title: "DOM Manipulation Playground",
+    lab_dom_desc: "Interact with page elements using standard DOM APIs.",
+    lab_dom_target: "Target Element",
+    lab_dom_action: "Execute JS",
+    lab_dom_console: "Console Output",
+    lab_dom_btn_text: "Change Text",
+    lab_dom_btn_color: "Change Color",
+    lab_dom_btn_hide: "Hide Element",
+    lab_dom_btn_show: "Show Element",
+
+    // Ajax Lab (New)
+    lab_ajax_title: "Async Interaction (Province/City)",
+    lab_ajax_desc: "Simulating the Province-City-Area selection flow from the course.",
+    lab_ajax_sync: "Promise Chain (.then)",
+    lab_ajax_async: "Async / Await",
+    lab_ajax_step_1: "1. Request Province",
+    lab_ajax_step_2: "2. Request City (pid=)",
+    lab_ajax_step_3: "3. Request Area (cid=)",
+    lab_ajax_complete: "Data Loaded!",
+    lab_ajax_start: "Start Request",
+    lab_ajax_reset: "Reset",
+
+    // Vue List Lab (Updated to Employee Management)
+    lab_vue_list_title: "Employee Management (v-for/v-if)",
+    lab_vue_list_desc: "Rendering a list based on raw data with conditional formatting.",
+    lab_vue_form_name: "Name",
+    lab_vue_form_gender: "Gender",
+    lab_vue_form_job: "Job",
+    lab_vue_add: "Add Employee",
+    lab_vue_empty: "No data available",
+    lab_gender_1: "Male",
+    lab_gender_2: "Female",
+    lab_job_1: "Lecturer",
+    lab_job_2: "Teacher",
+    lab_job_3: "Other",
     
     // Existing Vue Tools
     lab_reactivity: "Reactivity",
@@ -109,7 +163,7 @@ export const I18N = {
     lab_directives_info: "Visualizing how Vue handles conditional rendering and DOM updates.",
     lab_quiz_start: "Start Training",
     lab_quiz_title: "Vue Ninja Training",
-    lab_quiz_subtitle: "Test your reflexes and Vue knowledge.",
+    lab_quiz_subtitle: "Test your reflexes and Vue knowledge based on the course.",
     res_vue_mastery_desc: "Gamified learning path",
     res_scrimba_desc: "Interactive video tutorials"
   },
@@ -126,21 +180,75 @@ export const I18N = {
     lab_course: "Vue 实战笔记 (源码解析)",
 
     // Categories
-    cat_foundation: "Web 基础",
+    cat_foundation: "Web 基础 (JS/DOM)",
     cat_vue: "Vue 核心",
+    cat_network: "网络与异步",
     cat_challenge: "挑战",
 
+    // Web Standards Tool
+    lab_standards_title: "Web 标准三剑客",
+    lab_standards_desc: "基于 W3C 标准，直观理解 HTML、CSS 和 JavaScript 的分工。",
+    lab_st_html: "HTML (结构)",
+    lab_st_css: "CSS (表现)",
+    lab_st_js: "JS (行为)",
+    lab_st_info_html: "HTML 是骨架。它定义了页面上“有什么” (What)。",
+    lab_st_info_css: "CSS 是皮肤/衣服。它定义了页面“长什么样” (How Look)。",
+    lab_st_info_js: "JS 是肌肉/灵魂。它定义了页面“怎么动” (How Act)。",
+
     // HTML/JS Tools
-    lab_html_title: "HTML 结构与盒模型",
-    lab_html_info: "输入 HTML 代码，右侧实时渲染。切换“结构调试”模式可透视元素边界。",
+    lab_html_title: "浏览器内核模拟器",
+    lab_html_info: "输入代码，观察浏览器内核如何解析 HTML/CSS 并渲染成网页。",
     lab_html_mode: "视图模式",
     lab_html_debug: "结构调试 (Debug)",
     lab_html_preview: "渲染预览 (Preview)",
+    lab_html_process: "内核状态",
+    lab_html_status_idle: "就绪",
+    lab_html_status_parse: "解析 HTML 结构...",
+    lab_html_status_dom: "构建 DOM Tree...",
+    lab_html_status_style: "计算 CSS 样式...",
+    lab_html_status_paint: "绘制像素 (Paint)...",
 
     lab_js_title: "JS 事件传播机制",
     lab_js_info: "点击下方方块，可视化观察事件的“捕获”与“冒泡”全过程。",
     lab_js_log: "事件日志",
     lab_js_clear: "清空",
+
+    // DOM Lab (New)
+    lab_dom_title: "DOM 操作演练场",
+    lab_dom_desc: "使用标准的 document API 操作页面元素。",
+    lab_dom_target: "目标元素",
+    lab_dom_action: "执行 JS 代码",
+    lab_dom_console: "控制台输出",
+    lab_dom_btn_text: "修改内容 (innerHTML)",
+    lab_dom_btn_color: "修改颜色 (Style)",
+    lab_dom_btn_hide: "隐藏元素 (Display)",
+    lab_dom_btn_show: "显示元素 (Display)",
+
+    // Ajax Lab (New)
+    lab_ajax_title: "异步交互 (省市区联动)",
+    lab_ajax_desc: "模拟课程中的“省-市-区”三级联动请求流程。",
+    lab_ajax_sync: "链式调用 (.then)",
+    lab_ajax_async: "Async / Await",
+    lab_ajax_step_1: "1. 请求省份 (Province)",
+    lab_ajax_step_2: "2. 请求城市 (City)",
+    lab_ajax_step_3: "3. 请求区县 (Area)",
+    lab_ajax_complete: "数据加载完成！",
+    lab_ajax_start: "发起请求",
+    lab_ajax_reset: "重置",
+
+    // Vue List Lab (Updated)
+    lab_vue_list_title: "员工管理系统 (v-for/v-if)",
+    lab_vue_list_desc: "复刻课程案例：根据原始数据渲染表格，处理性别与职位的显示逻辑。",
+    lab_vue_form_name: "姓名",
+    lab_vue_form_gender: "性别",
+    lab_vue_form_job: "职位",
+    lab_vue_add: "入职 (添加)",
+    lab_vue_empty: "暂无数据",
+    lab_gender_1: "男",
+    lab_gender_2: "女",
+    lab_job_1: "讲师",
+    lab_job_2: "班主任",
+    lab_job_3: "其他",
 
     // Existing Vue Tools
     lab_reactivity: "响应式原理",
@@ -152,7 +260,7 @@ export const I18N = {
     lab_directives: "指令实验室",
     lab_directives_desc: "v-if 与 v-show 的区别",
     lab_quiz: "Vue 忍者挑战",
-    lab_quiz_desc: "随机抽取5题测试水平！",
+    lab_quiz_desc: "基于课程内容的随机测试！",
     
     // Quiz Extended
     quiz_cat_all: "综合大挑战",
@@ -165,9 +273,9 @@ export const I18N = {
     quiz_lifeline_used: "已使用",
     quiz_review: "错题回顾",
     quiz_explanation: "解析",
-    quiz_perfect: "太强了！全知全能的忍者！",
-    quiz_good: "干得漂亮！继续保持。",
-    quiz_try: "别灰心！复习一下笔记再来。",
+    quiz_perfect: "太强了！你已经掌握了所有课程内容！",
+    quiz_good: "干得漂亮！继续复习 source-2.md。",
+    quiz_try: "别灰心！回顾一下 source-1.md 再来。",
 
     // Resources Categories
     res_cat_platform: "互动学习平台",
@@ -221,7 +329,7 @@ export const I18N = {
     lab_directives_info: "可视化 Vue 如何处理条件渲染和 DOM 更新。",
     lab_quiz_start: "开始修炼",
     lab_quiz_title: "Vue 忍者训练",
-    lab_quiz_subtitle: "测试你的反应速度和 Vue 知识。",
+    lab_quiz_subtitle: "测试你的反应速度和 Vue 知识 (基于课程标准)。",
     res_vue_mastery_desc: "游戏化学习路径",
     res_scrimba_desc: "交互式视频教程"
   }

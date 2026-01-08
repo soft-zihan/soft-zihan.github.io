@@ -1,67 +1,63 @@
-# 01. Project Structure & Vue Intro 🌸
 
-> Welcome to the frontend training ground! Unlike boring documentation, we will **dissect the source code of this blog directly** to help you understand Vue 3 from scratch.
+# 01. Web Standards & Vue Architecture 🌸
 
-## 1. What kind of project is this?
+> **Goal**: Understand the Web Standards Triad, Vue as a Progressive Framework, and SPA bootstrapping.
+> **Ref**: `source.md`, `source-2.md`
 
-This is a purely static Vue 3 Single Page Application (SPA).
-The source code is right in front of your eyes. Click the **🖊️ (View Source)** button in the top right corner to view the Markdown source of this document at any time. To see the project code, you can visit the Github repository.
+## 1. The Web Standards Triad
 
-Let's look at the File Structure:
+As described in `source.md`, modern web development relies on three pillars. Here is how they apply to **Sakura Notes**:
 
-```text
-sakura-notes/
-├── index.html        # Entry HTML (The root of everything)
-├── src/
-│   ├── main.ts       # Vue Startup Entry
-│   ├── App.vue       # Root Layout Container
-│   ├── components/   # Component folder
-│   │   ├── AppSidebar.vue      # Sidebar logic
-│   │   ├── FileTree.vue        # Recursive File Tree
-│   │   ├── LabDashboard.vue    # Lab Dashboard
-│   │   ├── PetalBackground.vue # Animation logic
-│   │   └── ...                 # Other tools
-│   └── constants.ts  # Constants (e.g., Mock Data, i18n text)
-├── public/           # Static Assets
-└── notes/            # Where your Markdown notes live
+1.  **HTML (Structure)**: 
+    *   *Theory*: The skeleton. Defines WHAT is on the page.
+    *   *Project*: Check `index.html`. It's nearly empty (`<div id="app"></div>`). Why? Because Vue is a **SPA (Single Page Application)**. It takes over this div and injects content dynamically via JS.
+2.  **CSS (Presentation)**: 
+    *   *Theory*: The skin. Defines HOW it looks.
+    *   *Project*: We use **Tailwind CSS** (e.g., `bg-sakura-50`) and component `<style>` tags to define the pink aesthetics and animations.
+3.  **JavaScript (Behavior)**: 
+    *   *Theory*: The soul. Defines HOW it interacts.
+    *   *Project*: The sidebar toggling, note switching, and lab interactions are all powered by TypeScript logic.
+
+## 2. Vue: The Progressive Framework
+
+Vue is a **progressive** framework for **building user interfaces** (`source-2.md`).
+
+### "Data-Driven View"
+In traditional JS, you manually touch the DOM. In Vue, you only touch **Data**.
+
+**Source Code (`App.vue`)**:
+```typescript
+// We define data
+const fileSystem = ref([]); 
+
+// We DO NOT write document.createElement...
+// Vue automatically renders the file tree based on fileSystem
 ```
 
-## 2. It all starts with index.html
+### "Progressive"
+*   **Partial**: You can use Vue in just one HTML file (like the Quick Start in `source-2.md`).
+*   **Full Stack**: Or build a full engineering project like this blog (Vite + Vue 3).
 
-Open `index.html` in the project root. Unlike traditional webpages filled with `div`s, the HTML of a Vue project is usually very empty:
+## 3. Bootstrapping
 
-```html
-<body>
-  <div id="app"></div> <!-- Mount Point -->
-  <script type="module" src="/src/main.ts"></script>
-</body>
-```
-
-**Principle**:
-Vue will take over the div with `id="app"` and "stuff" all the components we write into it. This is the core of **SPA (Single Page Application)**—the page never truly refreshes, JS simply swaps the content inside the div.
-
-## 3. main.ts: Starting the Engine
-
-`src/main.ts` is the commander.
+Starts at `index.tsx`:
 
 ```typescript
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+// 1. Create App Instance
+const app = createApp(App);
+// 2. Mount to #app in index.html
+app.mount('#app');
 ```
 
-This code means:
-1. Create a Vue application instance.
-2. Use `App.vue` as the root component.
-3. Mount it to `#app` in `index.html`.
+## 4. Single File Component (SFC)
 
-## 4. App.vue: Page Skeleton
+`components/AppSidebar.vue` demonstrates the standard `.vue` format:
 
-`App.vue` is the core file. In the latest architecture, it acts mainly as a **Layout Container** and **State Manager**:
+*   **`<template>`**: HTML Structure.
+*   **`<script setup>`**: JS Logic.
+*   **`<style>`**: CSS Styles.
 
-1.  **Template (HTML)**: It includes `<AppSidebar>` to handle complex sidebar logic, `<PetalBackground>` for animations, while the main area renders Markdown content.
-2.  **Script (JS/TS)**: It holds global state (like `currentFile`, `isDark`) and passes data down to `<AppSidebar>` via **Props**.
-3.  **Style (CSS)**: Uses Tailwind CSS to handle global Flex layout.
-
-Extracting navigation logic into `AppSidebar.vue` keeps `App.vue` clean and follows the "Separation of Concerns" principle. In the next chapter, we will dive into the soul of Vue 3—**Reactivity**.
+This **Separation of Concerns** keeps code clean and maintainable.

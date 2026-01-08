@@ -2,7 +2,7 @@
 <template>
   <div class="bg-white/80 dark:bg-gray-800/80 p-6 rounded-2xl border border-indigo-100 dark:border-gray-700 shadow-sm backdrop-blur-md">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-      <p class="text-xs text-gray-500 dark:text-gray-400">{{ t.lab_html_info }}</p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex-1">{{ t.lab_html_info }}</p>
       
       <!-- View Mode Toggle -->
       <div class="bg-indigo-50 dark:bg-gray-900 p-1 rounded-lg flex gap-1 flex-shrink-0">
@@ -26,37 +26,68 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       
       <!-- Editor -->
-      <div class="flex flex-col h-full min-h-[300px]">
-        <div class="bg-gray-800 text-gray-300 text-xs px-4 py-2 rounded-t-lg font-bold flex justify-between items-center">
-          <span>HTML Input</span>
-          <span class="text-[10px] bg-gray-700 px-2 py-0.5 rounded">Editable</span>
+      <div class="flex flex-col h-full min-h-[400px]">
+        <div class="bg-gray-800 text-gray-300 text-xs px-4 py-2 rounded-t-lg font-bold flex justify-between items-center border-b border-gray-700">
+          <div class="flex gap-2">
+            <div class="w-3 h-3 rounded-full bg-red-500"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <div class="w-3 h-3 rounded-full bg-green-500"></div>
+          </div>
+          <span class="text-[10px] bg-gray-700 px-2 py-0.5 rounded opacity-70">index.html (Editable)</span>
         </div>
         <textarea 
           v-model="htmlCode" 
-          class="w-full flex-1 bg-[#1e1e1e] text-blue-300 p-4 font-mono text-sm focus:outline-none resize-none rounded-b-lg shadow-inner custom-scrollbar leading-relaxed"
+          @input="simulateRender"
+          class="w-full flex-1 bg-[#1e1e1e] text-blue-300 p-4 font-mono text-sm focus:outline-none resize-none shadow-inner custom-scrollbar leading-relaxed"
           spellcheck="false"
         ></textarea>
         
-        <div class="mt-4 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-           <button @click="setTemplate('nested')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-xs font-medium rounded hover:bg-indigo-100 transition-colors whitespace-nowrap">Nested Divs</button>
-           <button @click="setTemplate('list')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-xs font-medium rounded hover:bg-indigo-100 transition-colors whitespace-nowrap">List & Button</button>
-           <button @click="setTemplate('card')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-xs font-medium rounded hover:bg-indigo-100 transition-colors whitespace-nowrap">User Card</button>
-           <button @click="setTemplate('flex')" class="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 text-xs font-medium rounded hover:bg-indigo-100 transition-colors whitespace-nowrap">Flex Layout</button>
+        <!-- Preset Buttons -->
+        <div class="bg-[#252526] p-2 flex gap-2 overflow-x-auto rounded-b-lg border-t border-gray-700 scrollbar-none">
+           <button @click="setTemplate('news')" class="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 text-[10px] font-medium rounded transition-colors whitespace-nowrap border border-indigo-500/30">📰 News Article</button>
+           <button @click="setTemplate('card')" class="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 text-[10px] font-medium rounded transition-colors whitespace-nowrap border border-indigo-500/30">🪪 ID Card</button>
+           <button @click="setTemplate('list')" class="px-3 py-1.5 bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/40 text-[10px] font-medium rounded transition-colors whitespace-nowrap border border-indigo-500/30">📝 Todo List</button>
         </div>
       </div>
 
-      <!-- Preview -->
-      <div class="flex flex-col h-full min-h-[300px]">
-         <div class="bg-white dark:bg-gray-700 text-gray-500 dark:text-gray-300 text-xs px-4 py-2 rounded-t-lg font-bold border border-b-0 border-gray-200 dark:border-gray-600 flex justify-between">
-          <span>{{ debugMode ? t.lab_html_debug : t.lab_html_preview }}</span>
-        </div>
-        <div class="relative flex-1 bg-white dark:bg-gray-800 p-4 rounded-b-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+      <!-- Preview & Kernel Simulator -->
+      <div class="flex flex-col h-full min-h-[400px]">
+         <!-- Kernel Status Bar (Simulation) -->
+         <div class="bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 p-3 rounded-t-lg flex flex-col gap-2">
+            <div class="flex justify-between items-center text-xs font-bold text-gray-500 dark:text-gray-400">
+               <span>{{ t.lab_html_process }}</span>
+               <span class="text-indigo-500">{{ renderStatusText }}</span>
+            </div>
+            <!-- Progress Bar -->
+            <div class="w-full h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+               <div 
+                 class="h-full bg-indigo-500 transition-all duration-300 ease-out"
+                 :style="{ width: renderProgress + '%' }"
+               ></div>
+            </div>
+            <!-- Phases Indicators -->
+            <div class="flex justify-between text-[8px] uppercase font-bold text-gray-400">
+               <span :class="{'text-indigo-500': renderStep >= 1}">Parse</span>
+               <span :class="{'text-indigo-500': renderStep >= 2}">DOM Tree</span>
+               <span :class="{'text-indigo-500': renderStep >= 3}">Layout</span>
+               <span :class="{'text-indigo-500': renderStep >= 4}">Paint</span>
+            </div>
+         </div>
+
+        <div class="relative flex-1 bg-white dark:bg-gray-800 p-4 rounded-b-lg border border-gray-200 dark:border-gray-600 overflow-hidden shadow-inner">
            <!-- Rendered Content with Scoped Styles -->
            <div 
-             class="html-visualizer-sandbox h-full w-full overflow-auto custom-scrollbar" 
-             :class="{'debug-mode': debugMode}"
-             v-html="htmlCode"
+             class="html-visualizer-sandbox h-full w-full overflow-auto custom-scrollbar transition-opacity duration-300" 
+             :class="{'debug-mode': debugMode, 'opacity-50 blur-[1px]': renderStep < 4}"
+             v-html="renderedCode"
            ></div>
+
+           <!-- Loading Overlay Simulation -->
+           <div v-if="renderStep < 4" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div class="bg-black/70 text-white px-4 py-2 rounded-lg text-xs font-mono animate-pulse">
+                 ⚙️ Kernel Working...
+              </div>
+           </div>
         </div>
       </div>
 
@@ -65,56 +96,112 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { I18N } from '../constants';
+import _ from 'lodash';
 
 const props = defineProps<{
   lang: 'en' | 'zh';
 }>();
 
 const t = computed(() => I18N[props.lang]);
-const debugMode = ref(true);
+const debugMode = ref(false);
 
+// Kernel Simulation State
+const renderProgress = ref(100);
+const renderStep = ref(4); // 0: Idle, 1: Parse, 2: DOM, 3: Style/Layout, 4: Paint
+const renderStatusText = ref('Idle');
+
+// Templates based on Source.md concepts
 const templates = {
-  nested: `<div class="p-4">
-  Parent Div
-  <div class="m-4 p-4">
-    Child Div
-    <div class="m-4 p-4">
-      Grandchild
+  news: `<!-- News Article Structure -->
+<article style="font-family: serif; max-width: 400px; margin: 0 auto;">
+  <h1 style="color: #333; border-bottom: 2px solid #d00;">Frontend News</h1>
+  <p style="color: #666; font-style: italic;">Published on: 2023-11-18</p>
+  
+  <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=400&q=80" style="width: 100%; border-radius: 8px; margin: 10px 0;" />
+  
+  <p style="line-height: 1.6;">
+    HTML provides the structure, while CSS handles the presentation. 
+    Notice how this text is styled to be readable.
+  </p>
+  
+  <a href="#" style="display: inline-block; background: #d00; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">Read More</a>
+</article>`,
+  
+  card: `<div style="border: 1px solid #ddd; border-radius: 12px; padding: 16px; display: flex; align-items: center; gap: 16px; background: #fafafa; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+  <img src="https://ui-avatars.com/api/?name=Sakura+Vue&background=f43f72&color=fff" style="width: 60px; height: 60px; border-radius: 50%;" />
+  <div>
+    <h3 style="margin: 0; color: #333;">Sakura Vue</h3>
+    <p style="margin: 5px 0 0 0; color: #777; font-size: 14px;">Frontend Developer</p>
+    <div style="margin-top: 8px;">
+       <span style="background: #e0f2fe; color: #0284c7; padding: 2px 8px; border-radius: 10px; font-size: 10px;">HTML</span>
+       <span style="background: #fce7f3; color: #db2777; padding: 2px 8px; border-radius: 10px; font-size: 10px;">CSS</span>
     </div>
   </div>
 </div>`,
-  list: `<h3>My Todo List</h3>
-<ul>
-  <li>Learn HTML</li>
-  <li>
-    <span>Learn CSS</span>
-    <button>Done</button>
+
+  list: `<h3 style="color: #4f46e5;">My Learning Path</h3>
+<ul style="padding-left: 20px;">
+  <li style="margin-bottom: 8px;">
+    <strong>HTML5</strong> - Structure
   </li>
-  <li>Learn Vue</li>
-</ul>`,
-  card: `<div style="display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #eee; border-radius: 8px;">
-  <img src="https://ui-avatars.com/api/?name=Vue&background=random" width="50" style="border-radius: 50%;" />
-  <div>
-    <h4 style="margin: 0;">User Card</h4>
-    <p style="margin: 0; color: #888;">This is a description.</p>
-  </div>
-</div>`,
-  flex: `<div style="display: flex; gap: 10px; height: 100%;">
-  <div style="flex: 1; background: #f0f9ff; padding: 10px;">Sidebar</div>
-  <div style="flex: 2; background: #fff0f5; padding: 10px;">
-     <h2>Main Content</h2>
-     <p>Flexbox makes layout easy!</p>
-  </div>
-</div>`
+  <li style="margin-bottom: 8px; color: #db2777;">
+    <strong>CSS3</strong> - Presentation (Current)
+  </li>
+  <li style="color: #9ca3af;">
+    JavaScript - Behavior (Pending)
+  </li>
+</ul>`
 };
 
-const htmlCode = ref(templates.nested);
+const htmlCode = ref(templates.news);
+const renderedCode = ref(templates.news);
+
+// Simulation Logic
+const updateRender = () => {
+    // 1. Parse
+    renderStep.value = 1;
+    renderProgress.value = 25;
+    renderStatusText.value = t.value.lab_html_status_parse;
+
+    setTimeout(() => {
+        // 2. DOM
+        renderStep.value = 2;
+        renderProgress.value = 50;
+        renderStatusText.value = t.value.lab_html_status_dom;
+        
+        setTimeout(() => {
+            // 3. Style
+            renderStep.value = 3;
+            renderProgress.value = 75;
+            renderStatusText.value = t.value.lab_html_status_style;
+
+            setTimeout(() => {
+                // 4. Paint
+                renderStep.value = 4;
+                renderProgress.value = 100;
+                renderStatusText.value = t.value.lab_html_status_paint;
+                renderedCode.value = htmlCode.value; // Actually apply HTML
+                
+                setTimeout(() => {
+                    renderStatusText.value = t.value.lab_html_status_idle;
+                }, 500);
+            }, 300);
+        }, 300);
+    }, 200);
+};
+
+const simulateRender = _.debounce(updateRender, 1000);
 
 const setTemplate = (key: keyof typeof templates) => {
   htmlCode.value = templates[key];
+  updateRender();
 };
+
+onMounted(() => {
+    renderStatusText.value = t.value.lab_html_status_idle;
+});
 </script>
 
 <style scoped>
@@ -122,38 +209,28 @@ const setTemplate = (key: keyof typeof templates) => {
   Debug Mode Styles using :deep() to penetrate v-html content
 */
 .html-visualizer-sandbox.debug-mode :deep(*) {
-  border: 2px dashed rgba(99, 102, 241, 0.4) !important; /* Indigo */
-  margin: 5px !important;
-  padding: 5px !important;
-  border-radius: 4px;
-  background-color: rgba(99, 102, 241, 0.05);
-  transition: all 0.3s;
+  outline: 1px dashed rgba(99, 102, 241, 0.5) !important; /* Indigo */
+  position: relative;
 }
 
-.html-visualizer-sandbox.debug-mode :deep(*:hover) {
-  border-color: #f43f72 !important; /* Sakura */
-  background-color: rgba(244, 63, 114, 0.1);
+.html-visualizer-sandbox.debug-mode :deep(*):hover {
+  outline: 2px solid #f43f72 !important; /* Sakura */
+  background-color: rgba(244, 63, 114, 0.05);
   cursor: default;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Default Styles to make unstyled HTML look decent in Preview Mode */
-.html-visualizer-sandbox :deep(h3), .html-visualizer-sandbox :deep(h4), .html-visualizer-sandbox :deep(h2) {
-  font-weight: bold;
-  margin-bottom: 0.5em;
-}
-.html-visualizer-sandbox :deep(ul) {
-  list-style-type: disc;
-  padding-left: 1.5em;
-}
-.html-visualizer-sandbox :deep(button) {
+/* Tooltip on hover in debug mode */
+.html-visualizer-sandbox.debug-mode :deep(*):hover::after {
+  content: "<" attr(tagName) ">"; /* Note: standard CSS can't grab tagName easily without JS, this is pseudo */
+  content: "Element";
+  position: absolute;
+  top: -15px;
+  left: 0;
   background: #f43f72;
   color: white;
-  border: none;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-left: 5px;
-  font-size: 0.8em;
-  cursor: pointer;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  z-index: 10;
 }
 </style>

@@ -1,67 +1,67 @@
-# 01. 项目结构与 Vue 入门 🌸
 
-> 欢迎来到前端修炼场！不同于枯燥的文档，我们将**直接剖析这个博客本身的源码**，带你从零看懂 Vue 3 项目。
+# 01. Web 标准与 Vue 架构解析 🌸
 
-## 1. 这是一个什么样的项目？
+> **学习目标**: 理解 Web 标准三剑客，掌握 Vue 渐进式框架的概念，了解单页面应用 (SPA) 的启动流程。
+> **参考教材**: `source.md` (Web标准), `source-2.md` (Vue概述)
 
-这是一个纯静态的 Vue 3 单页应用 (SPA)。
-源码就在你眼前，点击右上角的 **🖊️ (查看源码)** 按钮，你可以随时查看本文档的 Markdown 源码。而查看项目代码，可以去 Github 仓库。
+## 1. Web 标准三剑客 (The Triad)
 
-我们先看看文件结构 (File Structure)：
+正如 `source.md` 教程中所述，Web 开发的基础是三项核心技术。在 **Sakura Notes** 这个项目中，它们的分工如下：
 
-```
-sakura-notes/
-├── index.html        # 入口 HTML (万物之源)
-├── src/
-│   ├── main.ts       # Vue 启动入口
-│   ├── App.vue       # 根布局容器 (Layout)
-│   ├── components/   # 组件文件夹
-│   │   ├── AppSidebar.vue      # 左侧侧边栏 (导航逻辑)
-│   │   ├── FileTree.vue        # 递归文件树组件
-│   │   ├── LabDashboard.vue    # 实验室仪表盘
-│   │   ├── PetalBackground.vue # 樱花背景动画
-│   │   └── ...                 # 其他工具组件
-│   └── constants.ts  # 常量数据 (如 Mock 数据、多语言文本)
-├── public/           # 静态资源
-└── notes/            # 你的 Markdown 笔记存放处
-```
+1.  **HTML (结构 Structure)**: 
+    *   *理论*: 负责网页的骨架，定义页面有什么内容。
+    *   *项目实战*: 打开根目录下的 `index.html`，你会发现它非常简洁。核心只有一行 `<div id="app"></div>`。这是因为 Vue 是一个 **SPA (单页面应用)**，它接管了这个 `div`，所有的页面内容都是由 Vue 通过 JavaScript 动态生成的。
+2.  **CSS (表现 Presentation)**: 
+    *   *理论*: 负责网页的皮肤，定义页面长什么样。
+    *   *项目实战*: 本项目使用了 **Tailwind CSS** (例如 `bg-sakura-50`, `text-teal-500`) 以及组件内的 `<style>` 标签来控制樱花主题的配色和动画效果。
+3.  **JavaScript (行为 Behavior)**: 
+    *   *理论*: 负责网页的灵魂，定义页面怎么动 (交互)。
+    *   *项目实战*: 侧边栏的折叠、笔记的点击切换、实验室的互动，全都是由 TypeScript (JavaScript 的超集) 编写的逻辑驱动的。
 
-## 2. 一切从 index.html 开始
+## 2. Vue：渐进式框架
 
-打开项目根目录的 `index.html`。不同于传统网页满屏的 `div`，Vue 项目的 HTML 通常很空：
+Vue (读音 /vjuː/) 是一款用于**构建用户界面**的**渐进式**框架 (参考 `source-2.md` 第一章)。
 
-```html
-<body>
-  <div id="app"></div> <!-- 挂载点 -->
-  <script type="module" src="/src/main.ts"></script>
-</body>
+### 什么是“数据驱动视图”？
+在传统的开发中，我们需要手动操作 DOM (例如 `document.getElementById('id').innerHTML = ...`)。
+而在 Vue 中，我们只需要关注**数据**。
+
+**源码实战 (`App.vue`)**:
+```typescript
+// 我们定义数据
+const fileSystem = ref([]); 
+
+// 并没有写 document.createElement('li')...
+// 而是通过模板语法，Vue 自动帮我们渲染出左侧的文件树
 ```
 
-**原理**：
-Vue 会接管 `id="app"` 的这个 div，并把我们写的所有组件“塞”进去。这就是 **SPA (Single Page Application)** 的核心——页面从未真正刷新，只是 JS 在不断地替换 div 里的内容。
+### 什么是“渐进式”？
+你不需要一开始就使用全家桶。
+*   **局部改造**: 就像 `source-2.md` 快速入门中演示的，你可以只在一个 HTML 文件中引入 Vue。
+*   **工程化开发**: 也可以像本项目一样，使用 Vite + Vue 3 + TypeScript 构建一个完整的现代化应用。
 
-## 3. main.ts：启动引擎
+## 3. 项目启动流程 (Bootstrapping)
 
-`src/main.ts` 是指挥官。
+一切始于入口文件 `index.tsx` (对应传统 Vue 项目的 `main.js`)：
 
 ```typescript
 import { createApp } from 'vue'
 import App from './App.vue'
 
-createApp(App).mount('#app')
+// 1. 创建应用实例
+const app = createApp(App);
+// 2. 挂载到 index.html 中的 #app 容器
+app.mount('#app');
 ```
 
-这句话的意思是：
-1. 创建一个 Vue 应用实例。
-2. 用 `App.vue` 作为根组件。
-3. 把它挂载 (Mount) 到 `index.html` 里的 `#app` 上。
+当浏览器执行这段代码时，Vue 引擎启动，解析根组件 `App.vue`，并将其渲染的内容“塞”进 `index.html` 的 `#app` 容器中。
 
-## 4. App.vue：页面骨架
+## 4. 单文件组件 (SFC)
 
-`App.vue` 是核心文件，在最新的架构中，它主要充当**布局容器**和**状态管理器**：
+打开 `components/AppSidebar.vue`，你会看到 Vue 标志性的 `.vue` 文件结构，它完美对应了 Web 标准：
 
-1.  **Template (HTML)**: 它引用了 `<AppSidebar>` 来处理复杂的侧边栏逻辑，引用 `<PetalBackground>` 处理背景动画，主内容区则负责渲染 Markdown 内容。
-2.  **Script (JS/TS)**: 它持有全局状态（如当前打开的文件 `currentFile`、主题模式 `isDark`），并通过 **Props** 将数据传递给 `<AppSidebar>`。
-3.  **Style (CSS)**: 使用 Tailwind CSS 定义了全局的 Flex 布局。
+*   **`<template>`**: 定义 HTML 结构。
+*   **`<script setup>`**: 定义 JavaScript 逻辑 (组合式 API)。
+*   **`<style>`**: 定义 CSS 样式。
 
-这种将导航逻辑抽离到 `AppSidebar.vue` 的做法，让 `App.vue` 变得更加清爽，符合组件化开发的“关注点分离”原则。在下一章，我们将深入学习 Vue 3 的灵魂——**响应式系统 (Reactivity)**。
+这种 **关注点分离 (Separation of Concerns)** 的模式，让代码非常易于维护。

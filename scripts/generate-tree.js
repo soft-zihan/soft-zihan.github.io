@@ -1,3 +1,4 @@
+
 import fs from 'fs';
 import path from 'path';
 
@@ -26,9 +27,14 @@ function scanDirectory(dirPath, relativePath) {
 
     const fullPath = path.join(dirPath, item);
     const stat = fs.statSync(fullPath);
-    // Ensure forward slashes for web compatibility
+    
+    // Ensure forward slashes for web compatibility even on Windows
     // relativePath is empty for root items, so we just use item
-    const itemRelativePath = relativePath ? path.join(relativePath, item).replace(/\\/g, '/') : item;
+    let itemRelativePath = relativePath ? path.join(relativePath, item) : item;
+    
+    // CRITICAL: Force forward slashes for files.json consistency on all platforms
+    // This fixes path resolution issues on GitHub Pages
+    itemRelativePath = itemRelativePath.split(path.sep).join('/');
 
     if (stat.isDirectory()) {
       const children = scanDirectory(fullPath, itemRelativePath);
@@ -43,24 +49,3 @@ function scanDirectory(dirPath, relativePath) {
       }
     } else if (item.endsWith('.md')) {
       result.push({
-        name: item,
-        path: itemRelativePath,
-        type: 'file',
-        lastModified: stat.mtime.toISOString()
-      });
-    }
-  }
-  return result;
-}
-
-try {
-  // Directly scan the notes folder and use its children as the root of our tree
-  const fileTree = scanDirectory(notesDir, '');
-  
-  fs.writeFileSync(outputFile, JSON.stringify(fileTree, null, 2));
-  console.log(`✅ Successfully generated public/files.json (${fileTree.length} root items)`);
-} catch (error) {
-  console.error('❌ Error generating tree:', error);
-  // Do not fail hard, just log, so CI can proceed if needed, but usually we want to know.
-  process.exit(1);
-}
