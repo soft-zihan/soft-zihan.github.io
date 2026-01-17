@@ -87,7 +87,7 @@ export const createPetal = (yStart = -50): Petal => {
 };
 
 // Long press detection helpers
-let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+export let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let longPressStartX = 0;
 let longPressStartY = 0;
 

@@ -1,5 +1,5 @@
 <template>
-  <!-- Container: only captures vortex events, never blocks page interaction -->
+  <!-- Container: pointer-events-none by default, never blocks page interaction -->
   <div 
     class="fixed inset-0 pointer-events-none z-50 overflow-hidden"
   >
@@ -37,13 +37,6 @@
         zIndex: p.isDragging ? 20 : 5
       }"
       @pointerdown="onPointerDown(p, $event)"
-    />
-
-    <!-- Empty area to trigger vortex: pointer-events only when needed -->
-    <div 
-      v-if="!vortexState.active"
-      class="absolute inset-0 pointer-events-auto"
-      @pointerdown="handleLongPressStart"
     />
   </div>
 </template>
@@ -99,10 +92,22 @@ const onPointerUp = () => {
   window.removeEventListener('pointerup', onPointerUp);
 };
 
-// Long press for vortex effect
-const handleLongPressStart = (e: PointerEvent) => {
-  // Only trigger on the empty background, not on petals
-  if ((e.target as HTMLElement).classList.contains('pointer-events-auto')) return;
+// Long press for vortex effect - use document listener to avoid blocking
+const handleDocumentPointerDown = (e: PointerEvent) => {
+  const target = e.target as HTMLElement;
+  
+  // Don't start long press if:
+  // 1. Clicking on a petal (has cursor-grab class)
+  // 2. Clicking on an interactive element (button, link, input, etc.)
+  // 3. Already dragging
+  if (
+    draggedPetalId.value !== null ||
+    target.closest('.cursor-grab') ||
+    target.closest('button, a, input, textarea, select, [role="button"], [tabindex]')
+  ) {
+    return;
+  }
+  
   startLongPress(e.clientX, e.clientY);
 };
 
@@ -111,6 +116,17 @@ const handleLongPressMove = (e: PointerEvent) => {
 };
 
 const handleLongPressEnd = () => {
+  endLongPress();
+};
+
+// Global window listeners for long press tracking
+const handleWindowPointerMove = (e: PointerEvent) => {
+  if (vortexState.value.active || longPressTimer) {
+    updateLongPress(e.clientX, e.clientY);
+  }
+};
+
+const handleWindowPointerUp = () => {
   endLongPress();
 };
 
@@ -128,12 +144,23 @@ onMounted(() => {
     petals.value.push(createPetal(Math.random() * window.innerHeight * 0.8));
   }
   animationFrameId = requestAnimationFrame(update);
+  
+  // Add document listener for long press detection
+  document.addEventListener('pointerdown', handleDocumentPointerDown, { passive: true });
+  // Add global listeners for long press tracking
+  window.addEventListener('pointermove', handleWindowPointerMove, { passive: true });
+  window.addEventListener('pointerup', handleWindowPointerUp, { passive: true });
+  window.addEventListener('pointercancel', handleWindowPointerUp, { passive: true });
 });
 
 onUnmounted(() => {
   cancelAnimationFrame(animationFrameId);
+  document.removeEventListener('pointerdown', handleDocumentPointerDown);
   window.removeEventListener('pointermove', onPointerMove);
   window.removeEventListener('pointerup', onPointerUp);
+  window.removeEventListener('pointermove', handleWindowPointerMove);
+  window.removeEventListener('pointerup', handleWindowPointerUp);
+  window.removeEventListener('pointercancel', handleWindowPointerUp);
 });
 </script>
 
