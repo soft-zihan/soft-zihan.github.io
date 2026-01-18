@@ -325,8 +325,11 @@
                 </div>
 
                 <div class="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col">
-                  <div class="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400">
-                    {{ lang === 'zh' ? '预览' : 'Preview' }}
+                  <div class="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                    <span>{{ lang === 'zh' ? '预览' : 'Preview' }}</span>
+                    <span class="text-[10px] text-gray-400" v-if="importPreviewStatus">
+                      {{ importPreviewStatus }}
+                    </span>
                   </div>
                   <div class="flex-1 p-4 overflow-y-auto prose prose-sakura dark:prose-invert max-w-none" v-html="importPreviewHtml"></div>
                 </div>
@@ -390,6 +393,7 @@ const importFiles = ref<File[]>([])
 const importSelected = ref<string[]>([])
 const importPreviewPath = ref('')
 const importPreviewContent = ref('')
+const importPreviewStatus = ref('')
 const importTags = ref<string[]>([])
 const importTagInput = ref('')
 const importAuthorName = ref('')
@@ -397,6 +401,7 @@ const importAuthorUrl = ref('')
 const isImporting = ref(false)
 const importProgress = ref(0)
 const importError = ref('')
+const importImageUrlCache = ref(new Map<string, string>())
 
 // 从设置中读取配置
 const repoOwner = ref('soft-zihan')
@@ -899,6 +904,110 @@ function normalizePath(raw: string) {
   return stack.join('/')
 }
 
+const prepareImportPreview = async (relPath: string) => {
+  const item = importMdFiles.value.find((m: { relPath: string }) => m.relPath === relPath)
+  if (!item) {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+    return
+  }
+
+  const rawText = await item.file.text()
+  const token = getToken()
+  if (!token) {
+    importPreviewContent.value = rawText
+    importPreviewStatus.value = props.lang === 'zh' ? '未配置 Token，无法上传图片' : 'Token missing, image upload skipped'
+    return
+  }
+
+  importPreviewStatus.value = props.lang === 'zh' ? '图片上传中...' : 'Uploading images...'
+
+  const imageFiles = importFiles.value.filter((f: File) => /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name))
+  const imageMap = new Map<string, File>()
+  const imageNameMap = new Map<string, File>()
+  for (const file of imageFiles) {
+    const rel = normalizePath(getFileRelPath(file, importMode.value))
+    imageMap.set(rel, file)
+    imageMap.set(encodeURI(rel), file)
+    imageMap.set(safeDecode(rel), file)
+    imageNameMap.set(file.name, file)
+    imageNameMap.set(encodeURI(file.name), file)
+    imageNameMap.set(safeDecode(file.name), file)
+  }
+
+  const imageRefs = extractImagePaths(rawText)
+  const localImageRefs = new Set<string>()
+  for (const raw of imageRefs) {
+    const { path } = normalizeImageToken(raw)
+    if (!path || isDataOrLocalToken(path) || isHttpUrl(path)) continue
+    const resolved = resolveImagePath(relPath, path)
+    if (resolved && imageMap.has(resolved)) {
+      localImageRefs.add(resolved)
+      continue
+    }
+    const base = getImageBasename(path)
+    if (base && imageNameMap.has(base)) localImageRefs.add(base)
+  }
+
+  const total = localImageRefs.size
+  if (total === 0) {
+    importPreviewContent.value = rawText
+    importPreviewStatus.value = props.lang === 'zh' ? '无本地图片' : 'No local images'
+    return
+  }
+
+  const imageUrlMap = new Map<string, string>()
+  let success = 0
+  let failed = 0
+
+  for (const ref of localImageRefs) {
+    const cached = getCachedImageUrl(ref, importImageUrlCache.value)
+    if (cached) {
+      imageUrlMap.set(ref, cached)
+      setCacheForKey(ref, cached, importImageUrlCache.value)
+      success += 1
+      continue
+    }
+
+    const file = imageMap.get(ref)
+      || imageNameMap.get(ref)
+      || imageNameMap.get(getImageBasename(ref))
+
+    if (!file) {
+      failed += 1
+      continue
+    }
+
+    const url = await uploadImage(
+      { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+      file,
+      'notes/images'
+    )
+    if (url) {
+      imageUrlMap.set(ref, url)
+      setCacheForKey(ref, url, importImageUrlCache.value)
+      success += 1
+    } else {
+      failed += 1
+    }
+  }
+
+  const replaced = imageUrlMap.size > 0
+    ? replaceLocalImages(rawText, relPath, imageUrlMap)
+    : rawText
+
+  importPreviewContent.value = replaced
+  if (failed === 0) {
+    importPreviewStatus.value = props.lang === 'zh'
+      ? `图片上传成功：${success}/${total}`
+      : `Images uploaded: ${success}/${total}`
+  } else {
+    importPreviewStatus.value = props.lang === 'zh'
+      ? `图片上传：${success}/${total} 成功，${failed} 失败`
+      : `Images: ${success}/${total} ok, ${failed} failed`
+  }
+}
+
 const openImportModal = async (files: File[], mode: 'file' | 'folder') => {
   importFiles.value = files
   importMode.value = mode
@@ -909,7 +1018,12 @@ const openImportModal = async (files: File[], mode: 'file' | 'folder') => {
   }
   importSelected.value = mdList.map((m: { relPath: string }) => m.relPath)
   importPreviewPath.value = mdList[0]?.relPath || ''
-  importPreviewContent.value = mdList[0] ? await mdList[0].file.text() : ''
+  if (importPreviewPath.value) {
+    await prepareImportPreview(importPreviewPath.value)
+  } else {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+  }
 
   const savedTags = localStorage.getItem(`publish_tags_${props.lang}`)
   if (savedTags) {
@@ -998,6 +1112,22 @@ function getImageBasename(p: string) {
   const cleaned = safeDecode(p).split('?')[0].split('#')[0]
   const parts = cleaned.split('/')
   return parts[parts.length - 1] || ''
+}
+
+function getCachedImageUrl(key: string, cache: Map<string, string>) {
+  const candidates = [key, safeDecode(key), encodeURI(key)]
+  const base = getImageBasename(key)
+  if (base) candidates.push(base)
+  return candidates.map(k => cache.get(k)).find(Boolean) || null
+}
+
+function setCacheForKey(key: string, url: string, cache: Map<string, string>) {
+  const candidates = [key, safeDecode(key), encodeURI(key)]
+  const base = getImageBasename(key)
+  if (base) candidates.push(base)
+  for (const c of candidates) {
+    cache.set(c, url)
+  }
 }
 
 function getImageKeyCandidates(mdRelPath: string, raw: string) {
@@ -1137,8 +1267,21 @@ const publishImportedFiles = async () => {
     const imageUrlMap = new Map<string, string>()
     const imageFolder = 'notes/images'
     for (const imgPath of localImageRefs) {
+      const cached = getCachedImageUrl(imgPath, importImageUrlCache.value)
+      if (cached) {
+        imageUrlMap.set(imgPath, cached)
+        setCacheForKey(imgPath, cached, importImageUrlCache.value)
+        step += 1
+        importProgress.value = Math.round((step / totalSteps) * 100)
+        continue
+      }
+
       const file = imageMap.get(imgPath) || imageNameMap.get(imgPath)
-      if (!file) continue
+      if (!file) {
+        step += 1
+        importProgress.value = Math.round((step / totalSteps) * 100)
+        continue
+      }
       const url = await uploadImage(
         { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
         file,
@@ -1148,6 +1291,7 @@ const publishImportedFiles = async () => {
         imageUrlMap.set(imgPath, url)
         const base = getImageBasename(imgPath)
         if (base) imageUrlMap.set(base, url)
+        setCacheForKey(imgPath, url, importImageUrlCache.value)
       }
       step += 1
       importProgress.value = Math.round((step / totalSteps) * 100)
@@ -1302,8 +1446,12 @@ watch(() => props.lang, () => {
 watch(pathSuffix, () => syncTargetFolder())
 
 watch(importPreviewPath, async () => {
-  const item = importMdFiles.value.find((m: { relPath: string }) => m.relPath === importPreviewPath.value)
-  importPreviewContent.value = item ? await item.file.text() : ''
+  if (!importPreviewPath.value) {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+    return
+  }
+  await prepareImportPreview(importPreviewPath.value)
 })
 </script>
 
