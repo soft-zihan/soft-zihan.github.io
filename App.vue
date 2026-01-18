@@ -240,6 +240,7 @@
               v-html="renderedHtml" 
               class="markdown-body dark:text-gray-300 selection:bg-sakura-200 dark:selection:bg-sakura-900"
               @click="handleContentClick"
+              @mousedown="selectionMenu.locked = true"
               @mouseup="handleSelection"
               @touchend="handleSelection"
               @contextmenu="handleSelectionContextMenu"
@@ -1111,7 +1112,7 @@ const handleSelection = () => {
     show: true,
     x: rect.left + rect.width / 2,
     y: rect.top - 10,
-    locked: false
+    locked: true
   };
 };
 
@@ -1163,8 +1164,8 @@ const handleSelectionChange = () => {
     return;
   }
   lastSelectionRange.value = range.cloneRange();
-  if (sel.isCollapsed && !selectionMenu.value.locked) {
-    selectionMenu.value.show = false;
+  if (sel.isCollapsed) {
+    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
     return;
   }
   handleSelection();
