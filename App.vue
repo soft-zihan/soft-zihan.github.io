@@ -1164,52 +1164,76 @@ const handleSelectionChange = () => {
     return;
   }
   lastSelectionRange.value = range.cloneRange();
-  if (sel.isCollapsed) {
-    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
-    return;
-  }
-  handleSelection();
+  if (!sel.isCollapsed) handleSelection();
+};
+
+const getSelectionRangeInViewer = () => {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return null;
+  const range = selection.getRangeAt(0);
+  const viewer = document.getElementById('markdown-viewer');
+  if (!viewer || !viewer.contains(range.startContainer) || !viewer.contains(range.endContainer)) return null;
+  return { range, viewer };
 };
 
 const applyFormat = (type: 'highlight-yellow' | 'highlight-green' | 'highlight-blue' | 'highlight-pink' | 'underline-wavy' | 'underline-double') => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    try {
-        const span = document.createElement('span');
-        switch (type) {
-            case 'highlight-yellow':
-                span.className = 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-green':
-                span.className = 'bg-green-200 dark:bg-green-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-blue':
-                span.className = 'bg-blue-200 dark:bg-blue-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-pink':
-                span.className = 'bg-pink-200 dark:bg-pink-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'underline-wavy':
-                span.className = 'underline decoration-wavy decoration-sakura-500 underline-offset-4';
-                break;
-            case 'underline-double':
-                span.className = 'underline decoration-double decoration-blue-500 underline-offset-4';
-                break;
-        }
-        range.surroundContents(span);
-        selection.removeAllRanges();
-        selectionMenu.value.show = false;
-        selectionMenu.value.locked = false;
-    } catch (e) {
-        showToast(t.value.selection_error);
-    }
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) return;
+
+  const info = getSelectionRangeInViewer();
+  if (!info) return;
+  const { range, viewer } = info;
+
+  const classMap: Record<string, string> = {
+    'highlight-yellow': 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm',
+    'highlight-green': 'bg-green-200 dark:bg-green-800/60 rounded px-0.5 transition-colors shadow-sm',
+    'highlight-blue': 'bg-blue-200 dark:bg-blue-800/60 rounded px-0.5 transition-colors shadow-sm',
+    'highlight-pink': 'bg-pink-200 dark:bg-pink-800/60 rounded px-0.5 transition-colors shadow-sm',
+    'underline-wavy': 'underline decoration-wavy decoration-sakura-500 underline-offset-4',
+    'underline-double': 'underline decoration-double decoration-blue-500 underline-offset-4'
+  };
+
+  try {
+    const walker = document.createTreeWalker(viewer, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      }
+    });
+
+    const nodes: Text[] = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+
+    nodes.forEach((node) => {
+      let start = 0;
+      let end = node.nodeValue?.length || 0;
+      if (node === range.startContainer) start = range.startOffset;
+      if (node === range.endContainer) end = range.endOffset;
+      if (start === end) return;
+
+      let target = node;
+      if (start > 0) target = target.splitText(start);
+      if (end - start < target.length) target.splitText(end - start);
+
+      const span = document.createElement('span');
+      span.className = classMap[type] || '';
+      target.parentNode?.insertBefore(span, target);
+      span.appendChild(target);
+    });
+
+    selection.removeAllRanges();
+    selectionMenu.value.show = false;
+    selectionMenu.value.locked = false;
+  } catch (e) {
+    showToast(t.value.selection_error);
+  }
 };
 
 // Lightbox logic & Link Interception
 const handleContentClick = async (e: MouseEvent) => {
   const target = e.target as HTMLElement;
+  const sel = window.getSelection();
+  if (selectionMenu.value.locked && sel && !sel.isCollapsed) return;
   
   // 1. Handle Lightbox
   if (target.tagName === 'IMG') {
