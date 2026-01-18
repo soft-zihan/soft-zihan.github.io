@@ -314,7 +314,7 @@ const handleRestore = async (filename: string) => {
 }
 
 const handleDelete = async (backup: any) => {
-  if (!confirm(\`确定要删除备份 "\${parseBackupFilename(backup.name).author}" 吗？\`)) {
+  if (!confirm(`确定要删除备份 "${parseBackupFilename(backup.name).author}" 吗？`)) {
     return
   }
   
