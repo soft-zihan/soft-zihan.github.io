@@ -198,6 +198,14 @@ export const I18N = {
     res_cat_frontend_games: "Frontend Games",
     res_cat_vue_projects: "Vue Mini Projects",
 
+    // Vue Advanced Lab (NEW)
+    lab_composables: "Composables",
+    lab_composables_desc: "Learn to extract reusable logic as composables",
+    lab_pinia: "Pinia State Management",
+    lab_pinia_desc: "Master Vue 3 official state management",
+    lab_vue_advanced: "Vue Advanced",
+    lab_vue_advanced_desc: "Composables, Pinia, and component communication",
+
     // JS Basics Lab (NEW)
     lab_js_basics: "JavaScript Fundamentals",
     lab_js_basics_desc: "Variables, Functions, Arrays, Objects",
@@ -459,6 +467,14 @@ export const I18N = {
     res_cat_platform: "互动学习平台",
     res_cat_frontend_games: "前端游戏化学习",
     res_cat_vue_projects: "Vue 实战项目",
+
+    // Vue Advanced Lab (NEW)
+    lab_composables: "Composables 组合式函数",
+    lab_composables_desc: "学习将逻辑抽离为可复用的组合式函数",
+    lab_pinia: "Pinia 状态管理",
+    lab_pinia_desc: "掌握 Vue 3 官方状态管理库",
+    lab_vue_advanced: "Vue 进阶",
+    lab_vue_advanced_desc: "Composables、Pinia、组件通信",
 
     // JS Basics Lab (NEW)
     lab_js_basics: "JavaScript 基础语法",

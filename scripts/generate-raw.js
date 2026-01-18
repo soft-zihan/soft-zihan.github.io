@@ -24,7 +24,7 @@ const FILES_TO_GENERATE = [
   'vite.config.ts',
   'index.tsx',
   
-  // components 目录下的所有 Vue 文件
+  // components 目录下的核心 Vue 文件
   'components/AppHeader.vue',
   'components/AppSidebar.vue',
   'components/ArticleCard.vue',
@@ -33,28 +33,57 @@ const FILES_TO_GENERATE = [
   'components/FolderView.vue',
   'components/GiscusComments.vue',
   'components/GlobalAudio.vue',
-  'components/LabAjax.vue',
-  'components/LabClassStyle.vue',
-  'components/LabCodeEvolution.vue',
-  'components/LabDashboard.vue',
-  'components/LabDirectives.vue',
-  'components/LabDom.vue',
-  'components/LabEventHandling.vue',
-  'components/LabHtml.vue',
-  'components/LabHtmlBasics.vue',
-  'components/LabJs.vue',
-  'components/LabLifecycle.vue',
-  'components/LabPropsEmit.vue',
-  'components/LabQuizGame.vue',
-  'components/LabReactivity.vue',
-  'components/LabSlot.vue',
-  'components/LabVueList.vue',
   'components/MusicPlayer.vue',
   'components/PetalBackground.vue',
   'components/SearchModal.vue',
   'components/SettingsModal.vue',
   'components/WallpaperLayer.vue',
   'components/WriteEditor.vue',
+  
+  // lab 实验室组件 - LabDashboard
+  'components/lab/LabDashboard.vue',
+  
+  // lab/stage1-foundation
+  'components/lab/stage1-foundation/LabCodeEvolution.vue',
+  'components/lab/stage1-foundation/LabHtml.vue',
+  'components/lab/stage1-foundation/LabHtmlBasics.vue',
+  
+  // lab/stage2-js-basics
+  'components/lab/stage2-js-basics/LabJsBasics.vue',
+  
+  // lab/stage3-css
+  'components/lab/stage3-css/LabCssBasics.vue',
+  'components/lab/stage3-css/LabCssLayout.vue',
+  
+  // lab/stage4-js-advanced
+  'components/lab/stage4-js-advanced/LabAjax.vue',
+  'components/lab/stage4-js-advanced/LabDom.vue',
+  'components/lab/stage4-js-advanced/LabJs.vue',
+  'components/lab/stage4-js-advanced/LabTypeScript.vue',
+  
+  // lab/stage5-engineering
+  'components/lab/stage5-engineering/LabBuildTools.vue',
+  'components/lab/stage5-engineering/LabCssFrameworks.vue',
+  'components/lab/stage5-engineering/LabModuleSystem.vue',
+  'components/lab/stage5-engineering/LabNpm.vue',
+  'components/lab/stage5-engineering/LabTailwind.vue',
+  
+  // lab/stage6-vue-core
+  'components/lab/stage6-vue-core/LabClassStyle.vue',
+  'components/lab/stage6-vue-core/LabDirectives.vue',
+  'components/lab/stage6-vue-core/LabEventHandling.vue',
+  'components/lab/stage6-vue-core/LabLifecycle.vue',
+  'components/lab/stage6-vue-core/LabReactivity.vue',
+  'components/lab/stage6-vue-core/LabVueList.vue',
+  
+  // lab/stage7-vue-advanced
+  'components/lab/stage7-vue-advanced/LabComposables.vue',
+  'components/lab/stage7-vue-advanced/LabPinia.vue',
+  'components/lab/stage7-vue-advanced/LabPropsEmit.vue',
+  'components/lab/stage7-vue-advanced/LabSlot.vue',
+  
+  // lab/stage8-challenge
+  'components/lab/stage8-challenge/LabQuizGame.vue',
   
   // composables
   'composables/useFile.ts',

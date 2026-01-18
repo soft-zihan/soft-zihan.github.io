@@ -292,12 +292,107 @@ const { name, version } = toRefs(state)
       </div>
     </div>
 
+    <!-- Part 5: Sakura Notes Code Examples -->
+    <div class="max-w-4xl mx-auto bg-gradient-to-r from-sakura-50 to-purple-50 dark:from-sakura-900/20 dark:to-purple-900/20 rounded-2xl p-8 border border-sakura-200 dark:border-sakura-700 shadow-lg">
+      <h3 class="text-lg font-bold text-sakura-800 dark:text-sakura-300 mb-4 flex items-center gap-2">
+        <span class="text-2xl">🌸</span> {{ lang === 'zh' ? '本站源码示例' : 'Sakura Notes Code Examples' }}
+      </h3>
+      
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+        {{ lang === 'zh' ? '看看 Sakura Notes 项目中是如何使用响应式的：' : 'See how Sakura Notes uses reactivity in real code:' }}
+      </p>
+
+      <div class="space-y-4">
+        <!-- appStore example -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded">stores/appStore.ts</span>
+            <span class="text-xs text-gray-500">{{ lang === 'zh' ? '全局状态管理' : 'Global state management' }}</span>
+          </div>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 stores/appStore.ts - 使用 ref 定义全局状态
+const lang = ref&lt;'en' | 'zh'&gt;('zh')    // 语言设置
+const isDark = ref(false)              // 主题模式
+const showParticles = ref(true)        // 花瓣效果
+
+// 用户设置对象 - 也用 ref
+const userSettings = ref({
+  fontSize: 'normal' as 'small' | 'normal' | 'large',
+  fontFamily: 'sans' as 'sans' | 'serif',
+  petalSpeed: 'slow' as 'off' | 'slow' | 'fast'
+})
+
+// computed 派生状态
+const t = computed(() => I18N[lang.value])
+const fontSizeClass = computed(() => {
+  switch (userSettings.value.fontSize) {
+    case 'small': return 'text-sm lg:text-base'
+    case 'large': return 'text-xl lg:text-2xl'
+    default: return 'text-base lg:text-lg'
+  }
+})</pre>
+        </div>
+
+        <!-- useSearch example -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 px-2 py-1 rounded">composables/useSearch.ts</span>
+            <span class="text-xs text-gray-500">{{ lang === 'zh' ? '搜索功能状态' : 'Search state' }}</span>
+          </div>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 composables/useSearch.ts - Composable 中的响应式
+export function useSearch() {
+  // 搜索状态 - ref
+  const searchQuery = ref('')
+  const searchResults = ref&lt;SearchResult[]&gt;([])
+  const isSearching = ref(false)
+  
+  // 搜索索引 - ref 包装复杂对象
+  const searchIndex = ref&lt;MiniSearch | null&gt;(null)
+  
+  // 计算属性
+  const hasResults = computed(() => 
+    searchResults.value.length > 0
+  )
+  
+  return { searchQuery, searchResults, isSearching, hasResults }
+}</pre>
+        </div>
+
+        <!-- musicStore example -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-1 rounded">stores/musicStore.ts</span>
+            <span class="text-xs text-gray-500">{{ lang === 'zh' ? '音乐播放器状态' : 'Music player state' }}</span>
+          </div>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 stores/musicStore.ts - 复杂数组状态
+const playlist = ref&lt;MusicTrack[]&gt;([])
+const currentIndex = ref(0)
+const currentTime = ref(0)
+const duration = ref(0)
+
+// Getter: 当前曲目（派生状态）
+const currentTrack = computed(() => 
+  playlist.value[currentIndex.value] || null
+)
+
+// Getter: 播放进度百分比
+const progress = computed(() => {
+  if (duration.value === 0) return 0
+  return (currentTime.value / duration.value) * 100
+})</pre>
+        </div>
+      </div>
+      
+      <div class="mt-4 p-3 bg-sakura-100 dark:bg-sakura-900/30 rounded-lg text-sm text-sakura-700 dark:text-sakura-300">
+        💡 {{ lang === 'zh' ? '提示：本站大量使用 ref 而非 reactive，因为 ref 更灵活，支持原始类型和对象，且可以整体替换。' : 'Tip: This site prefers ref over reactive because ref is more flexible, supports primitives and objects, and allows full replacement.' }}
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, toRefs } from 'vue';
-import { I18N } from '../constants';
+import { I18N } from '../../../constants';
 
 const props = defineProps<{
   lang: 'en' | 'zh';

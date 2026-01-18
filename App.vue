@@ -488,9 +488,7 @@ import { NodeType } from './types';
 import type { FileNode, BreadcrumbItem, TocItem } from './types';
 
 // Components
-import LabDashboard from './components/LabDashboard.vue';
-import LabEventHandling from './components/LabEventHandling.vue';
-import LabSlot from './components/LabSlot.vue';
+import LabDashboard from './components/lab/LabDashboard.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
 import WallpaperLayer from './components/WallpaperLayer.vue';

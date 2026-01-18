@@ -134,7 +134,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { I18N } from '../constants';
+import { I18N } from '../../../constants';
 
 const props = defineProps<{
   lang: 'en' | 'zh';

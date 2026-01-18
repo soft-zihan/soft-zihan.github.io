@@ -113,7 +113,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import { I18N } from '../constants';
+import { I18N } from '../../../constants';
 import _ from 'lodash';
 import { h } from 'vue';
 
