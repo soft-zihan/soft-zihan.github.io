@@ -25,7 +25,7 @@ export function useWallpapers() {
     
     isLoading.value = true
     try {
-      const response = await fetch('/wallpapers.json')
+      const response = await fetch('./wallpapers.json')
       if (response.ok) {
         wallpapersData.value = await response.json()
       } else {
@@ -60,11 +60,9 @@ export function useWallpapers() {
     
     if (!wallpapers.length) return ''
     
-    // 查找匹配的壁纸
-    const found = wallpapers.find(w => w.filename === filename)
+    // 如果未设置或找不到，回退到第一张
+    const found = wallpapers.find((w: WallpaperItem) => w.filename === filename)
     if (found) return found.path
-    
-    // 没找到则返回第一张
     return wallpapers[0]?.path || ''
   })
   
@@ -82,7 +80,12 @@ export function useWallpapers() {
   }
   
   // 初始化时加载壁纸
-  loadWallpapers()
+  loadWallpapers().then(() => {
+    const wallpapers = currentThemeWallpapers.value
+    if (wallpapers.length && !appStore.currentWallpaperFilename) {
+      appStore.setWallpaper(wallpapers[0].filename)
+    }
+  })
   
   return {
     wallpapersData,

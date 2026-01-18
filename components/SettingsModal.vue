@@ -5,18 +5,15 @@
       
       <!-- Banner Mode -->
       <div class="mb-6">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.banner_settings || 'Banner Mode' }}</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button @click="settings.bannerMode = 'normal'" class="py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'normal' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.banner_settings || 'Background Settings' }}</label>
+          <div class="flex gap-2">
+            <button @click="settings.bannerMode = 'normal'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'normal' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
               <span>🖼️</span> {{ t.banner_normal || 'Normal' }}
             </button>
-            <button @click="settings.bannerMode = 'fullscreen'" class="py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'fullscreen' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+            <button @click="settings.bannerMode = 'fullscreen'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'fullscreen' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
               <span>🖥️</span> {{ t.banner_fullscreen || 'Full' }}
             </button>
-            <button @click="settings.bannerMode = 'background'" class="py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'background' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
-              <span>🎨</span> {{ t.banner_background || 'BG' }}
-            </button>
-            <button @click="settings.bannerMode = 'hide'" class="py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'hide' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+            <button @click="settings.bannerMode = 'hide'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.bannerMode === 'hide' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
               <span>🚫</span> {{ t.banner_hide || 'Hide' }}
             </button>
           </div>

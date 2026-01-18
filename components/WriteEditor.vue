@@ -119,59 +119,19 @@
             
             <div class="flex items-center gap-3">
               <!-- 目录选择 -->
-              <div class="relative">
-                <button 
-                  @click="showFolderBrowser = !showFolderBrowser"
-                  class="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <span>📁</span>
-                  <span class="max-w-[200px] truncate">{{ targetFolder }}</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-                
-                <!-- 目录下拉列表 -->
-                <div 
-                  v-if="showFolderBrowser"
-                  class="absolute bottom-full mb-2 left-0 w-80 max-h-64 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl z-50"
-                >
-                  <div class="p-2 border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500">
-                    {{ lang === 'zh' ? '选择或输入发布目录' : 'Select or enter publish folder' }}
-                  </div>
-                  
-                  <!-- 新建路径输入 -->
-                  <div class="p-2 border-b border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-400 mb-1">
-                      {{ lang === 'zh' ? `新路径将添加到 ${getRootFolder()} 下` : `New path will be under ${getRootFolder()}` }}
-                    </div>
-                    <div class="flex gap-2">
-                      <input 
-                        v-model="customFolder"
-                        type="text"
-                        :placeholder="lang === 'zh' ? '子目录名 (如: 我的分类)' : 'Subfolder name (e.g. MyCategory)'"
-                        class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-gray-900"
-                        @keyup.enter="addCustomFolder"
-                      />
-                      <button 
-                        @click="addCustomFolder"
-                        class="px-2 py-1 text-xs bg-sakura-500 text-white rounded hover:bg-sakura-600"
-                      >
-                        {{ lang === 'zh' ? '添加' : 'Add' }}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    v-for="folder in availableFolders"
-                    :key="folder"
-                    @click="targetFolder = folder; showFolderBrowser = false"
-                    class="px-3 py-2 text-sm cursor-pointer hover:bg-sakura-50 dark:hover:bg-gray-700 transition-colors"
-                    :class="targetFolder === folder ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600' : ''"
-                  >
-                    {{ folder }}
-                  </div>
-                </div>
+              <div class="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg">
+                <span>📁</span>
+                <span class="text-xs text-gray-400">{{ getRootFolder() }}/</span>
+                <input
+                  v-model="pathSuffix"
+                  type="text"
+                  list="folder-suffix-options"
+                  :placeholder="lang === 'zh' ? '子目录 (可选)' : 'Subfolder (optional)'"
+                  class="w-48 text-sm bg-transparent border-0 outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                />
+                <datalist id="folder-suffix-options">
+                  <option v-for="opt in folderSuffixOptions" :key="opt" :value="opt"></option>
+                </datalist>
               </div>
               
               <button 
@@ -179,6 +139,20 @@
                 class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 {{ lang === 'zh' ? '保存草稿' : 'Save Draft' }}
+              </button>
+
+              <button 
+                @click="triggerMarkdownFiles"
+                class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {{ lang === 'zh' ? '导入 Markdown' : 'Import Markdown' }}
+              </button>
+
+              <button 
+                @click="triggerMarkdownFolder"
+                class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {{ lang === 'zh' ? '导入文件夹' : 'Import Folder' }}
               </button>
               
               <button 
@@ -202,6 +176,26 @@
               :style="{ width: publishProgress + '%' }"
             ></div>
           </div>
+
+          <!-- Hidden Inputs: Markdown Import -->
+          <input
+            ref="markdownFileInput"
+            type="file"
+            class="hidden"
+            accept=".md,.markdown"
+            multiple
+            @change="handleMarkdownFiles"
+          />
+          <input
+            ref="markdownFolderInput"
+            type="file"
+            class="hidden"
+            accept=".md,.markdown"
+            multiple
+            webkitdirectory
+            directory
+            @change="handleMarkdownFolder"
+          />
         </div>
       </div>
     </Transition>
@@ -229,9 +223,10 @@ const editorRef = ref<HTMLTextAreaElement | null>(null)
 const title = ref('')
 const content = ref('')
 const targetFolder = ref('notes/zh')
-const customFolder = ref('')
+const pathSuffix = ref('')
 const images = ref<Array<{ id: string; file: File; preview: string }>>([])
-const showFolderBrowser = ref(false)
+const markdownFileInput = ref<HTMLInputElement | null>(null)
+const markdownFolderInput = ref<HTMLInputElement | null>(null)
 
 // 从设置中读取配置
 const repoOwner = ref('soft-zihan')
@@ -269,49 +264,34 @@ const availableFolders = computed(() => {
   return Array.from(new Set(merged))
 })
 
+const folderSuffixOptions = computed(() => {
+  const rootFolder = getRootFolder()
+  return availableFolders.value
+    .filter((f: string) => f.startsWith(rootFolder))
+    .map((f: string) => f.replace(rootFolder, '').replace(/^\/+/, ''))
+    .filter((f: string) => f.length > 0)
+})
+
 // 根据语言获取根目录
 const getRootFolder = () => props.lang === 'zh' ? 'notes/zh' : 'notes/en'
 
-// 添加自定义路径 - 必须在当前语言的 notes 目录下
-const addCustomFolder = () => {
-  let folder = customFolder.value.trim()
-  if (!folder) return
-  
-  const rootFolder = getRootFolder()
-  const langKey = props.lang as 'zh' | 'en'
-  
-  // 统一分隔符
-  folder = folder.replace(/\\/g, '/')
-  // 禁止跨目录
-  if (folder.includes('..') || folder.startsWith('/')) {
+const sanitizeSuffix = (suffix: string) => {
+  let clean = suffix.trim().replace(/\\/g, '/')
+  if (!clean) return ''
+  clean = clean.replace(/^\/+/, '')
+  if (clean.includes('..')) {
     alert(props.lang === 'zh' 
-      ? '路径非法：禁止使用 .. 或以 / 开头' 
-      : 'Invalid path: do not use .. or leading /')
-    return
+      ? '路径非法：禁止使用 ..' 
+      : 'Invalid path: do not use ..')
+    return ''
   }
+  return clean.replace(/\/+$/g, '')
+}
 
-  // 只允许在当前语言根目录下
-  if (folder.startsWith('notes/')) {
-    if (!folder.startsWith(rootFolder)) {
-      alert(props.lang === 'zh' 
-        ? `路径必须在 ${rootFolder} 目录下` 
-        : `Path must be under ${rootFolder}`)
-      return
-    }
-  } else {
-    folder = `${rootFolder}/${folder}`
-  }
-
-  const normalized = folder.replace(/\/+$/g, '')
-  const customList = customFoldersByLang.value[langKey] || []
-  if (!customList.includes(normalized)) {
-    customFoldersByLang.value[langKey] = [normalized, ...customList]
-    localStorage.setItem(`custom_folders_${langKey}`, JSON.stringify(customFoldersByLang.value[langKey]))
-  }
-
-  targetFolder.value = normalized
-  customFolder.value = ''
-  showFolderBrowser.value = false
+const syncTargetFolder = () => {
+  const rootFolder = getRootFolder()
+  const cleanSuffix = sanitizeSuffix(pathSuffix.value)
+  targetFolder.value = cleanSuffix ? `${rootFolder}/${cleanSuffix}` : rootFolder
 }
 
 const hasToken = computed(() => !!localStorage.getItem('github_pat'))
@@ -429,6 +409,49 @@ const handleDrop = async (e: DragEvent) => {
   }
 }
 
+const parseMetaComment = (text: string) => {
+  const result = { tags: [] as string[], author: '', authorUrl: '' }
+  const match = text.match(/^\s*<!--([\s\S]*?)-->/)
+  if (!match) return result
+  const block = match[1]
+  const tagsMatch = block.match(/tags?\s*:\s*([^\n]+)/i)
+  if (tagsMatch) {
+    result.tags = tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(Boolean)
+  }
+  const authorMatch = block.match(/author\s*:\s*([^\n]+)/i)
+  if (authorMatch) result.author = authorMatch[1].trim()
+  const authorUrlMatch = block.match(/authorUrl\s*:\s*([^\n]+)/i)
+  if (authorUrlMatch) result.authorUrl = authorUrlMatch[1].trim()
+  return result
+}
+
+const buildMetaComment = (tags: string[], author: string, authorUrl: string) => {
+  const lines: string[] = []
+  if (tags.length) lines.push(`tags: ${tags.join(', ')}`)
+  if (author) lines.push(`author: ${author}`)
+  if (authorUrl) lines.push(`authorUrl: ${authorUrl}`)
+  if (!lines.length) return ''
+  return `<!--\n${lines.join('\n')}\n-->\n\n`
+}
+
+const applyMetaComment = (text: string, tags: string[], author: string, authorUrl: string) => {
+  const stripped = text.replace(/^\s*<!--[\s\S]*?-->\s*/, '')
+  const metaBlock = buildMetaComment(tags, author, authorUrl)
+  return metaBlock + stripped
+}
+
+const buildTagsForPublish = (text: string, folder: string, extraSubPath = '') => {
+  const root = getRootFolder()
+  const existing = parseMetaComment(text).tags
+  const folderRel = folder.replace(root, '').replace(/^\/+/, '')
+  const folderParts = folderRel ? folderRel.split('/').filter(Boolean) : []
+  const extraParts = extraSubPath ? extraSubPath.split('/').filter(Boolean) : []
+  const authorName = localStorage.getItem('author_name') || ''
+  const merged = [...existing, ...folderParts, ...extraParts]
+  if (authorName) merged.push(authorName)
+  return Array.from(new Set(merged))
+}
+
 const saveDraft = () => {
   localStorage.setItem('sakura_draft', JSON.stringify({
     title: title.value,
@@ -447,6 +470,7 @@ const loadDraft = () => {
     content.value = c || ''
     const rootFolder = getRootFolder()
     targetFolder.value = (f && f.startsWith(rootFolder)) ? f : rootFolder
+    pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
   }
 }
 
@@ -497,37 +521,9 @@ const publish = async () => {
       publishProgress.value = 60
     }
   
-    // 只有在用户填写了作者链接时才添加 authorUrl
-    let frontmatter = ''
-    if (authorName || authorUrl) {
-      const fmParts = []
-      if (authorUrl) {
-        fmParts.push(`authorUrl: ${authorUrl}`)
-      }
-      if (authorName) {
-        fmParts.push(`tags: [${authorName}]`)
-      }
-      
-      if (fmParts.length > 0) {
-        frontmatter = `---\n${fmParts.join('\n')}\n---\n\n`
-      }
-    }
-    
-    // 如果内容已有 frontmatter，则合并
-    let finalContent = processedContent
-    if (frontmatter) {
-      if (finalContent.startsWith('---')) {
-        const endIndex = finalContent.indexOf('---', 3)
-        if (endIndex > 0) {
-          // 合并到现有 frontmatter
-          const existingFm = finalContent.slice(4, endIndex).trim()
-          const newFmContent = frontmatter.slice(4, -5).trim()
-          finalContent = `---\n${existingFm}\n${newFmContent}\n---\n\n${finalContent.slice(endIndex + 4).trim()}`
-        }
-      } else {
-        finalContent = frontmatter + finalContent
-      }
-    }
+    // 使用注释写入 meta 信息，避免出现在正文
+    const publishTags = buildTagsForPublish(processedContent, targetFolder.value)
+    let finalContent = applyMetaComment(processedContent, publishTags, authorName, authorUrl)
     
     // 生成文件名
     const fileName = title.value
@@ -576,6 +572,84 @@ const publish = async () => {
   }
 }
 
+const triggerMarkdownFiles = () => markdownFileInput.value?.click()
+const triggerMarkdownFolder = () => markdownFolderInput.value?.click()
+
+const handleMarkdownFiles = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  await uploadMarkdownFiles(Array.from(input.files), 'file')
+  input.value = ''
+}
+
+const handleMarkdownFolder = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  await uploadMarkdownFiles(Array.from(input.files), 'folder')
+  input.value = ''
+}
+
+const uploadMarkdownFiles = async (files: File[], mode: 'file' | 'folder' = 'file') => {
+  const token = getToken()
+  if (!token) {
+    alert(props.lang === 'zh' ? '请先在设置中配置 GitHub Token' : 'Please configure GitHub Token in Settings')
+    return
+  }
+
+  const rootFolder = getRootFolder()
+  const cleanFolder = targetFolder.value.replace(/^\/+|\/+$/g, '')
+  if (!cleanFolder.startsWith(rootFolder) || cleanFolder.includes('..')) {
+    alert(props.lang === 'zh' 
+      ? `发布路径必须在 ${rootFolder} 目录下` 
+      : `Publish path must be under ${rootFolder}`)
+    return
+  }
+
+  const mdFiles = files.filter(f => /\.md|\.markdown$/i.test(f.name))
+  if (!mdFiles.length) {
+    alert(props.lang === 'zh' ? '未检测到 Markdown 文件' : 'No Markdown files found')
+    return
+  }
+
+  isPublishing.value = true
+  publishProgress.value = 10
+
+  try {
+    const total = mdFiles.length
+    for (let i = 0; i < total; i++) {
+      const file = mdFiles[i]
+      const relPath = (mode === 'folder' && (file as any).webkitRelativePath)
+        ? (file as any).webkitRelativePath
+        : file.name
+
+      const normalizedRel = relPath.replace(/^\/+/, '')
+      const contentText = await file.text()
+      const authorName = localStorage.getItem('author_name') || ''
+      const authorUrl = localStorage.getItem('author_url') || ''
+      const relFolder = normalizedRel.split('/').slice(0, -1).join('/')
+      const publishTags = buildTagsForPublish(contentText, cleanFolder, relFolder)
+      const finalContent = applyMetaComment(contentText, publishTags, authorName, authorUrl)
+
+      const path = `${cleanFolder}/${normalizedRel}`
+      await uploadFile(
+        { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+        path,
+        finalContent,
+        `Add article: ${file.name}`
+      )
+
+      publishProgress.value = 10 + Math.round(((i + 1) / total) * 90)
+    }
+
+    alert(props.lang === 'zh' ? '批量上传完成' : 'Batch upload completed')
+  } catch (e: any) {
+    alert(`${props.lang === 'zh' ? '上传出错' : 'Upload error'}: ${e.message || e}`)
+  } finally {
+    isPublishing.value = false
+    publishProgress.value = 0
+  }
+}
+
 const confirmClose = () => {
   if (content.value.trim() && !confirm(props.lang === 'zh' ? '确定要关闭吗？未保存的内容将丢失。' : 'Close editor? Unsaved changes will be lost.')) {
     return
@@ -589,7 +663,7 @@ onMounted(() => {
   repoName.value = localStorage.getItem('github_repo_name') || 'soft-zihan.github.io'
   
   // 加载自定义文件夹
-  (['zh', 'en'] as Array<'zh' | 'en'>).forEach((langKey) => {
+  (['zh', 'en'] as Array<'zh' | 'en'>).forEach((langKey: 'zh' | 'en') => {
     const customFolders = localStorage.getItem(`custom_folders_${langKey}`)
     if (customFolders) {
       try {
@@ -603,6 +677,7 @@ onMounted(() => {
   if (!targetFolder.value.startsWith(rootFolder)) {
     targetFolder.value = rootFolder
   }
+  pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
 })
 
 watch(() => props.lang, () => {
@@ -610,7 +685,10 @@ watch(() => props.lang, () => {
   if (!targetFolder.value.startsWith(rootFolder)) {
     targetFolder.value = rootFolder
   }
+  pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
 })
+
+watch(pathSuffix, () => syncTargetFolder())
 </script>
 
 <style scoped>

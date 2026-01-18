@@ -288,6 +288,29 @@
                <div class="flex justify-between"><span>{{ t.words }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentWordCount }}</span></div>
                <div class="flex justify-between"><span>{{ t.lines }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentLineCount }}</span></div>
                <div class="flex justify-between"><span>{{ t.format }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentFile.isSource ? 'Code' : 'Markdown' }}</span></div>
+               <div v-if="currentTags.length > 0" class="pt-1">
+                 <div class="mb-1 text-[10px] text-gray-400">{{ lang === 'zh' ? '标签' : 'Tags' }}</div>
+                 <div class="flex flex-wrap gap-1.5">
+                   <span
+                     v-for="tag in currentTags"
+                     :key="tag"
+                     class="text-[10px] px-2 py-0.5 rounded-full bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300"
+                   >
+                     {{ tag }}
+                   </span>
+                 </div>
+               </div>
+               <div v-if="currentAuthorUrl" class="pt-1">
+                 <div class="mb-1 text-[10px] text-gray-400">{{ lang === 'zh' ? '发布者' : 'Publisher' }}</div>
+                 <a
+                   :href="currentAuthorUrl"
+                   target="_blank"
+                   rel="noopener"
+                   class="text-[11px] text-sakura-600 dark:text-sakura-300 hover:underline break-all"
+                 >
+                   {{ currentAuthorName || currentAuthorUrl }}
+                 </a>
+               </div>
              </div>
           </div>
         </aside>
@@ -558,6 +581,11 @@ const currentLineCount = computed(() => {
   return currentFile.value.content ? currentFile.value.content.split(/\r?\n/).length : 0;
 });
 
+const currentMeta = computed(() => extractMetaFromContent(currentFile.value?.content || ''));
+const currentTags = computed(() => currentMeta.value.tags || []);
+const currentAuthorName = computed(() => currentMeta.value.author || '');
+const currentAuthorUrl = computed(() => currentMeta.value.authorUrl || '');
+
 const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '');
 
 // Resource Categories Data (Reactive to lang change)
@@ -626,30 +654,54 @@ const filteredFlatFiles = computed(() => {
   return files.sort((a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime());
 });
 
-// 从文章内容中提取 tags
-const extractTagsFromContent = (content: string): string[] => {
-  if (!content) return [];
-  
-  // 尝试从 frontmatter 中提取 tags
+// 从文章内容中提取 meta（支持注释与 frontmatter）
+const extractMetaFromContent = (content: string): { tags: string[]; author: string; authorUrl: string } => {
+  const meta = { tags: [] as string[], author: '', authorUrl: '' };
+  if (!content) return meta;
+
+  // 优先从顶部注释提取
+  const commentMatch = content.match(/^\s*<!--([\s\S]*?)-->/);
+  if (commentMatch) {
+    const block = commentMatch[1];
+    const tagsMatch = block.match(/tags?\s*:\s*([^\n]+)/i);
+    if (tagsMatch) {
+      meta.tags = tagsMatch[1]
+        .split(',')
+        .map(t => t.trim().replace(/['"]/g, ''))
+        .filter(Boolean);
+    }
+    const authorMatch = block.match(/author\s*:\s*([^\n]+)/i);
+    if (authorMatch) meta.author = authorMatch[1].trim();
+    const authorUrlMatch = block.match(/authorUrl\s*:\s*([^\n]+)/i);
+    if (authorUrlMatch) meta.authorUrl = authorUrlMatch[1].trim();
+  }
+
+  // 兼容旧 frontmatter
   const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
   if (fmMatch) {
     const frontmatter = fmMatch[1];
-    // 匹配 tags: [tag1, tag2] 或 tags: tag1
     const tagsMatch = frontmatter.match(/tags:\s*\[([^\]]*)\]/);
     if (tagsMatch) {
-      return tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(t => t);
+      const fmTags = tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(t => t);
+      meta.tags = Array.from(new Set([...meta.tags, ...fmTags]));
     }
     const singleTagMatch = frontmatter.match(/tags:\s*(\S+)/);
     if (singleTagMatch) {
-      return [singleTagMatch[1].trim()];
+      meta.tags = Array.from(new Set([...meta.tags, singleTagMatch[1].trim()]));
     }
-    // 也尝试提取 author 作为 tag
     const authorMatch = frontmatter.match(/author:\s*(\S+)/);
-    if (authorMatch) {
-      return [authorMatch[1].trim()];
-    }
+    if (authorMatch && !meta.author) meta.author = authorMatch[1].trim();
+    const authorUrlMatch = frontmatter.match(/authorUrl:\s*(\S+)/);
+    if (authorUrlMatch && !meta.authorUrl) meta.authorUrl = authorUrlMatch[1].trim();
   }
-  return [];
+
+  return meta;
+};
+
+// 从文章内容中提取 tags
+const extractTagsFromContent = (content: string): string[] => {
+  const meta = extractMetaFromContent(content);
+  return meta.tags || [];
 };
 
 // 文件是否可见（收藏/标签筛选）
