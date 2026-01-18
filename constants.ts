@@ -198,6 +198,30 @@ export const I18N = {
     res_cat_frontend_games: "Frontend Games",
     res_cat_vue_projects: "Vue Mini Projects",
 
+    // JS Basics Lab (NEW)
+    lab_js_basics: "JavaScript Fundamentals",
+    lab_js_basics_desc: "Variables, Functions, Arrays, Objects",
+    lab_js_variables: "Variables",
+    lab_js_types: "Data Types",
+    lab_js_functions: "Functions",
+    lab_js_arrays: "Arrays & Objects",
+    lab_js_flow: "Control Flow",
+
+    // CSS Basics Lab (NEW)
+    lab_css_basics: "CSS Fundamentals",
+    lab_css_basics_desc: "Selectors, Box Model, Position",
+    lab_css_selectors: "Selectors",
+    lab_css_box: "Box Model",
+    lab_css_text: "Text & Color",
+    lab_css_position: "Position",
+
+    // CSS Layout Lab (NEW)
+    lab_css_layout: "CSS Layout",
+    lab_css_layout_desc: "Flexbox, Grid, Responsive",
+    lab_flex: "Flexbox",
+    lab_grid: "Grid",
+    lab_responsive: "Responsive",
+
     // General
     no_notes: "No notes found in 'en' folder.",
     no_vue_notes: "Course notes folder not found.",
@@ -435,6 +459,30 @@ export const I18N = {
     res_cat_platform: "互动学习平台",
     res_cat_frontend_games: "前端游戏化学习",
     res_cat_vue_projects: "Vue 实战项目",
+
+    // JS Basics Lab (NEW)
+    lab_js_basics: "JavaScript 基础语法",
+    lab_js_basics_desc: "变量、函数、数组、对象",
+    lab_js_variables: "变量声明",
+    lab_js_types: "数据类型",
+    lab_js_functions: "函数",
+    lab_js_arrays: "数组与对象",
+    lab_js_flow: "流程控制",
+
+    // CSS Basics Lab (NEW)
+    lab_css_basics: "CSS 基础",
+    lab_css_basics_desc: "选择器、盒模型、定位",
+    lab_css_selectors: "选择器",
+    lab_css_box: "盒模型",
+    lab_css_text: "文本与颜色",
+    lab_css_position: "定位与层叠",
+
+    // CSS Layout Lab (NEW)
+    lab_css_layout: "CSS 布局",
+    lab_css_layout_desc: "Flexbox、Grid、响应式",
+    lab_flex: "Flexbox",
+    lab_grid: "Grid",
+    lab_responsive: "响应式",
 
     // General
     no_notes: "在 'zh' 文件夹下暂无笔记",

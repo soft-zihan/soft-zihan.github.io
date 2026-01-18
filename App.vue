@@ -869,7 +869,7 @@ const { handleContentClick } = useContentClick(
   showToast
 );
 
-// 捕获阶段拦截内部链接点击（在冒泡阶段之前拦截，确保 preventDefault 生效）
+// 捕获阶段拦截内部链接点击（仅阻止默认跳转，不阻止传播，让冒泡阶段处理弹窗逻辑）
 const handleLinkCapture = (e: Event) => {
   const mouseEvent = e as MouseEvent;
   const target = mouseEvent.target as HTMLElement;
@@ -881,9 +881,9 @@ const handleLinkCapture = (e: Event) => {
     const internalHref = link.getAttribute('data-internal-href');
     const href = link.getAttribute('href');
     // 如果有 data-internal-href 或者是支持的内部链接，立即阻止默认行为
+    // 注意：不调用 stopPropagation()，让事件继续传播到冒泡阶段的 handleContentClickEvent
     if (internalHref || (href && isSupportedInternalLink(href))) {
       mouseEvent.preventDefault();
-      mouseEvent.stopPropagation();
     }
   }
 };
@@ -892,20 +892,7 @@ const handleLinkCapture = (e: Event) => {
 const handleContentClickEvent = (e: MouseEvent) => {
   if (selectionMenu.value.locked) return;
   
-  // 同步判断：如果是内部链接，立即阻止默认行为（在任何 async 操作之前）
-  const target = e.target as HTMLElement;
-  const link = target.closest('a');
-  if (link) {
-    // 检查 data-internal-href（由 marked 渲染器设置）或普通 href
-    const internalHref = link.getAttribute('data-internal-href');
-    const href = link.getAttribute('href');
-    if (internalHref || (href && isSupportedInternalLink(href))) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-  }
-  
-  // 然后异步处理点击逻辑
+  // 然后异步处理点击逻辑（捕获阶段已阻止默认行为，这里直接处理）
   handleContentClick(e, selectionMenu.value.locked);
 };
 

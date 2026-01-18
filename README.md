@@ -84,22 +84,58 @@ The project follows Vue 3 best practices with modular composables for separation
 
 #### Lab Components (Interactive Learning)
 
-- [components/LabDashboard.vue](/components/LabDashboard.vue): Dashboard for Vue learning labs
-- [components/LabEventHandling.vue](/components/LabEventHandling.vue): Event handling lab
-- [components/LabSlot.vue](/components/LabSlot.vue): Slot system lab
-- [components/LabReactivity.vue](/components/LabReactivity.vue): Reactivity demonstration
-- [components/LabDirectives.vue](/components/LabDirectives.vue): Vue directives
-- [components/LabLifecycle.vue](/components/LabLifecycle.vue): Lifecycle hooks
-- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): Props and emit communication
+The lab follows a **7-stage progressive learning path**:
+
+**Stage 1: Web Basics**
+- [components/LabCodeEvolution.vue](/components/LabCodeEvolution.vue): Code evolution history from HTML to Vue
+- [components/LabHtml.vue](/components/LabHtml.vue): HTML parser and tokenizer simulator
+- [components/LabHtmlBasics.vue](/components/LabHtmlBasics.vue): HTML basics with live preview
+
+**Stage 2: JavaScript Basics** *(NEW)*
+- [components/LabJsBasics.vue](/components/LabJsBasics.vue): Variables, functions, arrays, control flow with site code examples
+
+**Stage 3: CSS Layout** *(NEW)*
+- [components/LabCssBasics.vue](/components/LabCssBasics.vue): Selectors, box model, position, Tailwind mapping
+- [components/LabCssLayout.vue](/components/LabCssLayout.vue): Flexbox, Grid, responsive design playground
+
+**Stage 4: JavaScript Advanced**
+- [components/LabJs.vue](/components/LabJs.vue): Event bubbling, this binding, type coercion
+- [components/LabDom.vue](/components/LabDom.vue): DOM manipulation playground
+- [components/LabAjax.vue](/components/LabAjax.vue): Async programming with Promise/async-await
 - [components/LabTypeScript.vue](/components/LabTypeScript.vue): TypeScript fundamentals
+
+**Stage 5: Engineering**
+- [components/LabModuleSystem.vue](/components/LabModuleSystem.vue): ES Modules vs CommonJS
+- [components/LabNpm.vue](/components/LabNpm.vue): NPM package management
+- [components/LabBuildTools.vue](/components/LabBuildTools.vue): Vite/Webpack build tools
 - [components/LabTailwind.vue](/components/LabTailwind.vue): TailwindCSS quickstart
-- And more...
+- [components/LabCssFrameworks.vue](/components/LabCssFrameworks.vue): CSS framework comparison
+
+**Stage 6: Vue 3 Core**
+- [components/LabReactivity.vue](/components/LabReactivity.vue): Reactivity system visualization
+- [components/LabDirectives.vue](/components/LabDirectives.vue): v-if vs v-show
+- [components/LabClassStyle.vue](/components/LabClassStyle.vue): Class & style binding
+- [components/LabEventHandling.vue](/components/LabEventHandling.vue): Event handling & modifiers
+- [components/LabVueList.vue](/components/LabVueList.vue): v-for list rendering
+- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): Props and emit communication
+- [components/LabSlot.vue](/components/LabSlot.vue): Slot system (default, named, scoped)
+- [components/LabLifecycle.vue](/components/LabLifecycle.vue): Lifecycle hooks
+
+**Stage 7: Challenge**
+- [components/LabQuizGame.vue](/components/LabQuizGame.vue): Interactive quiz game
+- [components/LabDashboard.vue](/components/LabDashboard.vue): Dashboard orchestrating all labs
 
 ### Notes
 
 - [notes/](/notes/): Directory containing markdown notes in multiple languages
   - [notes/VUE Learning/](/notes/VUE%20Learning/): English Vue learning notes
+    - `00-A-JavaScript-Fundamentals.md`: JS basics with site code examples *(NEW)*
+    - `00-B-CSS-Basics-Tailwind.md`: CSS fundamentals & Tailwind mapping *(NEW)*
+    - `01-Basic Concepts and MVVM.md` to `05-Lifecycle Hooks.md`
   - [notes/VUE学习笔记/](/notes/VUE学习笔记/): Chinese Vue learning notes
+    - `00-A-JavaScript基础语法.md`: JS 基础语法，配合本站代码示例 *(NEW)*
+    - `00-B-CSS基础与Tailwind.md`: CSS 基础与 Tailwind 速查 *(NEW)*
+    - `01-基础概念与MVVM.md` to `05-生命周期(Lifecycle).md`
   - [notes/en/](/notes/en/): English technical notes
   - [notes/zh/](/notes/zh/): Chinese technical notes
 
