@@ -7,8 +7,8 @@
         @click.self="emit('close')"
         @keydown.esc="emit('close')"
       >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+        <!-- Backdrop - clickable to close -->
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-pointer" @click="emit('close')"></div>
         
         <!-- Search Box -->
         <div class="relative w-full max-w-2xl bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in">

@@ -100,17 +100,17 @@ export const startLongPress = (x: number, y: number) => {
   longPressStartX = x;
   longPressStartY = y;
   
-  // Faster trigger for a snappier vortex start
+  // Fast trigger for snappy vortex start
   longPressTimer = setTimeout(() => {
     vortexState.value = {
       active: true,
       x,
       y,
-      strength: 45, // Higher initial pull for a visible snap
-      maxStrength: 200, // Allow a stronger ceiling
-      radius: 220 // Wider grab zone so petals respond sooner
+      strength: 30, // Moderate initial strength for smooth ramp-up
+      maxStrength: 150, // Strong maximum for dramatic effect
+      radius: 180 // Focused vortex range for visible spiral trajectory
     };
-  }, 250);  // Quicker trigger than previous 300ms
+  }, 300);  // Balanced trigger time - responsive but not hair-trigger
 };
 
 export const updateLongPress = (x: number, y: number) => {
@@ -119,8 +119,8 @@ export const updateLongPress = (x: number, y: number) => {
   const dy = y - longPressStartY;
   const distance = Math.sqrt(dx * dx + dy * dy);
   
-  // More tolerant movement threshold to avoid accidental cancels
-  if (distance > 25 && longPressTimer) {
+  // Standard movement threshold for long press
+  if (distance > 20 && longPressTimer) {
     clearTimeout(longPressTimer);
     longPressTimer = null;
     if (vortexState.value.active) {
@@ -132,9 +132,9 @@ export const updateLongPress = (x: number, y: number) => {
   if (vortexState.value.active && distance <= 60) {
     vortexState.value.x = x;
     vortexState.value.y = y;
-    // Faster strength increase for more dynamic effect
+    // Smooth strength increase for natural acceleration
     vortexState.value.strength = Math.min(
-      vortexState.value.strength + 3.5,
+      vortexState.value.strength + 2.5,  // Smooth ramp-up speed
       vortexState.value.maxStrength
     );
   }
@@ -184,8 +184,10 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
           p.opacity = 1;
         }
         
-        // Calculate vortex force - smooth falloff
-        const influence = 1 - (distance / vortexState.value.radius) * 0.8;
+        // Distance-based influence: closer petals feel stronger pull (remote slow, close fast)
+        // Use non-linear falloff (quadratic) to enhance the near/far difference
+        const normalizedDistance = distance / vortexState.value.radius;
+        const influence = (1 - normalizedDistance) * (1 - normalizedDistance); // Quadratic for more dramatic effect
         const strength = vortexState.value.strength * influence;
         
         // Natural spiral motion
@@ -196,7 +198,7 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
         const tangentX = Math.cos(angle + Math.PI / 2) * strength * 0.015;
         const tangentY = Math.sin(angle + Math.PI / 2) * strength * 0.015;
         
-        // Radial velocity: smooth pull towards center
+        // Radial velocity: stronger pull for near petals, weaker for far
         const radialStrength = Math.max(0.5, strength * 0.008);
         const radialX = (dx / distance) * radialStrength;
         const radialY = (dy / distance) * radialStrength;
@@ -205,7 +207,7 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
         p.x += tangentX + radialX;
         p.y += tangentY + radialY;
         
-        // Smooth rotation following spiral
+        // Smooth rotation following spiral - faster for closer petals
         p.rotation += strength * 0.08;
         
         continue;

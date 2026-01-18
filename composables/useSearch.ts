@@ -45,12 +45,16 @@ export function useSearch() {
       
       for (const node of nodes) {
         if (node.type === NodeType.FILE && !node.isSource) {
-          const searchableContent = (node.content || node.contentSnippet || '') + ' ' + node.name
+          // 关键修复：包含文件名在内容中，确保即使内容为空也能搜索文件名
+          // 并且内容优先使用已加载的content，如果没有则使用contentSnippet
+          const contentToIndex = (node.content || node.contentSnippet || '').trim()
+          const nameAndContent = node.name.replace('.md', '') + ' ' + contentToIndex
+          
           files.push({
             id: node.path,
             name: node.name.replace('.md', ''),
             path: node.path,
-            content: searchableContent  // Include filename in searchable content
+            content: nameAndContent  // Include filename and content in searchable content
           })
         }
         if (node.children) {
