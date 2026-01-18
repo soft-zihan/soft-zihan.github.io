@@ -13,18 +13,65 @@ export interface SearchResult {
   fileNode?: any  // Optional reference to FileNode for direct opening
 }
 
-export function useSearch() {
+export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<string>) {
   const searchQuery = ref('')
   const searchResults = ref<SearchResult[]>([])
   const isSearching = ref(false)
   const showSearchModal = ref(false)
+  const isLoadingContent = ref(false)
   const searchIndex = ref<MiniSearch<any> | null>(null)
   const fileSystem = ref<FileNode[]>([])
+  const isFullIndexReady = ref(false)
   
-  // Initialize search index
+  // Initialize search index - only create empty index, defer content loading
   const initSearchIndex = async (fs: FileNode[]) => {
     fileSystem.value = fs
-    rebuildSearchIndex()
+    // Create empty search index, will be populated on first search
+    const miniSearch = new MiniSearch({
+      fields: ['name', 'content'],
+      storeFields: ['name', 'path', 'content'],
+      searchOptions: {
+        boost: { name: 2 },
+        fuzzy: 0.2,
+        prefix: true
+      }
+    })
+    searchIndex.value = miniSearch
+    isFullIndexReady.value = false
+  }
+  
+  // Load all file contents and rebuild index with complete data
+  const loadFullContentAndRebuild = async () => {
+    if (isFullIndexReady.value || isLoadingContent.value) return
+    if (!fetchFileContentFn) {
+      console.warn('fetchFileContentFn not provided to useSearch')
+      return
+    }
+    
+    isLoadingContent.value = true
+    try {
+      // Recursively load all file contents
+      const loadFileContents = async (nodes: FileNode[]) => {
+        for (const node of nodes) {
+          if (node.type === NodeType.FILE && !node.isSource && !node.content) {
+            try {
+              node.content = await fetchFileContentFn(node)
+            } catch (e) {
+              console.warn(`Failed to load content for ${node.path}:`, e)
+            }
+          }
+          if (node.children) {
+            await loadFileContents(node.children)
+          }
+        }
+      }
+      
+      await loadFileContents(fileSystem.value)
+      rebuildSearchIndex()
+      isFullIndexReady.value = true
+    } finally {
+      isLoadingContent.value = false
+    }
   }
   
   // Rebuild search index with current file contents
@@ -45,8 +92,6 @@ export function useSearch() {
       
       for (const node of nodes) {
         if (node.type === NodeType.FILE && !node.isSource) {
-          // 关键修复：包含文件名在内容中，确保即使内容为空也能搜索文件名
-          // 并且内容优先使用已加载的content，如果没有则使用contentSnippet
           const contentToIndex = (node.content || node.contentSnippet || '').trim()
           const nameAndContent = node.name.replace('.md', '') + ' ' + contentToIndex
           
@@ -54,7 +99,7 @@ export function useSearch() {
             id: node.path,
             name: node.name.replace('.md', ''),
             path: node.path,
-            content: nameAndContent  // Include filename and content in searchable content
+            content: nameAndContent
           })
         }
         if (node.children) {
@@ -70,11 +115,16 @@ export function useSearch() {
     searchIndex.value = miniSearch
   }
   
-  // Perform search
+  // Perform search with smart sorting
   const search = (query: string): SearchResult[] => {
     if (!searchIndex.value || !query.trim()) {
       searchResults.value = []
       return []
+    }
+    
+    // Trigger full content loading on first search if not ready
+    if (!isFullIndexReady.value && !isLoadingContent.value) {
+      loadFullContentAndRebuild()
     }
     
     isSearching.value = true
@@ -86,9 +136,28 @@ export function useSearch() {
         prefix: true
       })
       
-      searchResults.value = results.slice(0, 20).map(r => {
+      // Smart sorting: exact match > prefix match > fuzzy match
+      const queryLower = query.toLowerCase()
+      const sorted = results.sort((a, b) => {
+        const nameA = a.name.toLowerCase()
+        const nameB = b.name.toLowerCase()
+        
+        // Exact match on name gets highest priority
+        const aExact = nameA === queryLower ? 1000 : 0
+        const bExact = nameB === queryLower ? 1000 : 0
+        if (aExact !== bExact) return bExact - aExact
+        
+        // Prefix match (name starts with query) gets second priority
+        const aPrefix = nameA.startsWith(queryLower) ? 100 : 0
+        const bPrefix = nameB.startsWith(queryLower) ? 100 : 0
+        if (aPrefix !== bPrefix) return bPrefix - aPrefix
+        
+        // Then sort by score
+        return b.score - a.score
+      })
+      
+      searchResults.value = sorted.slice(0, 20).map(r => {
         const content = r.content || ''
-        const queryLower = query.toLowerCase()
         const contentLower = content.toLowerCase()
         
         // Find excerpt around match
@@ -143,6 +212,11 @@ export function useSearch() {
     }
   }
   
+  // Set fetch function (called after useSearch is created and fetchFileContent is available)
+  const setFetchFunction = (fetchFn: (file: FileNode) => Promise<string>) => {
+    fetchFileContentFn = fetchFn
+  }
+  
   onMounted(() => {
     document.addEventListener('keydown', handleKeydown)
   })
@@ -155,10 +229,13 @@ export function useSearch() {
     searchQuery,
     searchResults,
     isSearching,
+    isLoadingContent,
     showSearchModal,
     initSearchIndex,
     rebuildSearchIndex,
     search,
+    loadFullContentAndRebuild,
+    setFetchFunction,
     highlightMatches,
     clearSearch
   }

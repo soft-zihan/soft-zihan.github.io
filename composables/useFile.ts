@@ -77,16 +77,12 @@ export function useFile(fileSystem: Ref<FileNode[]>, lang: Ref<'en' | 'zh'>) {
     if (file.isSource && file.fetchPath) {
       fetchPath = `./${file.fetchPath}`
     } else {
-      const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/')
-      fetchPath = `./notes/${encodedPath}`
+      // Use raw path directly - files are stored with actual characters, not encoded
+      fetchPath = `./notes/${file.path}`
     }
     
     try {
-      let res = await fetch(fetchPath)
-      if (!res.ok) {
-        console.warn(`Fetch failed for ${fetchPath}, trying fallback...`)
-        res = await fetch(`./notes/${file.path}`)
-      }
+      const res = await fetch(fetchPath)
       
       if (res.ok) return await res.text()
       return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`

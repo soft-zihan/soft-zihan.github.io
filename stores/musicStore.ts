@@ -26,8 +26,7 @@ export const useMusicStore = defineStore('music', () => {
   const volume = ref(0.7)
   const isMuted = ref(false)
   const playMode = ref<'sequence' | 'loop' | 'single' | 'shuffle'>('sequence')
-  const showMiniPlayer = ref(true)
-  const showFullPlayer = ref(false)
+  const showMusicPlayer = ref(false)
   const lyrics = ref<LyricLine[]>([])
   const currentLyricIndex = ref(-1)
   
@@ -213,8 +212,7 @@ export const useMusicStore = defineStore('music', () => {
     volume,
     isMuted,
     playMode,
-    showMiniPlayer,
-    showFullPlayer,
+    showMusicPlayer,
     lyrics,
     currentLyricIndex,
     songRequests,

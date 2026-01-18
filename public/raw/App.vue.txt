@@ -80,7 +80,7 @@
         @download="downloadSource"
         @open-settings="showSettings = true"
         @open-search="showSearch = true"
-        @open-music="showMusicPlayer = true"
+        @open-music="musicStore.showMusicPlayer = true"
         @open-write="showWriteEditor = true"
       />
 
@@ -332,13 +332,12 @@
       :lang="lang"
       :searchFn="search"
       :highlightFn="highlightMatches"
+      :isLoadingContent="isLoadingContent"
       @select="handleSearchSelect"
     />
 
     <!-- Music Player Modal -->
     <MusicPlayer
-      v-if="showMusicPlayer"
-      @close="showMusicPlayer = false"
       :lang="lang"
     />
 
@@ -384,7 +383,7 @@ import { useSearch } from './composables/useSearch';
 const appStore = useAppStore();
 const articleStore = useArticleStore();
 const musicStore = useMusicStore();
-const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, rebuildSearchIndex } = useSearch();
+const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, rebuildSearchIndex, isLoadingContent, setFetchFunction } = useSearch();
 
 // i18n with Persistence (from store)
 const lang = computed({
@@ -463,7 +462,6 @@ const isRawMode = ref(false);
 // Modal States
 const showSettings = ref(false);
 const showSearch = searchModalOpen;
-const showMusicPlayer = ref(false);
 const showWriteEditor = ref(false);
 const sidebarOpen = ref(false);
 
@@ -714,17 +712,12 @@ const fetchFileContent = async (file: FileNode): Promise<string> => {
     if (file.isSource && file.fetchPath) {
         fetchPath = `./${file.fetchPath}`;
     } else {
-        // Safe encoding for URL
-        const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
-        fetchPath = `./notes/${encodedPath}`;
+        // Use raw path directly - files are stored with actual characters, not encoded
+        fetchPath = `./notes/${file.path}`;
     }
     
     try {
-        let res = await fetch(fetchPath);
-        if (!res.ok) {
-           console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
-           res = await fetch(`./notes/${file.path}`);
-        }
+        const res = await fetch(fetchPath);
         
         if (res.ok) return await res.text();
         return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`;
@@ -1077,6 +1070,9 @@ onMounted(async () => {
 
   // Initialize music store (load playlist)
   musicStore.loadPlaylist();
+  
+  // Set fetch function for search (after fetchFileContent is defined)
+  setFetchFunction(fetchFileContent);
   
   try {
     // Explicitly using ./files.json to ensure relative fetch

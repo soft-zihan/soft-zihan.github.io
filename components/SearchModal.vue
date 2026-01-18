@@ -28,8 +28,11 @@
               @keydown.enter="selectResult"
               @keydown.up.prevent="navigateResults(-1)"
               @keydown.down.prevent="navigateResults(1)"
+              @focus="onSearchFocus"
               autofocus
             />
+            <!-- Loading indicator on the right -->
+            <div v-if="isLoading" class="animate-spin text-xl mr-2">🌸</div>
             <kbd class="hidden sm:inline-flex items-center px-2 py-1 text-xs font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 rounded">ESC</kbd>
           </div>
           
@@ -127,6 +130,7 @@ const props = defineProps<{
   lang: 'en' | 'zh'
   searchFn: (query: string) => SearchResult[]
   highlightFn: (text: string, query: string) => string
+  isLoadingContent?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -139,8 +143,16 @@ const query = ref('')
 const results = ref<SearchResult[]>([])
 const selectedIndex = ref(0)
 const isSearching = ref(false)
+const isLoading = ref(false)
 
 let searchTimeout: ReturnType<typeof setTimeout> | null = null
+
+const onSearchFocus = () => {
+  // Trigger full content loading on search focus if not ready
+  if (!isLoading.value && props.isLoadingContent) {
+    isLoading.value = true
+  }
+}
 
 const handleSearch = () => {
   if (searchTimeout) clearTimeout(searchTimeout)
@@ -151,6 +163,11 @@ const handleSearch = () => {
       results.value = props.searchFn(query.value)
       isSearching.value = false
       selectedIndex.value = 0
+      
+      // Stop showing loading indicator if content is loaded
+      if (!props.isLoadingContent) {
+        isLoading.value = false
+      }
     } else {
       results.value = []
     }

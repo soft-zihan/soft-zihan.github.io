@@ -32,8 +32,8 @@ export const vortexState = ref({
   x: 0,
   y: 0,
   strength: 0,
-  maxStrength: 150,
-  radius: 200
+  maxStrength: 220,
+  radius: 280
 });
 
 let nextId = 0;
@@ -100,17 +100,17 @@ export const startLongPress = (x: number, y: number) => {
   longPressStartX = x;
   longPressStartY = y;
   
-  // Fast trigger for snappy vortex start
+  // Faster trigger for snappy vortex start
   longPressTimer = setTimeout(() => {
     vortexState.value = {
       active: true,
       x,
       y,
-      strength: 30, // Moderate initial strength for smooth ramp-up
-      maxStrength: 150, // Strong maximum for dramatic effect
-      radius: 180 // Focused vortex range for visible spiral trajectory
+      strength: 50, // Higher initial strength for faster start
+      maxStrength: 220, // Stronger maximum for dramatic effect
+      radius: 280 // Larger vortex range for visible spiral trajectory
     };
-  }, 300);  // Balanced trigger time - responsive but not hair-trigger
+  }, 200);  // Faster trigger time - more responsive
 };
 
 export const updateLongPress = (x: number, y: number) => {
@@ -132,9 +132,9 @@ export const updateLongPress = (x: number, y: number) => {
   if (vortexState.value.active && distance <= 60) {
     vortexState.value.x = x;
     vortexState.value.y = y;
-    // Smooth strength increase for natural acceleration
+    // Faster strength increase for natural acceleration
     vortexState.value.strength = Math.min(
-      vortexState.value.strength + 2.5,  // Smooth ramp-up speed
+      vortexState.value.strength + 3.5,  // Faster ramp-up speed
       vortexState.value.maxStrength
     );
   }
@@ -194,12 +194,12 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
         const angle = Math.atan2(dy, dx);
         
         // Spiral velocity: tangential (circular) + radial (inward)
-        // Tangential velocity creates the rotation
-        const tangentX = Math.cos(angle + Math.PI / 2) * strength * 0.015;
-        const tangentY = Math.sin(angle + Math.PI / 2) * strength * 0.015;
+        // Tangential velocity creates the rotation (faster for dramatic spiral)
+        const tangentX = Math.cos(angle + Math.PI / 2) * strength * 0.025;
+        const tangentY = Math.sin(angle + Math.PI / 2) * strength * 0.025;
         
         // Radial velocity: stronger pull for near petals, weaker for far
-        const radialStrength = Math.max(0.5, strength * 0.008);
+        const radialStrength = Math.max(0.8, strength * 0.012);
         const radialX = (dx / distance) * radialStrength;
         const radialY = (dy / distance) * radialStrength;
         
@@ -208,7 +208,7 @@ export function updatePetals(petals: Petal[], opts: { speedMultiplier: number; i
         p.y += tangentY + radialY;
         
         // Smooth rotation following spiral - faster for closer petals
-        p.rotation += strength * 0.08;
+        p.rotation += strength * 0.8;
         
         continue;
       } else {
