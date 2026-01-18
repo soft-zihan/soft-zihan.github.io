@@ -899,20 +899,29 @@ const extractImagePaths = (text: string) => {
   return paths
 }
 
+const safeDecode = (value: string) => {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
 const normalizeImageToken = (raw: string) => {
   let cleaned = raw.trim()
   if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
     cleaned = cleaned.slice(1, -1)
   }
   const [pathPart, ...rest] = cleaned.split(/\s+/)
-  return { path: pathPart, tail: rest.join(' ') }
+  return { path: safeDecode(pathPart), tail: rest.join(' ') }
 }
 
 const resolveImagePath = (mdRelPath: string, imgPath: string) => {
   if (!imgPath || isHttpUrl(imgPath) || isDataOrLocalToken(imgPath)) return null
-  if (imgPath.startsWith('/')) return null
+  const decoded = safeDecode(imgPath)
+  if (decoded.startsWith('/')) return null
   const mdDir = mdRelPath.split('/').slice(0, -1)
-  const parts = imgPath.split('/')
+  const parts = decoded.split('/')
   const stack = [...mdDir]
   for (const part of parts) {
     if (!part || part === '.') continue
@@ -923,14 +932,14 @@ const resolveImagePath = (mdRelPath: string, imgPath: string) => {
 }
 
 const getImageBasename = (p: string) => {
-  const cleaned = p.split('?')[0].split('#')[0]
+  const cleaned = safeDecode(p).split('?')[0].split('#')[0]
   const parts = cleaned.split('/')
   return parts[parts.length - 1] || ''
 }
 
 const getImageKeyCandidates = (mdRelPath: string, raw: string) => {
   const { path } = normalizeImageToken(raw)
-  const keys = [path]
+  const keys = [path, safeDecode(path), encodeURI(path)]
   const resolved = resolveImagePath(mdRelPath, path)
   if (resolved) keys.push(resolved)
   const base = getImageBasename(path)
@@ -1004,7 +1013,11 @@ const publishImportedFiles = async () => {
     for (const file of imageFiles) {
       const rel = normalizePath(getFileRelPath(file, importMode.value))
       imageMap.set(rel, file)
+      imageMap.set(encodeURI(rel), file)
+      imageMap.set(safeDecode(rel), file)
       imageNameMap.set(file.name, file)
+      imageNameMap.set(encodeURI(file.name), file)
+      imageNameMap.set(safeDecode(file.name), file)
     }
 
     const contentMap = new Map<string, string>()

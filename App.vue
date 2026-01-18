@@ -286,7 +286,7 @@
                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                        </svg>
-                       {{ isSavingRaw ? (lang === 'zh' ? '保存中...' : 'Saving...') : (lang === 'zh' ? '保存并发布' : 'Save & Publish') }}
+                       {{ isSavingRaw ? (lang === 'zh' ? '提交中...' : 'Publishing...') : (lang === 'zh' ? '提交修改' : 'Submit Changes') }}
                      </button>
                    </template>
                  </div>
@@ -884,6 +884,106 @@ const cancelEditingRaw = () => {
   editedRawContent.value = '';
 };
 
+const createPullRequestForFileUpdate = async (
+  options: { owner: string; repo: string; base: string; token: string },
+  filePath: string,
+  content: string,
+  title: string,
+  authorName: string
+): Promise<{ success: boolean; message: string; url?: string }> => {
+  const { owner, repo, base, token } = options;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: 'application/vnd.github.v3+json',
+    'Content-Type': 'application/json'
+  };
+
+  const safeSlug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50) || 'update';
+  const branch = `edit/${safeSlug}-${Date.now()}`;
+
+  try {
+    const baseRefRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${base}`,
+      { headers }
+    );
+    if (!baseRefRes.ok) throw new Error('Failed to get base branch info');
+    const baseRef = await baseRefRes.json();
+    const baseSha = baseRef.object.sha;
+
+    const createRefRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/git/refs`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: baseSha })
+      }
+    );
+    if (!createRefRes.ok) {
+      const err = await createRefRes.json();
+      throw new Error(err.message || 'Failed to create branch');
+    }
+
+    let sha: string | undefined;
+    const fileRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${base}`,
+      { headers }
+    );
+    if (fileRes.ok) {
+      const fileData = await fileRes.json();
+      sha = fileData.sha;
+    }
+
+    const updateRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          message: `Update article: ${title}`,
+          content: btoa(unescape(encodeURIComponent(content))),
+          branch,
+          sha
+        })
+      }
+    );
+    if (!updateRes.ok) {
+      const err = await updateRes.json();
+      throw new Error(err.message || 'Failed to update file on branch');
+    }
+
+    const prBody = authorName
+      ? `Contributor: ${authorName}\n\nAuto-generated from Sakura Notes raw editor.`
+      : 'Auto-generated from Sakura Notes raw editor.';
+
+    const prRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/pulls`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          title: `Update ${title}`,
+          head: branch,
+          base,
+          body: prBody
+        })
+      }
+    );
+    if (!prRes.ok) {
+      const err = await prRes.json();
+      throw new Error(err.message || 'Failed to create PR');
+    }
+    const prData = await prRes.json();
+
+    return { success: true, message: 'PR created', url: prData.html_url };
+  } catch (e: any) {
+    return { success: false, message: e.message || 'PR failed' };
+  }
+};
+
 const saveRawContent = async () => {
   const token = getToken();
   if (!token) {
@@ -912,11 +1012,12 @@ const saveRawContent = async () => {
     const repoOwner = localStorage.getItem('github_repo_owner') || 'soft-zihan';
     const repoName = localStorage.getItem('github_repo_name') || 'soft-zihan.github.io';
     
-    const result = await uploadFile(
-      { owner: repoOwner, repo: repoName, branch: 'main', token },
+    const result = await createPullRequestForFileUpdate(
+      { owner: repoOwner, repo: repoName, base: 'main', token },
       filePath,
       finalContent,
-      `Update article: ${currentFile.value.name}`
+      currentFile.value.name,
+      contributorName
     );
     
     if (result.success) {
@@ -930,12 +1031,16 @@ const saveRawContent = async () => {
         await updateRenderedContent();
       }
       
-      showToast(lang.value === 'zh' ? '保存成功！' : 'Saved successfully!');
+      if (result.url) {
+        alert(`${lang.value === 'zh' ? '已提交 PR：' : 'PR created: '}${result.url}`);
+      } else {
+        showToast(lang.value === 'zh' ? '提交成功！' : 'Submitted successfully!');
+      }
     } else {
-      alert(`${lang.value === 'zh' ? '保存失败' : 'Save failed'}: ${result.message}`);
+      alert(`${lang.value === 'zh' ? '提交失败' : 'Publish failed'}: ${result.message}`);
     }
   } catch (e: any) {
-    alert(`${lang.value === 'zh' ? '保存出错' : 'Save error'}: ${e.message || e}`);
+    alert(`${lang.value === 'zh' ? '提交出错' : 'Publish error'}: ${e.message || e}`);
   } finally {
     isSavingRaw.value = false;
   }
@@ -1054,7 +1159,8 @@ const updateRenderedContent = async () => {
         // 对于 GitHub Pages，使用完整的绝对路径
         const isRelativeBase = baseUrl === './' || baseUrl === '.';
         const normalizedBase = isRelativeBase ? './' : (baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
-        const serverPrefix = `${normalizedBase}notes/`; 
+        const baseHref = new URL(normalizedBase, window.location.href).href;
+        const serverPrefix = `${baseHref}notes/`; 
         
         const resolvePath = (relPath: string) => {
           // 保留原始路径用于特殊协议
@@ -1068,10 +1174,10 @@ const updateRenderedContent = async () => {
           let cleaned = trimmed.replace(/^\.\//g, '');
           
           // 处理绝对路径 /notes/...
-          if (cleaned.startsWith('/notes/')) return `${normalizedBase}notes/${cleaned.replace(/^\/notes\//, '')}`;
-          if (cleaned.startsWith('notes/')) return `${normalizedBase}${cleaned}`;
+          if (cleaned.startsWith('/notes/')) return encodeURI(`${baseHref}notes/${cleaned.replace(/^\/notes\//, '')}`);
+          if (cleaned.startsWith('notes/')) return encodeURI(`${baseHref}${cleaned}`);
           // 处理其他绝对路径 /image/... 等
-          if (cleaned.startsWith('/')) return `${normalizedBase}${cleaned.replace(/^\/+/, '')}`;
+          if (cleaned.startsWith('/')) return encodeURI(`${baseHref}${cleaned.replace(/^\/+/, '')}`);
           
           // 处理相对路径 (包括 ../ 开头的)
           const parts = cleaned.split('/');
@@ -1085,7 +1191,7 @@ const updateRenderedContent = async () => {
                   parentParts.push(part);
               }
           }
-          return `${serverPrefix}${parentParts.join('/')}`;
+          return encodeURI(`${serverPrefix}${parentParts.join('/')}`);
         };
 
           const splitImageToken = (raw: string) => {
@@ -1596,12 +1702,21 @@ const handleContentClick = async (e: MouseEvent) => {
   const link = target.closest('a');
   if (link) {
     const href = link.getAttribute('href');
+
+    const normalizeHref = (raw?: string | null) => {
+      if (!raw) return '';
+      const trimmed = raw.trim();
+      const noHash = trimmed.split('#')[0];
+      const noQuery = noHash.split('?')[0];
+      return noQuery;
+    };
     
     const isSupportedInternal = (raw?: string | null) => {
       if (!raw) return false;
       if (raw.startsWith('http') || raw.startsWith('//')) return false;
-      const lower = raw.toLowerCase();
-      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss'];
+      const normalized = normalizeHref(raw);
+      const lower = normalized.toLowerCase();
+      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.htm', '.css', '.scss'];
       return exts.some(ext => lower.endsWith(ext));
     };
 
@@ -1609,15 +1724,16 @@ const handleContentClick = async (e: MouseEvent) => {
       e.preventDefault(); // Stop Browser Jump
       
       let targetPath = '';
-      const isCodeFile = !href.toLowerCase().endsWith('.md');
+      const normalizedHref = normalizeHref(href);
+      const isCodeFile = !normalizedHref.toLowerCase().endsWith('.md');
 
-      if (href.startsWith('/')) {
+      if (normalizedHref.startsWith('/')) {
           // Absolute path from root (e.g. /App.vue -> App.vue)
-          targetPath = href.substring(1);
+          targetPath = normalizedHref.substring(1);
       } else if (currentFile.value?.path) {
         // Resolve relative path
         const currentDir = currentFile.value.path.split('/').slice(0, -1);
-        const parts = href.split('/');
+        const parts = normalizedHref.split('/');
         
         for (const part of parts) {
            if (part === '.') continue;
@@ -1629,7 +1745,7 @@ const handleContentClick = async (e: MouseEvent) => {
         }
         targetPath = currentDir.join('/');
       } else {
-          targetPath = href;
+          targetPath = normalizedHref;
       }
 
       // 对于代码文件（非 .md），直接打开代码弹窗
