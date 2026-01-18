@@ -29,6 +29,7 @@ export const useMusicStore = defineStore('music', () => {
   const showMusicPlayer = ref(false)
   const lyrics = ref<LyricLine[]>([])
   const currentLyricIndex = ref(-1)
+  const seekRequestTime = ref<number | null>(null) // 用于通知 GlobalAudio 同步进度
   
   // Computed
   const currentTrack = computed(() => playlist.value[currentIndex.value] || null)
@@ -101,7 +102,13 @@ export const useMusicStore = defineStore('music', () => {
   }
   
   function seek(time: number) {
-    currentTime.value = Math.max(0, Math.min(time, duration.value))
+    const clampedTime = Math.max(0, Math.min(time, duration.value))
+    currentTime.value = clampedTime
+    seekRequestTime.value = clampedTime // 触发 GlobalAudio 同步
+  }
+  
+  function clearSeekRequest() {
+    seekRequestTime.value = null
   }
   
   function setVolume(v: number) {
@@ -245,6 +252,7 @@ export const useMusicStore = defineStore('music', () => {
     showMusicPlayer,
     lyrics,
     currentLyricIndex,
+    seekRequestTime,
     // Computed
     currentTrack,
     progress,
@@ -260,6 +268,7 @@ export const useMusicStore = defineStore('music', () => {
     next,
     prev,
     seek,
+    clearSeekRequest,
     setVolume,
     toggleMute,
     cyclePlayMode,

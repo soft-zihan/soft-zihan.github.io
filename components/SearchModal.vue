@@ -145,33 +145,20 @@ const selectedIndex = ref(0)
 const isSearching = ref(false)
 const isLoading = ref(false)
 
-let searchTimeout: ReturnType<typeof setTimeout> | null = null
-
 const onSearchFocus = () => {
-  // Trigger full content loading on search focus if not ready
-  if (!isLoading.value && props.isLoadingContent) {
-    isLoading.value = true
-  }
+  // 内容已在初始化时加载，无需额外处理
 }
 
 const handleSearch = () => {
-  if (searchTimeout) clearTimeout(searchTimeout)
-  
-  searchTimeout = setTimeout(() => {
-    if (query.value.trim()) {
-      isSearching.value = true
-      results.value = props.searchFn(query.value)
-      isSearching.value = false
-      selectedIndex.value = 0
-      
-      // Stop showing loading indicator if content is loaded
-      if (!props.isLoadingContent) {
-        isLoading.value = false
-      }
-    } else {
-      results.value = []
-    }
-  }, 150)
+  // 移除防抖，立即执行搜索
+  if (query.value.trim()) {
+    isSearching.value = true
+    results.value = props.searchFn(query.value)
+    isSearching.value = false
+    selectedIndex.value = 0
+  } else {
+    results.value = []
+  }
 }
 
 const highlightText = (text: string, q: string): string => {

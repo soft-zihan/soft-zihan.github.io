@@ -24,11 +24,11 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
   const isFullIndexReady = ref(false)
   const currentLang = ref<'en' | 'zh'>('zh')
   
-  // Initialize search index - only create empty index, defer content loading
+  // Initialize search index - 立即加载当前语言的全部内容
   const initSearchIndex = async (fs: FileNode[], lang: 'en' | 'zh' = 'zh') => {
     fileSystem.value = fs
     currentLang.value = lang
-    // Create empty search index, will be populated on first search
+    // Create empty search index
     const miniSearch = new MiniSearch({
       fields: ['name', 'content'],
       storeFields: ['name', 'path', 'content'],
@@ -40,6 +40,9 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     })
     searchIndex.value = miniSearch
     isFullIndexReady.value = false
+    
+    // 立即开始加载全部内容（不再懒加载）
+    loadFullContentAndRebuild()
   }
   
   // Load all file contents and rebuild index with complete data
@@ -134,10 +137,7 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
       return []
     }
     
-    // Trigger full content loading on first search if not ready
-    if (!isFullIndexReady.value && !isLoadingContent.value) {
-      loadFullContentAndRebuild()
-    }
+    // 不再需要懒加载检查，内容在初始化时已加载
     
     isSearching.value = true
     

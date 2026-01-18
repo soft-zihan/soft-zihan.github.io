@@ -12,10 +12,21 @@
   <!-- Mini FAB Button - Only spinning circle, NO card display -->
   <div 
     v-if="musicStore.currentTrack && !isMusicPage && !isMobileDevice" 
-    class="fixed bottom-8 right-8 z-50 pointer-events-auto hidden md:block"
+    ref="fabContainer"
+    class="fixed z-50 pointer-events-auto hidden md:block"
+    :style="{ bottom: fabPosition.bottom + 'px', right: fabPosition.right + 'px' }"
     @mouseenter="showControls"
     @mouseleave="hideControlsDelayed"
   >
+    
+    <!-- Drag Handle (显示在按钮上方) -->
+    <div 
+      class="absolute -top-6 left-1/2 -translate-x-1/2 cursor-move px-2 py-1 bg-black/50 rounded text-white text-xs opacity-0 group-hover:opacity-100 transition-opacity select-none"
+      @mousedown="startDrag"
+      @touchstart="startDrag"
+    >
+      ⋮⋮
+    </div>
     
     <!-- Hover Media Controls -->
     <div 
@@ -172,6 +183,74 @@ import { useMusicStore } from '../stores/musicStore'
 
 const musicStore = useMusicStore()
 const audioEl = ref<HTMLAudioElement | null>(null)
+const fabContainer = ref<HTMLElement | null>(null)
+
+// 拖动相关
+const fabPosition = ref({ bottom: 32, right: 32 })
+const isDragging = ref(false)
+const dragStart = ref({ x: 0, y: 0 })
+const positionStart = ref({ bottom: 0, right: 0 })
+
+const startDrag = (e: MouseEvent | TouchEvent) => {
+  e.preventDefault()
+  isDragging.value = true
+  
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  
+  dragStart.value = { x: clientX, y: clientY }
+  positionStart.value = { ...fabPosition.value }
+  
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
+  document.addEventListener('touchmove', onDrag)
+  document.addEventListener('touchend', stopDrag)
+}
+
+const onDrag = (e: MouseEvent | TouchEvent) => {
+  if (!isDragging.value) return
+  
+  const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX
+  const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY
+  
+  const deltaX = clientX - dragStart.value.x
+  const deltaY = clientY - dragStart.value.y
+  
+  // 计算新位置（注意：right 和 bottom 是从右下角计算的）
+  const newRight = Math.max(8, Math.min(window.innerWidth - 80, positionStart.value.right - deltaX))
+  const newBottom = Math.max(8, Math.min(window.innerHeight - 80, positionStart.value.bottom + deltaY))
+  
+  fabPosition.value = { bottom: newBottom, right: newRight }
+}
+
+const stopDrag = () => {
+  if (isDragging.value) {
+    isDragging.value = false
+    // 保存位置到 localStorage
+    localStorage.setItem('music_fab_position', JSON.stringify(fabPosition.value))
+  }
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('touchmove', onDrag)
+  document.removeEventListener('touchend', stopDrag)
+}
+
+// 从 localStorage 恢复位置
+const loadFabPosition = () => {
+  const saved = localStorage.getItem('music_fab_position')
+  if (saved) {
+    try {
+      const pos = JSON.parse(saved)
+      // 确保位置在屏幕范围内
+      fabPosition.value = {
+        bottom: Math.max(8, Math.min(window.innerHeight - 80, pos.bottom || 32)),
+        right: Math.max(8, Math.min(window.innerWidth - 80, pos.right || 32))
+      }
+    } catch (e) {
+      fabPosition.value = { bottom: 32, right: 32 }
+    }
+  }
+}
 
 // Hover state with delayed hide
 const isControlsVisible = ref(false)
@@ -213,6 +292,7 @@ const checkMobile = () => {
 
 onMounted(async () => {
   checkMobile()
+  loadFabPosition() // 恢复播放器位置
   window.addEventListener('resize', checkMobile)
   
   await musicStore.loadPlaylist()
@@ -299,6 +379,14 @@ watch(() => musicStore.isMuted, (muted) => {
   }
 })
 
+// 监听 seek 请求，同步 audioEl.currentTime
+watch(() => musicStore.seekRequestTime, (time) => {
+  if (time !== null && audioEl.value) {
+    audioEl.value.currentTime = time
+    musicStore.clearSeekRequest()
+  }
+})
+
 const onTimeUpdate = () => {
   if (audioEl.value) {
     musicStore.setCurrentTime(audioEl.value.currentTime)
@@ -326,16 +414,7 @@ const onError = (e: Event) => {
   console.error('Audio error:', e)
 }
 
-onMounted(async () => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
-  
-  await musicStore.loadPlaylist()
-  
-  if (audioEl.value) {
-    audioEl.value.volume = musicStore.volume
-  }
-})
+// 删除重复的 onMounted，合并到上面的 onMounted 中
 
 onUnmounted(() => {
   if (hideTimeout) clearTimeout(hideTimeout)

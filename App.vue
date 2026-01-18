@@ -200,6 +200,9 @@
                    <span class="text-xs text-gray-400">
                     📝 {{ currentWordCount }} {{ t.words }}
                    </span>
+                   <span class="text-xs text-gray-400 flex items-center gap-1">
+                     🕐 {{ t.updated }}: {{ formatDate(currentFile.lastModified) }}
+                   </span>
                  </div>
              </div>
 
@@ -219,9 +222,8 @@
                <pre class="whitespace-pre-wrap font-mono text-sm bg-[#1e1e1e] text-blue-200 p-6 rounded-xl border border-gray-700 overflow-x-auto select-text shadow-inner"><code :class="currentFile.name.endsWith('.vue') ? 'language-html' : ''">{{ currentFile.content }}</code></pre>
             </div>
             
-            <div class="mt-12 pt-8 border-t border-sakura-100 dark:border-gray-700 flex justify-between text-xs text-sakura-300 dark:text-gray-500">
+            <div class="mt-12 pt-8 border-t border-sakura-100 dark:border-gray-700 flex justify-center text-xs text-sakura-300 dark:text-gray-500">
               <span class="italic">Sakura Notes</span>
-              <span>{{ t.updated }}: {{ formatDate(currentFile.lastModified) }}</span>
             </div>
 
             <!-- Comments Section -->
@@ -606,8 +608,76 @@ const filteredFlatFiles = computed(() => {
     }
     return files;
   };
-  return flatten(filteredFileSystem.value).sort((a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime());
+  
+  let files = flatten(filteredFileSystem.value);
+  
+  // 应用收藏筛选
+  if (articleStore.showFavoritesOnly) {
+    files = files.filter(f => articleStore.isFavorite(f.path));
+  }
+  
+  // 应用 tag 筛选
+  if (articleStore.selectedTags.length < articleStore.availableTags.length) {
+    files = files.filter(f => {
+      const fileTags = extractTagsFromContent(f.content || '');
+      if (fileTags.length === 0) {
+        // 无 tag 的文章，检查 notag 是否被选中
+        return articleStore.isTagSelected('notag');
+      }
+      // 有 tag 的文章，检查是否有任一 tag 被选中
+      return fileTags.some(tag => articleStore.isTagSelected(tag));
+    });
+  }
+  
+  return files.sort((a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime());
 });
+
+// 从文章内容中提取 tags
+const extractTagsFromContent = (content: string): string[] => {
+  if (!content) return [];
+  
+  // 尝试从 frontmatter 中提取 tags
+  const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
+  if (fmMatch) {
+    const frontmatter = fmMatch[1];
+    // 匹配 tags: [tag1, tag2] 或 tags: tag1
+    const tagsMatch = frontmatter.match(/tags:\s*\[([^\]]*)\]/);
+    if (tagsMatch) {
+      return tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(t => t);
+    }
+    const singleTagMatch = frontmatter.match(/tags:\s*(\S+)/);
+    if (singleTagMatch) {
+      return [singleTagMatch[1].trim()];
+    }
+    // 也尝试提取 author 作为 tag
+    const authorMatch = frontmatter.match(/author:\s*(\S+)/);
+    if (authorMatch) {
+      return [authorMatch[1].trim()];
+    }
+  }
+  return [];
+};
+
+// 从所有文章中收集 tags
+const collectAllTags = () => {
+  const allFiles = filteredFileSystem.value;
+  const flatten = (nodes: FileNode[]): FileNode[] => {
+    let files: FileNode[] = [];
+    for (const node of nodes) {
+      if (node.type === NodeType.FILE) files.push(node);
+      else if (node.children) files = files.concat(flatten(node.children));
+    }
+    return files;
+  };
+  
+  const tags = new Set<string>();
+  for (const file of flatten(allFiles)) {
+    const fileTags = extractTagsFromContent(file.content || '');
+    fileTags.forEach(t => tags.add(t));
+  }
+  
+  articleStore.setAvailableTags([...tags]);
+};
 
 const labFolder = computed(() => {
   const targetName = lang.value === 'zh' ? 'VUE学习笔记' : 'VUE Learning';
@@ -948,14 +1018,23 @@ const handleSelection = () => {
 
 const handleSelectionContextMenu = (e: MouseEvent) => {
   if (currentFile.value?.isSource) return;
+  
   const selection = window.getSelection();
-  const range = (!selection || selection.isCollapsed || selection.rangeCount === 0)
-    ? lastSelectionRange.value
-    : selection.getRangeAt(0);
-  if (!range) {
+  let range: Range | null = null;
+  
+  // 优先使用当前选区，如果没有则尝试使用最后保存的选区
+  if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
+    range = selection.getRangeAt(0);
+    lastSelectionRange.value = range.cloneRange(); // 保存当前选区
+  } else if (lastSelectionRange.value) {
+    range = lastSelectionRange.value;
+  }
+  
+  if (!range || range.collapsed) {
     selectionMenu.value.show = false;
     return;
   }
+  
   const viewer = document.getElementById('markdown-viewer');
   if (!viewer || !viewer.contains(range.commonAncestorContainer)) {
     selectionMenu.value.show = false;
@@ -1229,6 +1308,9 @@ onMounted(async () => {
     // Initialize search index after file system is loaded
     if (fileSystem.value.length > 0) {
       await initSearchIndex(fileSystem.value, lang.value);
+      // 收集所有 tags（在搜索索引初始化后，因为此时内容可能还没完全加载）
+      // 延迟执行以等待内容加载
+      setTimeout(() => collectAllTags(), 2000);
     }
     
     // Setup scroll listener for mobile header hide/show (after content loads)

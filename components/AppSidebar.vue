@@ -135,8 +135,60 @@
           </div>
       </div>
 
+      <!-- Filter Section (for Latest and Files views) -->
+      <div v-if="viewMode === 'latest' || viewMode === 'files'" class="px-2 mb-4">
+        <!-- Favorites Filter -->
+        <div class="mb-3">
+          <button 
+            @click="articleStore.toggleShowFavoritesOnly()"
+            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
+            :class="articleStore.showFavoritesOnly 
+              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800' 
+              : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+          >
+            <span>{{ articleStore.showFavoritesOnly ? '⭐' : '☆' }}</span>
+            <span class="font-medium">{{ lang === 'zh' ? '仅显示收藏' : 'Favorites Only' }}</span>
+            <span class="ml-auto text-xs opacity-70">({{ articleStore.favoritesCount }})</span>
+          </button>
+        </div>
+        
+        <!-- Tags Filter -->
+        <div class="mb-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">{{ lang === 'zh' ? '标签筛选' : 'Tags' }}</span>
+            <div class="flex gap-1">
+              <button 
+                @click="articleStore.selectAllTags()"
+                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-sakura-100 hover:text-sakura-600"
+              >
+                {{ lang === 'zh' ? '全选' : 'All' }}
+              </button>
+              <button 
+                @click="articleStore.deselectAllTags()"
+                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-sakura-100 hover:text-sakura-600"
+              >
+                {{ lang === 'zh' ? '清空' : 'None' }}
+              </button>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button 
+              v-for="tag in articleStore.availableTags"
+              :key="tag"
+              @click="articleStore.toggleTag(tag)"
+              class="px-2 py-1 text-xs rounded-full transition-all"
+              :class="articleStore.isTagSelected(tag)
+                ? 'bg-sakura-500 text-white shadow-sm'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-sakura-100 dark:hover:bg-sakura-900/30'"
+            >
+              {{ tag === 'notag' ? (lang === 'zh' ? '无标签' : 'No Tag') : tag }}
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Latest View -->
-      <div v-else-if="viewMode === 'latest'" class="space-y-3 pb-20">
+      <div v-if="viewMode === 'latest'" class="space-y-3 pb-20">
           <div v-if="filteredFlatFiles.length === 0" class="text-center text-gray-400 py-10 text-sm italic">
           {{ t.no_notes }}
         </div>
@@ -180,6 +232,9 @@ import { defineProps, defineEmits, ref } from 'vue';
 import FileTree from './FileTree.vue';
 import ArticleCard from './ArticleCard.vue';
 import type { FileNode } from '../types';
+import { useArticleStore } from '../stores/articleStore';
+
+const articleStore = useArticleStore();
 
 defineProps<{
   lang: string;

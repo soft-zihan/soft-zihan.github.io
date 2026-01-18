@@ -129,13 +129,38 @@
             </div>
             
             <div class="flex items-center gap-3">
-              <select 
-                v-model="targetFolder"
-                class="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg"
-              >
-                <option value="notes/zh">notes/zh (中文)</option>
-                <option value="notes/en">notes/en (English)</option>
-              </select>
+              <!-- 目录选择 -->
+              <div class="relative">
+                <button 
+                  @click="showFolderBrowser = !showFolderBrowser"
+                  class="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  <span>📁</span>
+                  <span class="max-w-[200px] truncate">{{ targetFolder }}</span>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                  </svg>
+                </button>
+                
+                <!-- 目录下拉列表 -->
+                <div 
+                  v-if="showFolderBrowser"
+                  class="absolute bottom-full mb-2 left-0 w-80 max-h-64 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl z-50"
+                >
+                  <div class="p-2 border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500">
+                    {{ lang === 'zh' ? '选择发布目录' : 'Select publish folder' }}
+                  </div>
+                  <div 
+                    v-for="folder in availableFolders"
+                    :key="folder"
+                    @click="targetFolder = folder; showFolderBrowser = false"
+                    class="px-3 py-2 text-sm cursor-pointer hover:bg-sakura-50 dark:hover:bg-gray-700 transition-colors"
+                    :class="targetFolder === folder ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600' : ''"
+                  >
+                    {{ folder }}
+                  </div>
+                </div>
+              </div>
               
               <button 
                 @click="saveDraft"
@@ -193,6 +218,23 @@
               <span class="text-gray-400">/</span>
               <input v-model="repoName" type="text" placeholder="Repo" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm" />
             </div>
+            
+            <!-- 作者名称 -->
+            <div class="mb-4">
+              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-2">
+                {{ lang === 'zh' ? '作者名称 (GitHub 用户名)' : 'Author Name (GitHub username)' }}
+              </label>
+              <input 
+                v-model="authorName" 
+                type="text" 
+                placeholder="your-github-username"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
+              />
+              <p class="text-xs text-gray-400 mt-1">
+                {{ lang === 'zh' ? '将作为文章标签添加，用于筛选' : 'Will be added as article tag for filtering' }}
+              </p>
+            </div>
+            
             <div class="flex justify-end gap-2">
               <button 
                 @click="showTokenModal = false"
@@ -237,11 +279,31 @@ const content = ref('')
 const targetFolder = ref('notes/zh')
 const images = ref<Array<{ id: string; file: File; preview: string }>>([])
 const showTokenModal = ref(false)
+const showFolderBrowser = ref(false)
 const tokenInput = ref('')
 const repoOwner = ref('soft-zihan')
 const repoName = ref('soft-zihan.github.io')
+const authorName = ref('') // 作者名称
+const tokenValue = ref('') // 用于追踪 token 状态
 
-const hasToken = computed(() => !!getToken())
+// 可选的发布目录列表
+const availableFolders = [
+  'notes/zh',
+  'notes/zh/Linux命令行',
+  'notes/zh/Linux命令行/01_基础',
+  'notes/zh/Linux命令行/02_核心',
+  'notes/zh/Linux命令行/03_进阶',
+  'notes/zh/Linux命令行/04_实战',
+  'notes/en',
+  'notes/en/Linux Command Line',
+  'notes/en/Linux Command Line/1 Basics',
+  'notes/en/Linux Command Line/2 Intermediate',
+  'notes/en/Linux Command Line/3 Tips and Tricks',
+  'notes/VUE学习笔记',
+  'notes/VUE Learning'
+]
+
+const hasToken = computed(() => !!tokenValue.value)
 
 const wordCount = computed(() => {
   const chinese = (content.value.match(/[\u4e00-\u9fa5]/g) || []).length
@@ -381,8 +443,12 @@ const loadDraft = () => {
 const saveToken = () => {
   if (tokenInput.value) {
     setToken(tokenInput.value)
+    tokenValue.value = tokenInput.value // 更新本地状态
     localStorage.setItem('github_repo_owner', repoOwner.value)
     localStorage.setItem('github_repo_name', repoName.value)
+  }
+  if (authorName.value) {
+    localStorage.setItem('author_name', authorName.value)
   }
   showTokenModal.value = false
 }
@@ -390,6 +456,30 @@ const saveToken = () => {
 const publish = async () => {
   const token = getToken()
   if (!token || !title.value.trim() || !content.value.trim()) return
+  
+  // 构建带有作者信息的 frontmatter
+  let finalContent = content.value
+  const author = authorName.value.trim()
+  if (author) {
+    const frontmatter = `---
+author: ${author}
+authorUrl: https://github.com/${author}
+date: ${new Date().toISOString().split('T')[0]}
+tags: [${author}]
+---
+
+`
+    // 如果内容已有 frontmatter，则合并
+    if (finalContent.startsWith('---')) {
+      const endIndex = finalContent.indexOf('---', 3)
+      if (endIndex > 0) {
+        const existingFm = finalContent.slice(0, endIndex + 3)
+        finalContent = existingFm.replace('---\n', `---\nauthor: ${author}\nauthorUrl: https://github.com/${author}\ntags: [${author}]\n`) + finalContent.slice(endIndex + 3)
+      }
+    } else {
+      finalContent = frontmatter + finalContent
+    }
+  }
   
   const result = await publishArticle(
     {
@@ -399,7 +489,7 @@ const publish = async () => {
       token
     },
     title.value,
-    content.value,
+    finalContent,
     targetFolder.value,
     images.value.map(img => ({ id: img.id, file: img.file }))
   )
@@ -426,6 +516,9 @@ onMounted(() => {
   loadDraft()
   repoOwner.value = localStorage.getItem('github_repo_owner') || 'soft-zihan'
   repoName.value = localStorage.getItem('github_repo_name') || 'soft-zihan.github.io'
+  authorName.value = localStorage.getItem('author_name') || ''
+  tokenValue.value = getToken() || '' // 初始化 token 状态
+  tokenInput.value = tokenValue.value // 预填充 token 输入框
 })
 </script>
 

@@ -28,10 +28,8 @@ jobs:
           node-version: '20'
 
       # 关键步骤：强制清理环境，防止使用仓库中权限错误的 node_modules
-      - name: Clean and Install Dependencies
-        run: |
-          rm -rf node_modules
-          npm install
+      - name: Install Dependencies
+        run: npm install
 
       - name: Generate File Tree
         run: npm run gen-tree
@@ -41,6 +39,9 @@ jobs:
       
       - name: Generate Music Playlist
         run: npm run gen-music
+
+      - name: Generate Wallpapers List
+        run: npm run gen-wallpapers
 
       - name: Build
         run: npm run build

@@ -48,6 +48,11 @@ export const useArticleStore = defineStore('article', () => {
   // Liked fingerprints per article to prevent duplicate
   const likeFingerprints = ref<Record<string, string[]>>({})
   
+  // Tag 筛选相关
+  const availableTags = ref<string[]>(['notag']) // 可用的 tag 列表，notag 表示无 tag 文章
+  const selectedTags = ref<string[]>(['notag']) // 选中的 tag 列表，默认全选
+  const showFavoritesOnly = ref(false) // 是否仅显示收藏
+  
   // Computed
   const likedCount = computed(() => likedArticles.value.length)
   const favoritesCount = computed(() => favorites.value.length)
@@ -138,6 +143,42 @@ export const useArticleStore = defineStore('article', () => {
     return [...favorites.value]
   }
   
+  // Tag 筛选相关方法
+  function setAvailableTags(tags: string[]) {
+    // 确保 notag 始终在最前面
+    const uniqueTags = [...new Set(['notag', ...tags])]
+    availableTags.value = uniqueTags
+    // 默认全选
+    if (selectedTags.value.length === 1 && selectedTags.value[0] === 'notag') {
+      selectedTags.value = [...uniqueTags]
+    }
+  }
+  
+  function toggleTag(tag: string) {
+    const idx = selectedTags.value.indexOf(tag)
+    if (idx > -1) {
+      selectedTags.value.splice(idx, 1)
+    } else {
+      selectedTags.value.push(tag)
+    }
+  }
+  
+  function selectAllTags() {
+    selectedTags.value = [...availableTags.value]
+  }
+  
+  function deselectAllTags() {
+    selectedTags.value = []
+  }
+  
+  function isTagSelected(tag: string): boolean {
+    return selectedTags.value.includes(tag)
+  }
+  
+  function toggleShowFavoritesOnly() {
+    showFavoritesOnly.value = !showFavoritesOnly.value
+  }
+  
   // For Umami stats cache
   const umamiCache = ref<Record<string, { views: number; visitors: number; timestamp: number }>>({})
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -160,6 +201,9 @@ export const useArticleStore = defineStore('article', () => {
     favorites,
     articleStats,
     userFingerprint,
+    availableTags,
+    selectedTags,
+    showFavoritesOnly,
     // Computed
     likedCount,
     favoritesCount,
@@ -171,11 +215,17 @@ export const useArticleStore = defineStore('article', () => {
     toggleLike,
     toggleFavorite,
     getFavoriteArticles,
+    setAvailableTags,
+    toggleTag,
+    selectAllTags,
+    deselectAllTags,
+    isTagSelected,
+    toggleShowFavoritesOnly,
     getCachedStats,
     setCachedStats
   }
 }, {
   persist: {
-    pick: ['likedArticles', 'favorites', 'articleStats', 'likeFingerprints', 'userFingerprint']
+    pick: ['likedArticles', 'favorites', 'articleStats', 'likeFingerprints', 'userFingerprint', 'selectedTags', 'showFavoritesOnly']
   }
 })

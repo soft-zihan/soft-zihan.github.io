@@ -1,75 +1,95 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/appStore'
 
-export interface WallpaperInfo {
+export interface WallpaperItem {
   filename: string
-  lightPath: string
-  darkPath: string
+  path: string
+  name: string
 }
 
-// Hardcoded wallpaper list (to be updated when adding/removing wallpapers)
-const availableWallpapers: WallpaperInfo[] = [
-  {
-    filename: 'wallpaper-light.jpg',
-    lightPath: '/image/light/wallpaper-light.jpg',
-    darkPath: '/image/dark/pexels-minan1398-813269.jpg' // Default dark wallpaper
-  },
-  {
-    filename: 'pexels-minan1398-813269.jpg',
-    lightPath: '/image/light/wallpaper-light.jpg', // Default light wallpaper
-    darkPath: '/image/dark/pexels-minan1398-813269.jpg'
-  },
-  {
-    filename: 'pexels-krisof-1252869.jpg',
-    lightPath: '/image/light/wallpaper-light.jpg', // Default light wallpaper
-    darkPath: '/image/dark/pexels-krisof-1252869.jpg'
-  }
-]
+export interface WallpapersData {
+  light: WallpaperItem[]
+  dark: WallpaperItem[]
+}
+
+// 缓存壁纸数据（模块级别，跨组件共享）
+const wallpapersData = ref<WallpapersData | null>(null)
+const isLoading = ref(false)
 
 export function useWallpapers() {
   const appStore = useAppStore()
   
-  // Get all wallpapers
-  const wallpapers = computed(() => availableWallpapers)
+  // 加载壁纸列表
+  const loadWallpapers = async () => {
+    if (wallpapersData.value || isLoading.value) return
+    
+    isLoading.value = true
+    try {
+      const response = await fetch('/wallpapers.json')
+      if (response.ok) {
+        wallpapersData.value = await response.json()
+      } else {
+        // 回退到默认壁纸
+        wallpapersData.value = {
+          light: [{ filename: 'wallpaper-light.jpg', path: '/image/light/wallpaper-light.jpg', name: 'Default Light' }],
+          dark: [{ filename: 'pexels-minan1398-813269.jpg', path: '/image/dark/pexels-minan1398-813269.jpg', name: 'Default Dark' }]
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load wallpapers.json:', e)
+      // 回退到默认壁纸
+      wallpapersData.value = {
+        light: [{ filename: 'wallpaper-light.jpg', path: '/image/light/wallpaper-light.jpg', name: 'Default Light' }],
+        dark: [{ filename: 'pexels-minan1398-813269.jpg', path: '/image/dark/pexels-minan1398-813269.jpg', name: 'Default Dark' }]
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
   
-  // Get current wallpaper based on theme
+  // 当前主题的壁纸列表
+  const currentThemeWallpapers = computed(() => {
+    if (!wallpapersData.value) return []
+    return appStore.isDark ? wallpapersData.value.dark : wallpapersData.value.light
+  })
+  
+  // 当前选中的壁纸路径
   const currentWallpaper = computed(() => {
     const filename = appStore.currentWallpaperFilename
+    const wallpapers = currentThemeWallpapers.value
     
-    // Find wallpaper by filename
-    let wp = availableWallpapers.find(w => w.filename === filename)
+    if (!wallpapers.length) return ''
     
-    // If not found or no filename set, use first wallpaper
-    if (!wp) {
-      wp = availableWallpapers[0]
-    }
+    // 查找匹配的壁纸
+    const found = wallpapers.find(w => w.filename === filename)
+    if (found) return found.path
     
-    return appStore.isDark ? wp.darkPath : wp.lightPath
+    // 没找到则返回第一张
+    return wallpapers[0]?.path || ''
   })
   
-  // Get wallpapers for current theme (for display in settings)
-  const currentThemeWallpapers = computed(() => {
-    return availableWallpapers.map(wp => ({
-      filename: wp.filename,
-      path: appStore.isDark ? wp.darkPath : wp.lightPath,
-      name: wp.filename.replace(/\.(jpg|jpeg|png|webp)$/i, '').replace(/[-_]/g, ' ')
-    }))
-  })
-  
-  // Set wallpaper by filename
+  // 设置壁纸
   function setWallpaper(filename: string) {
     appStore.setWallpaper(filename)
   }
   
-  // Get wallpaper info by filename
-  function getWallpaperInfo(filename: string): WallpaperInfo | undefined {
-    return availableWallpapers.find(w => w.filename === filename)
+  // 获取壁纸信息
+  function getWallpaperInfo(filename: string): WallpaperItem | undefined {
+    if (!wallpapersData.value) return undefined
+    
+    const allWallpapers = [...wallpapersData.value.light, ...wallpapersData.value.dark]
+    return allWallpapers.find(w => w.filename === filename)
   }
   
+  // 初始化时加载壁纸
+  loadWallpapers()
+  
   return {
-    wallpapers,
-    currentWallpaper,
+    wallpapersData,
+    isLoading,
     currentThemeWallpapers,
+    currentWallpaper,
+    loadWallpapers,
     setWallpaper,
     getWallpaperInfo
   }

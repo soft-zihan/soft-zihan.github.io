@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen-tree && npm run gen-raw && npm run gen-music && vite build",
+    "build": "npm run gen-tree && npm run gen-raw && npm run gen-music && npm run gen-wallpapers && vite build",
     "preview": "vite preview",
     "gen-tree": "node scripts/generate-tree.js",
     "gen-raw": "node scripts/generate-raw.js",
-    "gen-music": "node scripts/generate-music.js"
+    "gen-music": "node scripts/generate-music.js",
+    "gen-wallpapers": "node scripts/generate-wallpapers.js"
   },
   "dependencies": {
     "lodash": "^4.17.21",

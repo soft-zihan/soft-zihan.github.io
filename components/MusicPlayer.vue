@@ -257,6 +257,9 @@ const seekTo = (e: MouseEvent) => {
 
 const startSeek = (e: PointerEvent) => {
   isSeeking.value = true
+  // 捕获指针，确保拖动时事件不会丢失
+  const target = e.target as HTMLElement
+  target.setPointerCapture(e.pointerId)
   updateSeek(e.clientX)
 }
 
