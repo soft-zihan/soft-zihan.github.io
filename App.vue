@@ -1,4 +1,3 @@
-
 <template>
   <!-- Dynamic Petals Container -->
   <PetalBackground v-if="appStore.showParticles" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" />
@@ -104,33 +103,33 @@
           @mousedown.prevent
         >
           <!-- Highlight Options -->
-          <button @click="applyFormat('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
+          <button @click="applyFormatHandler('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
             <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
+          <button @click="applyFormatHandler('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
             <span class="w-4 h-4 bg-green-400 rounded-full inline-block ring-2 ring-green-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
+          <button @click="applyFormatHandler('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
             <span class="w-4 h-4 bg-blue-400 rounded-full inline-block ring-2 ring-blue-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
+          <button @click="applyFormatHandler('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
             <span class="w-4 h-4 bg-pink-400 rounded-full inline-block ring-2 ring-pink-300/50"></span>
           </button>
           
           <div class="w-px bg-white/20 mx-0.5"></div>
           
           <!-- Underline Styles -->
-          <button @click="applyFormat('underline-wavy')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
+          <button @click="applyFormatHandler('underline-wavy')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
              <span class="underline decoration-wavy decoration-sakura-400 underline-offset-2">〰</span>
           </button>
-          <button @click="applyFormat('underline-double')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Double Underline">
+          <button @click="applyFormatHandler('underline-double')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Double Underline">
              <span class="underline decoration-double decoration-blue-400 underline-offset-2">≡</span>
           </button>
 
           <div class="w-px bg-white/20 mx-0.5"></div>
 
           <!-- Block Highlight -->
-          <button @click="applyFormat('highlight-block')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Block Highlight">
+          <button @click="applyFormatHandler('highlight-block')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Block Highlight">
             <span class="px-2 py-0.5 border border-yellow-300 rounded bg-yellow-200/40">▭</span>
           </button>
         </div>
@@ -246,11 +245,11 @@
               id="markdown-viewer"
               v-html="renderedHtml" 
               class="markdown-body dark:text-gray-300 selection:bg-sakura-200 dark:selection:bg-sakura-900"
-              @click="handleContentClick"
-              @mousedown="selectionMenu.locked = true"
-              @mouseup="handleSelection"
-              @touchend="handleSelection"
-              @contextmenu="handleSelectionContextMenu"
+              @click="handleContentClickEvent"
+              @mousedown="selectionMenuComposable.lockSelectionMenu()"
+              @mouseup="handleSelectionEvent"
+              @touchend="handleSelectionEvent"
+              @contextmenu="handleSelectionContextMenuEvent"
             ></div>
 
             <!-- Source Code / Raw Mode (Editable) -->
@@ -259,42 +258,42 @@
                <div class="flex items-center justify-between mb-3 bg-[#252526] px-4 py-2 rounded-t-xl border border-gray-700 border-b-0">
                  <div class="flex items-center gap-2">
                    <span class="text-xs text-gray-400 font-mono">{{ isRawMode ? 'Markdown' : 'Source' }}</span>
-                   <span v-if="isEditingRaw" class="text-xs text-yellow-400 px-2 py-0.5 bg-yellow-900/30 rounded">{{ lang === 'zh' ? '编辑中' : 'Editing' }}</span>
+                   <span v-if="rawEditor.isEditingRaw.value" class="text-xs text-yellow-400 px-2 py-0.5 bg-yellow-900/30 rounded">{{ lang === 'zh' ? '编辑中' : 'Editing' }}</span>
                  </div>
                  <div class="flex items-center gap-2">
                    <button
-                     v-if="!isEditingRaw && !currentFile.isSource"
-                     @click="startEditingRaw"
+                     v-if="!rawEditor.isEditingRaw.value && !currentFile.isSource"
+                     @click="rawEditor.startEditingRaw()"
                      class="text-xs px-3 py-1.5 bg-sakura-500 hover:bg-sakura-600 text-white rounded transition-colors"
                    >
                      {{ lang === 'zh' ? '编辑' : 'Edit' }}
                    </button>
-                   <template v-if="isEditingRaw">
+                   <template v-if="rawEditor.isEditingRaw.value">
                      <button
-                       @click="cancelEditingRaw"
+                       @click="rawEditor.cancelEditingRaw()"
                        class="text-xs px-3 py-1.5 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
-                       :disabled="isSavingRaw"
+                       :disabled="rawEditor.isSavingRaw.value"
                      >
                        {{ lang === 'zh' ? '取消' : 'Cancel' }}
                      </button>
                      <button
-                       @click="saveRawContent"
+                       @click="rawEditor.saveRawContent()"
                        class="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded transition-colors flex items-center gap-1"
-                       :disabled="isSavingRaw"
+                       :disabled="rawEditor.isSavingRaw.value"
                      >
-                       <svg v-if="isSavingRaw" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                       <svg v-if="rawEditor.isSavingRaw.value" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                        </svg>
-                       {{ isSavingRaw ? (lang === 'zh' ? '提交中...' : 'Publishing...') : (lang === 'zh' ? '提交修改' : 'Submit Changes') }}
+                       {{ rawEditor.isSavingRaw.value ? (lang === 'zh' ? '提交中...' : 'Publishing...') : (lang === 'zh' ? '提交修改' : 'Submit Changes') }}
                      </button>
                    </template>
                  </div>
                </div>
                <!-- Editable Textarea -->
                <textarea
-                 v-if="isEditingRaw"
-                 v-model="editedRawContent"
+                 v-if="rawEditor.isEditingRaw.value"
+                 v-model="rawEditor.editedRawContent.value"
                  class="w-full h-[60vh] font-mono text-sm bg-[#1e1e1e] text-blue-200 p-6 rounded-b-xl border border-gray-700 resize-none outline-none focus:ring-2 focus:ring-sakura-500/50"
                  spellcheck="false"
                ></textarea>
@@ -405,7 +404,7 @@
     <div 
       v-if="lightboxImage" 
       class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center cursor-zoom-out animate-fade-in p-4"
-      @click="lightboxImage = null"
+      @click="lightbox.closeLightbox()"
     >
        <img :src="lightboxImage" class="max-w-full max-h-full rounded-lg shadow-2xl scale-100 object-contain transition-transform duration-300" alt="Fullscreen preview" />
        <div class="absolute bottom-10 text-white/50 text-sm bg-black/50 px-4 py-2 rounded-full">Click anywhere to close</div>
@@ -413,9 +412,9 @@
 
     <!-- Source Code Modal (Enhanced with Syntax Highlighting) -->
     <div 
-      v-if="showCodeModal" 
+      v-if="codeModal.showCodeModal.value" 
       class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4 md:p-10"
-      @click.self="closeCodeModal"
+      @click.self="codeModal.closeCodeModal()"
     >
        <div class="bg-[#1e1e1e] w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden relative transform transition-all duration-300 scale-100">
           <!-- Modal Header -->
@@ -423,18 +422,18 @@
              <div class="flex items-center gap-2">
                 <span class="text-2xl">📝</span>
                 <div>
-                   <h3 class="text-sm font-bold text-gray-200 font-mono">{{ codeModalTitle }}</h3>
-                   <span class="text-[10px] text-gray-500">{{ codeModalPath || 'Read Only Preview' }}</span>
+                   <h3 class="text-sm font-bold text-gray-200 font-mono">{{ codeModal.codeModalTitle.value }}</h3>
+                   <span class="text-[10px] text-gray-500">{{ codeModal.codeModalPath.value || 'Read Only Preview' }}</span>
                 </div>
              </div>
              <div class="flex gap-2">
-               <button @click="copyCodeContent" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded transition-colors border border-gray-600">Copy</button>
-               <button @click="closeCodeModal" class="text-gray-400 hover:text-white transition-colors bg-gray-700/50 hover:bg-red-500/50 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+               <button @click="codeModal.copyCodeContent(showToast, t.toast_copied)" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded transition-colors border border-gray-600">Copy</button>
+               <button @click="codeModal.closeCodeModal()" class="text-gray-400 hover:text-white transition-colors bg-gray-700/50 hover:bg-red-500/50 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
              </div>
           </div>
           <!-- Modal Content with Syntax Highlighting -->
           <div class="flex-1 overflow-auto custom-scrollbar p-0 bg-[#1e1e1e]">
-             <pre class="p-6 text-sm font-mono leading-relaxed whitespace-pre-wrap hljs"><code v-html="highlightedCodeContent"></code></pre>
+             <pre class="p-6 text-sm font-mono leading-relaxed whitespace-pre-wrap hljs"><code v-html="codeModal.highlightedCodeContent.value"></code></pre>
           </div>
        </div>
     </div>
@@ -487,6 +486,8 @@ import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { I18N } from './constants';
 import { NodeType } from './types';
 import type { FileNode, BreadcrumbItem, TocItem } from './types';
+
+// Components
 import LabDashboard from './components/LabDashboard.vue';
 import LabEventHandling from './components/LabEventHandling.vue';
 import LabSlot from './components/LabSlot.vue';
@@ -501,105 +502,54 @@ import MusicPlayer from './components/MusicPlayer.vue';
 import SearchModal from './components/SearchModal.vue';
 import WriteEditor from './components/WriteEditor.vue';
 import GiscusComments from './components/GiscusComments.vue';
-import ArticleCard from './components/ArticleCard.vue';
-import { marked } from 'marked';
-import hljs from 'highlight.js/lib/common';
-import { useGitHubPublish } from './composables/useGitHubPublish';
 
 // Pinia Stores
 import { useAppStore } from './stores/appStore';
 import { useArticleStore } from './stores/articleStore';
 import { useMusicStore } from './stores/musicStore';
-import { useSearch } from './composables/useSearch';
 
+// Composables
+import { useSearch } from './composables/useSearch';
+import { useArticleMeta } from './composables/useArticleMeta';
+import { useCodeModal } from './composables/useCodeModal';
+import { useContentRenderer } from './composables/useContentRenderer';
+import { useRawEditor } from './composables/useRawEditor';
+import { useLightbox } from './composables/useLightbox';
+import { useSelectionMenu } from './composables/useSelectionMenu';
+import { useContentClick, useFileVisibility } from './composables/useContentClick';
+
+// =====================
+// Stores
+// =====================
 const appStore = useAppStore();
 const articleStore = useArticleStore();
 const musicStore = useMusicStore();
-const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, rebuildSearchIndex, isLoadingContent, setFetchFunction, updateLanguage } = useSearch();
-const { getToken, uploadFile } = useGitHubPublish();
 
-// i18n with Persistence (from store)
+// =====================
+// Search
+// =====================
+const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, isLoadingContent, setFetchFunction, updateLanguage } = useSearch();
+
+// =====================
+// i18n
+// =====================
 const lang = computed({
   get: () => appStore.lang,
   set: (val) => appStore.setLang(val)
 });
 const t = computed(() => I18N[lang.value]);
 
-const toggleLang = async () => {
-  const oldLang = lang.value;
-  const newLang = oldLang === 'en' ? 'zh' : 'en';
-  appStore.setLang(newLang);
-  
-  // Update search language filter
-  updateLanguage(newLang);
-  
-  // Preserve current state during language switch
-  // 1. If in lab mode, stay in lab mode (LabDashboard is language-aware)
-  if (viewMode.value === 'lab' && currentTool.value === 'dashboard') {
-    // Lab dashboard will automatically update with new lang prop
-    return;
-  }
-  
-  // 2. If viewing a folder, stay in folder view (folders exist in both lang roots)
-  if (currentFolder.value && !currentFile.value) {
-    // Keep folder view, UI will update via reactive lang/t
-    return;
-  }
-  
-  // 3. If viewing a file (note), we need to refresh because note files differ between languages
-  if (currentFile.value) {
-    // Try to find equivalent file in new language root
-    const oldPath = currentFile.value.path;
-    const pathParts = oldPath.split('/');
-    
-    // Replace language root (first segment) with new language
-    if (pathParts[0] === oldLang) {
-      pathParts[0] = newLang;
-      const newPath = pathParts.join('/');
-      const newNode = findNodeByPath(fileSystem.value, newPath);
-      
-      if (newNode && newNode.type === NodeType.FILE) {
-        // Found equivalent file in new language
-        await openFile(newNode);
-        return;
-      }
-    }
-    
-    // If no equivalent file found, go home
-    resetToHome();
-    return;
-  }
-  
-  // 4. If on home screen, stay on home (already reactive via lang/t)
-  // No action needed, UI will update automatically
-};
-
-// Theme (using store)
-const toggleTheme = (val: boolean) => {
-  appStore.setDark(val);
-  if (val) document.documentElement.classList.add('dark');
-  else document.documentElement.classList.remove('dark');
-};
-
-// Handle petal speed change
-const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
-  appStore.userSettings.petalSpeed = speed;
-  // When speed is 'off', hide particles; otherwise show them
-  appStore.showParticles = speed !== 'off';
-};
-
-// Data
+// =====================
+// Core State
+// =====================
 const fileSystem = ref<FileNode[]>([]);
 const currentFile = ref<FileNode | null>(null);
-const currentFolder = ref<FileNode | null>(null); 
+const currentFolder = ref<FileNode | null>(null);
 const viewMode = ref<'latest' | 'files' | 'lab'>('latest');
 const expandedFolders = ref<string[]>([]);
-const toc = ref<TocItem[]>([]);
-const activeHeaderId = ref<string>('');
 const loading = ref(true);
 const contentLoading = ref(false);
 const currentTool = ref<'dashboard' | 'event-handling' | 'slot' | null>(null);
-const lightboxImage = ref<string | null>(null);
 const isRawMode = ref(false);
 
 // Modal States
@@ -613,39 +563,42 @@ const headerHidden = ref(false);
 const lastScrollY = ref(0);
 const isMobile = ref(false);
 
-// Source Code Modal State
-const showCodeModal = ref(false);
-const codeModalContent = ref('');
-const codeModalTitle = ref('');
-const codeModalPath = ref(''); // 存储当前代码文件路径
-
-// Raw Mode Editing State
-const isEditingRaw = ref(false);
-const editedRawContent = ref('');
-const isSavingRaw = ref(false);
-
-const selectionMenu = ref({ show: false, x: 0, y: 0, locked: false });
-const lastSelectionRange = ref<Range | null>(null);
-
-// Wallpaper URLs (user to place files in project; hardcoded paths)
+// Wallpaper URLs
 const wallpaperLightUrl = '/image/wallpaper-light.jpg';
 const wallpaperDarkUrl = '/image/wallpaper-dark.jpg';
 
-// Keyboard Shortcuts (Cmd+K for search)
-const handleKeydown = (e: KeyboardEvent) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    showSearch.value = true;
-  }
-  if (e.key === 'Escape') {
-    showSearch.value = false;
-    musicStore.showMusicPlayer = false;
-    showWriteEditor.value = false;
-    sidebarOpen.value = false;
-  }
-};
+// =====================
+// Composables 初始化
+// =====================
+const showToast = (msg: string) => appStore.showToast(msg);
 
+// 文章元数据
+const { currentMeta, currentTags, currentAuthorName, currentAuthorUrl, currentContributors } = useArticleMeta(currentFile);
+
+// 代码弹窗
+const codeModal = useCodeModal();
+
+// 内容渲染
+const contentRenderer = useContentRenderer(currentFile, isRawMode);
+const { renderedHtml, toc, activeHeaderId, activeIndicatorTop, setupMarkedRenderer, updateRenderedContent, generateToc, scrollToHeader } = contentRenderer;
+
+// Raw 编辑器
+const rawEditor = useRawEditor(currentFile, isRawMode, updateRenderedContent, showToast, lang);
+
+// 图片灯箱
+const lightbox = useLightbox();
+const { lightboxImage, handleImageClick } = lightbox;
+
+// 选择菜单
+const selectionMenuComposable = useSelectionMenu(showToast);
+const { selectionMenu, handleSelection, handleSelectionContextMenu, handleSelectionChange, applyFormat, hideSelectionMenu } = selectionMenuComposable;
+
+// 文件可见性
+const { isFileVisible, collectAllTags } = useFileVisibility(articleStore);
+
+// =====================
 // Computed
+// =====================
 const fontSizeClass = computed(() => {
   switch(appStore.userSettings.fontSize) {
     case 'small': return 'text-sm lg:text-base leading-relaxed';
@@ -673,46 +626,12 @@ const currentLineCount = computed(() => {
   return currentFile.value.content ? currentFile.value.content.split(/\r?\n/).length : 0;
 });
 
-const currentMeta = computed(() => extractMetaFromContent(currentFile.value?.content || ''));
-const currentTags = computed(() => currentMeta.value.tags || []);
-const currentAuthorName = computed(() => currentMeta.value.author || '');
-const currentAuthorUrl = computed(() => currentMeta.value.authorUrl || '');
-
 const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '');
-
-// Resource Categories Data (Reactive to lang change)
-const resourceCategories = computed(() => [
-  {
-    title: t.value.res_cat_platform,
-    items: [
-       { name: 'Vue Mastery', url: 'https://vuemastery.com', icon: '🎮', desc: lang.value === 'zh' ? '官方推荐的游戏化教程' : 'Gamified learning path' },
-       { name: 'Scrimba', url: 'https://scrimba.com/learn/vue', icon: '📺', desc: lang.value === 'zh' ? '交互式视频编码' : 'Interactive video tutorials' },
-       { name: 'Frontend Mentor', url: 'https://frontendmentor.io', icon: '🎨', desc: lang.value === 'zh' ? '真实设计稿还原挑战' : 'Real-world design challenges' },
-    ]
-  },
-  {
-    title: t.value.res_cat_frontend_games,
-    items: [
-       { name: 'Flexbox Froggy', url: 'https://flexboxfroggy.com', icon: '🐸', desc: lang.value === 'zh' ? '青蛙跳荷叶学布局' : 'Learn Flexbox with frogs' },
-       { name: 'Grid Garden', url: 'https://cssgridgarden.com', icon: '🥕', desc: lang.value === 'zh' ? '种胡萝卜学网格' : 'Learn CSS Grid via gardening' },
-       { name: 'CSS Diner', url: 'https://flukeout.github.io', icon: '🍽️', desc: lang.value === 'zh' ? '选择器餐厅' : 'Master CSS selectors' },
-       { name: 'JavaScript 30', url: 'https://javascript30.com', icon: '🎹', desc: lang.value === 'zh' ? '30天原生JS挑战' : '30 Day Vanilla JS Challenge' },
-    ]
-  },
-  {
-     title: t.value.res_cat_vue_projects,
-     items: [
-       { name: 'Vue Tutorial', url: 'https://vuejs.org/tutorial/', icon: '🟩', desc: lang.value === 'zh' ? 'Vue 官方交互教程' : 'Official Interactive Tutorial' },
-       { name: 'Vue Snake', url: 'https://github.com/search?q=vue+snake+game', icon: '🐍', desc: lang.value === 'zh' ? '贪吃蛇源码搜索' : 'Search Snake Game code' },
-       { name: 'Vue Memory', url: 'https://codepen.io/search/pens?q=vue+memory+game', icon: '🃏', desc: lang.value === 'zh' ? '记忆卡片游戏' : 'Memory Card Game' },
-     ]
-  }
-]);
 
 // Root Directory Logic based on Language
 const currentLangRoot = computed(() => {
-   const root = fileSystem.value.find(node => node.name === lang.value);
-   return root ? root.children : [];
+  const root = fileSystem.value.find(node => node.name === lang.value);
+  return root ? root.children : [];
 });
 
 const filteredFileSystem = computed(() => {
@@ -722,7 +641,6 @@ const filteredFileSystem = computed(() => {
         return isFileVisible(node) ? node : null;
       }
       const children = node.children ? filterTree(node.children) : [];
-      // 保留目录结构，即使没有匹配文件
       return { ...node, children } as FileNode;
     }).filter(Boolean) as FileNode[];
   };
@@ -739,336 +657,35 @@ const filteredFlatFiles = computed(() => {
     }
     return files;
   };
-  
+
   let files = flatten(currentLangRoot.value || []);
   files = files.filter(isFileVisible);
-  
+
   return files.sort((a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime());
 });
-
-// 从文章内容中提取 meta（支持注释与 frontmatter）
-const extractMetaFromContent = (content: string): { tags: string[]; author: string; authorUrl: string } => {
-  const meta = { tags: [] as string[], author: '', authorUrl: '' };
-  if (!content) return meta;
-
-  // 优先从顶部注释提取
-  const commentMatch = content.match(/^\s*<!--([\s\S]*?)-->/);
-  if (commentMatch) {
-    const block = commentMatch[1];
-    const tagsMatch = block.match(/tags?\s*:\s*([^\n]+)/i);
-    if (tagsMatch) {
-      meta.tags = tagsMatch[1]
-        .split(/[,，]/)
-        .map(t => t.trim().replace(/['"]/g, ''))
-        .filter(Boolean);
-    }
-    const authorMatch = block.match(/author\s*:\s*([^\n]+)/i);
-    if (authorMatch) meta.author = authorMatch[1].trim();
-    const authorUrlMatch = block.match(/authorUrl\s*:\s*([^\n]+)/i);
-    if (authorUrlMatch) meta.authorUrl = authorUrlMatch[1].trim();
-  }
-
-  // 兼容旧 frontmatter
-  const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (fmMatch) {
-    const frontmatter = fmMatch[1];
-    const tagsMatch = frontmatter.match(/tags:\s*\[([^\]]*)\]/);
-    if (tagsMatch) {
-      const fmTags = tagsMatch[1]
-        .split(/[,，]/)
-        .map(t => t.trim().replace(/['"]/g, ''))
-        .filter(t => t);
-      meta.tags = Array.from(new Set([...meta.tags, ...fmTags]));
-    }
-    const singleTagMatch = frontmatter.match(/tags:\s*(\S+)/);
-    if (singleTagMatch) {
-      meta.tags = Array.from(new Set([...meta.tags, singleTagMatch[1].trim()]));
-    }
-    const authorMatch = frontmatter.match(/author:\s*(\S+)/);
-    if (authorMatch && !meta.author) meta.author = authorMatch[1].trim();
-    const authorUrlMatch = frontmatter.match(/authorUrl:\s*(\S+)/);
-    if (authorUrlMatch && !meta.authorUrl) meta.authorUrl = authorUrlMatch[1].trim();
-  }
-
-  return meta;
-};
-
-const stripMetaComment = (content: string): string => {
-  return content.replace(/^\s*<!--[\s\S]*?-->\s*/, '');
-};
-
-// 从文章内容中提取贡献者列表
-interface Contributor {
-  name: string;
-  url?: string;
-}
-
-const extractContributorsFromContent = (content: string): Contributor[] => {
-  const contributors: Contributor[] = [];
-  if (!content) return contributors;
-
-  const commentMatch = content.match(/^\s*<!--([\s\S]*?)-->/);
-  if (commentMatch) {
-    const block = commentMatch[1];
-    // 匹配 contributors: name1, name2 或 contributors: [{name, url}, ...]
-    const contributorsMatch = block.match(/contributors?\s*:\s*([^\n]+)/i);
-    if (contributorsMatch) {
-      const raw = contributorsMatch[1].trim();
-      // 尝试解析 JSON 格式
-      if (raw.startsWith('[')) {
-        try {
-          const parsed = JSON.parse(raw);
-          return parsed.map((c: any) => ({
-            name: c.name || c,
-            url: c.url || ''
-          }));
-        } catch {}
-      }
-      // 简单逗号分隔格式
-      return raw.split(',').map(n => ({ name: n.trim() })).filter(c => c.name);
-    }
-  }
-  return contributors;
-};
-
-// 当前文章的贡献者
-const currentContributors = computed(() => {
-  if (!currentFile.value?.content) return [];
-  return extractContributorsFromContent(currentFile.value.content);
-});
-
-// 构建包含贡献者的 meta 注释
-const buildMetaCommentWithContributors = (
-  content: string, 
-  newContributor: { name: string; url: string }
-): string => {
-  const existingMeta = extractMetaFromContent(content);
-  const existingContributors = extractContributorsFromContent(content);
-  
-  // 添加新贡献者（去重）
-  const contributorExists = existingContributors.some(c => 
-    c.name === newContributor.name || 
-    (c.url && c.url === newContributor.url)
-  );
-  
-  if (!contributorExists && newContributor.name) {
-    existingContributors.push(newContributor);
-  }
-  
-  // 移除旧的 meta 注释
-  const stripped = stripMetaComment(content);
-  
-  // 构建新的 meta 注释
-  const lines: string[] = [];
-  if (existingMeta.tags.length) lines.push(`tags: ${existingMeta.tags.join(', ')}`);
-  if (existingMeta.author) lines.push(`author: ${existingMeta.author}`);
-  if (existingMeta.authorUrl) lines.push(`authorUrl: ${existingMeta.authorUrl}`);
-  if (existingContributors.length) {
-    const contributorsJson = JSON.stringify(existingContributors.map(c => 
-      c.url ? { name: c.name, url: c.url } : { name: c.name }
-    ));
-    lines.push(`contributors: ${contributorsJson}`);
-  }
-  
-  if (!lines.length) return stripped;
-  return `<!--\n${lines.join('\n')}\n-->\n\n${stripped}`;
-};
-
-// 源码模式编辑功能
-const startEditingRaw = () => {
-  if (currentFile.value?.content) {
-    editedRawContent.value = currentFile.value.content;
-    isEditingRaw.value = true;
-  }
-};
-
-const cancelEditingRaw = () => {
-  isEditingRaw.value = false;
-  editedRawContent.value = '';
-};
-
-const updateFileOnMain = async (
-  options: { owner: string; repo: string; base: string; token: string },
-  filePath: string,
-  content: string,
-  title: string
-): Promise<{ success: boolean; message: string; url?: string }> => {
-  const { owner, repo, base, token } = options;
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/vnd.github.v3+json',
-    'Content-Type': 'application/json'
-  };
-
-  try {
-    let sha: string | undefined;
-    const fileRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${base}`,
-      { headers }
-    );
-    if (fileRes.ok) {
-      const fileData = await fileRes.json();
-      sha = fileData.sha;
-    }
-
-    const updateRes = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`,
-      {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify({
-          message: `Update article: ${title}`,
-          content: btoa(unescape(encodeURIComponent(content))),
-          branch: base,
-          sha
-        })
-      }
-    );
-    if (!updateRes.ok) {
-      const err = await updateRes.json();
-      throw new Error(err.message || 'Failed to update file on main');
-    }
-
-    const updateData = await updateRes.json();
-    return { success: true, message: 'Updated on main', url: updateData.content?.html_url };
-  } catch (e: any) {
-    return { success: false, message: e.message || 'Update failed' };
-  }
-};
-
-const saveRawContent = async () => {
-  const token = getToken();
-  if (!token) {
-    alert(lang.value === 'zh' ? '请先在设置中配置 GitHub Token' : 'Please configure GitHub Token in Settings');
-    showSettings.value = true;
-    return;
-  }
-  
-  if (!currentFile.value) return;
-  
-  isSavingRaw.value = true;
-  
-  try {
-    // 获取当前用户信息（用于贡献者名单）
-    const contributorName = localStorage.getItem('author_name') || '';
-    const contributorUrl = localStorage.getItem('author_url') || '';
-    
-    // 添加贡献者信息到内容
-    let finalContent = editedRawContent.value;
-    if (contributorName) {
-      finalContent = buildMetaCommentWithContributors(finalContent, { name: contributorName, url: contributorUrl });
-    }
-    
-    // 构建文件路径
-    const filePath = `notes/${currentFile.value.path}`;
-    const repoOwner = localStorage.getItem('github_repo_owner') || 'soft-zihan';
-    const repoName = localStorage.getItem('github_repo_name') || 'soft-zihan.github.io';
-    
-    const result = await updateFileOnMain(
-      { owner: repoOwner, repo: repoName, base: 'main', token },
-      filePath,
-      finalContent,
-      currentFile.value.name
-    );
-    
-    if (result.success) {
-      // 更新本地内容
-      currentFile.value.content = finalContent;
-      isEditingRaw.value = false;
-      editedRawContent.value = '';
-      
-      // 如果是渲染模式，重新渲染
-      if (!isRawMode.value) {
-        await updateRenderedContent();
-      }
-      
-      if (result.url) {
-        alert(`${lang.value === 'zh' ? '已提交到 main：' : 'Updated on main: '}${result.url}`);
-      } else {
-        showToast(lang.value === 'zh' ? '已提交到 main！' : 'Updated on main!');
-      }
-    } else {
-      alert(`${lang.value === 'zh' ? '提交失败' : 'Publish failed'}: ${result.message}`);
-    }
-  } catch (e: any) {
-    alert(`${lang.value === 'zh' ? '提交出错' : 'Publish error'}: ${e.message || e}`);
-  } finally {
-    isSavingRaw.value = false;
-  }
-};
-
-// 从文章内容中提取 tags
-const extractTagsFromContent = (content: string): string[] => {
-  const meta = extractMetaFromContent(content);
-  return meta.tags || [];
-};
-
-// 从文件中提取 tags（优先使用 contentSnippet，回退到 content）
-const extractTagsFromFile = (file: FileNode): string[] => {
-  // 优先使用 contentSnippet（从 files.json 预加载），否则使用完整 content
-  const text = file.contentSnippet || file.content || '';
-  return extractTagsFromContent(text);
-};
-
-// 文件是否可见（收藏/标签筛选）
-const isFileVisible = (file: FileNode): boolean => {
-  if (articleStore.showFavoritesOnly && !articleStore.isFavorite(file.path)) {
-    return false;
-  }
-  if (articleStore.selectedTags.length < articleStore.availableTags.length) {
-    const fileTags = extractTagsFromFile(file);
-    if (fileTags.length === 0) {
-      return articleStore.isTagSelected('notag');
-    }
-    return fileTags.some(tag => articleStore.isTagSelected(tag));
-  }
-  return true;
-};
-
-// 从所有文章中收集 tags
-const collectAllTags = () => {
-  const allFiles = currentLangRoot.value || [];
-  const flatten = (nodes: FileNode[]): FileNode[] => {
-    let files: FileNode[] = [];
-    for (const node of nodes) {
-      if (node.type === NodeType.FILE) files.push(node);
-      else if (node.children) files = files.concat(flatten(node.children));
-    }
-    return files;
-  };
-  
-  const tags = new Set<string>();
-  for (const file of flatten(allFiles)) {
-    const fileTags = extractTagsFromFile(file);
-    fileTags.forEach(t => tags.add(t));
-  }
-  
-  articleStore.setAvailableTags([...tags]);
-};
 
 const labFolder = computed(() => {
   const targetName = lang.value === 'zh' ? 'VUE学习笔记' : 'VUE Learning';
   const findFolderByName = (nodes: FileNode[]): FileNode | null => {
-      for (const node of nodes) {
-          if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
-              return node;
-          }
-          if (node.children) {
-              const found = findFolderByName(node.children);
-              if (found) return found;
-          }
+    for (const node of nodes) {
+      if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
+        return node;
       }
-      return null;
-  }
-  const folder = findFolderByName(fileSystem.value);
-  return folder;
+      if (node.children) {
+        const found = findFolderByName(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return findFolderByName(fileSystem.value);
 });
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const path = currentPath.value;
   if (!path) return [];
   const parts = path.split('/');
-  
+
   let accumulatedPath = '';
   return parts.map((part) => {
     accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part;
@@ -1076,132 +693,39 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   });
 });
 
-// Marked Configuration
-const setupMarkedRenderer = () => {
-  const renderer = new marked.Renderer();
-  renderer.heading = function(text, level) {
-      const id = text.toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
-      return `<h${level} id="${id}">${text}</h${level}>`;
-  };
-  renderer.code = function(code, language) {
-      const lang = (language && hljs.getLanguage(language)) ? language : 'plaintext';
-      const highlighted = hljs.highlight(code, { language: lang }).value;
-      return `<pre class="hljs"><code class="hljs language-${lang}">${highlighted}</code></pre>`;
-  };
-  marked.use({ renderer });
-};
+// Resource Categories
+const resourceCategories = computed(() => [
+  {
+    title: t.value.res_cat_platform,
+    items: [
+      { name: 'Vue Mastery', url: 'https://vuemastery.com', icon: '🎮', desc: lang.value === 'zh' ? '官方推荐的游戏化教程' : 'Gamified learning path' },
+      { name: 'Scrimba', url: 'https://scrimba.com/learn/vue', icon: '📺', desc: lang.value === 'zh' ? '交互式视频编码' : 'Interactive video tutorials' },
+      { name: 'Frontend Mentor', url: 'https://frontendmentor.io', icon: '🎨', desc: lang.value === 'zh' ? '真实设计稿还原挑战' : 'Real-world design challenges' },
+    ]
+  },
+  {
+    title: t.value.res_cat_frontend_games,
+    items: [
+      { name: 'Flexbox Froggy', url: 'https://flexboxfroggy.com', icon: '🐸', desc: lang.value === 'zh' ? '青蛙跳荷叶学布局' : 'Learn Flexbox with frogs' },
+      { name: 'Grid Garden', url: 'https://cssgridgarden.com', icon: '🥕', desc: lang.value === 'zh' ? '种胡萝卜学网格' : 'Learn CSS Grid via gardening' },
+      { name: 'CSS Diner', url: 'https://flukeout.github.io', icon: '🍽️', desc: lang.value === 'zh' ? '选择器餐厅' : 'Master CSS selectors' },
+      { name: 'JavaScript 30', url: 'https://javascript30.com', icon: '🎹', desc: lang.value === 'zh' ? '30天原生JS挑战' : '30 Day Vanilla JS Challenge' },
+    ]
+  },
+  {
+    title: t.value.res_cat_vue_projects,
+    items: [
+      { name: 'Vue Tutorial', url: 'https://vuejs.org/tutorial/', icon: '🟩', desc: lang.value === 'zh' ? 'Vue 官方交互教程' : 'Official Interactive Tutorial' },
+      { name: 'Vue Snake', url: 'https://github.com/search?q=vue+snake+game', icon: '🐍', desc: lang.value === 'zh' ? '贪吃蛇源码搜索' : 'Search Snake Game code' },
+      { name: 'Vue Memory', url: 'https://codepen.io/search/pens?q=vue+memory+game', icon: '🃏', desc: lang.value === 'zh' ? '记忆卡片游戏' : 'Memory Card Game' },
+    ]
+  }
+]);
 
-// Async Rendering Logic
-const renderedHtml = ref('');
-
-const updateRenderedContent = async () => {
-    if (!currentFile.value?.content) {
-        renderedHtml.value = '';
-        return;
-    }
-    
-    // If it's source or raw mode, we don't render md
-    if (currentFile.value.isSource || isRawMode.value) return;
-
-    let rawContent = stripMetaComment(currentFile.value.content);
-
-    // Image Path Resolution
-    if (currentFile.value.path) {
-        const parentDirParts = currentFile.value.path.split('/');
-        parentDirParts.pop(); // remove filename
-        const parentDir = parentDirParts.join('/'); 
-        // 使用绝对路径前缀确保移动端兼容性
-        const baseUrl = (import.meta as any).env?.BASE_URL || '/';
-        // 对于 GitHub Pages，使用完整的绝对路径
-        const isRelativeBase = baseUrl === './' || baseUrl === '.';
-        const normalizedBase = isRelativeBase ? './' : (baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
-        const baseHref = new URL(normalizedBase, window.location.href).href;
-        const serverPrefix = `${baseHref}notes/`; 
-        
-        const resolvePath = (relPath: string) => {
-          // 保留原始路径用于特殊协议
-          const trimmed = relPath.trim();
-          if (trimmed.startsWith('http') || trimmed.startsWith('//') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) return relPath;
-          
-          // 处理 GitHub raw URL (已经是完整URL的情况)
-          if (trimmed.includes('githubusercontent.com') || trimmed.includes('github.com')) return relPath;
-          
-          // 移除开头的 ./ 但保留 ../
-          let cleaned = trimmed.replace(/^\.\//g, '');
-          
-          // 处理绝对路径 /notes/...
-          if (cleaned.startsWith('/notes/')) return encodeURI(`${baseHref}notes/${cleaned.replace(/^\/notes\//, '')}`);
-          if (cleaned.startsWith('notes/')) return encodeURI(`${baseHref}${cleaned}`);
-          // 处理其他绝对路径 /image/... 等
-          if (cleaned.startsWith('/')) return encodeURI(`${baseHref}${cleaned.replace(/^\/+/, '')}`);
-          
-          // 处理相对路径 (包括 ../ 开头的)
-          const parts = cleaned.split('/');
-          const parentParts = parentDir.split('/').filter(p => p); 
-          
-          for (const part of parts) {
-              if (part === '.') continue;
-              if (part === '..') {
-                  if (parentParts.length > 0) parentParts.pop();
-              } else {
-                  parentParts.push(part);
-              }
-          }
-          return encodeURI(`${serverPrefix}${parentParts.join('/')}`);
-        };
-
-          const splitImageToken = (raw: string) => {
-            let cleaned = raw.trim();
-            if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
-              cleaned = cleaned.slice(1, -1);
-            }
-            const [pathPart, ...rest] = cleaned.split(/\s+/);
-            return { path: pathPart, tail: rest.join(' ') };
-          };
-
-          rawContent = rawContent.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, raw) => {
-            const { path, tail } = splitImageToken(raw);
-            const resolved = resolvePath(path);
-            const finalToken = tail ? `${resolved} ${tail}` : resolved;
-            return `![${alt}](${finalToken})`;
-          });
-
-          rawContent = rawContent.replace(/src="([^"]+)"/g, (match, src) => {
-            const { path, tail } = splitImageToken(src);
-            const resolved = resolvePath(path);
-            const finalToken = tail ? `${resolved} ${tail}` : resolved;
-            return `src="${finalToken}"`;
-          });
-    }
-
-    try {
-        // marked.parse is async in some configs, or sync in others, but returns promise or string.
-        // await is safe for both.
-        renderedHtml.value = await marked.parse(rawContent);
-    } catch (e) {
-        console.error("Marked render error:", e);
-        renderedHtml.value = `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`;
-    }
-};
-
-const activeIndicatorTop = computed(() => {
-  if (!activeHeaderId.value) return 0;
-  const idx = toc.value.findIndex(t => t.id === activeHeaderId.value);
-  return idx * 28; 
-});
-
-const getCleanParentPath = (path: string) => {
-  const parts = path.split('/');
-  const parent = parts.slice(0, -1).join('/');
-  return parent || 'Root';
-};
-
-const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
-
+// =====================
+// File Operations
+// =====================
 const findNodeByPath = (nodes: FileNode[], path: string): FileNode | null => {
-  // Try exact match
   for (const node of nodes) {
     if (node.path === path) return node;
     if (node.children) {
@@ -1209,76 +733,83 @@ const findNodeByPath = (nodes: FileNode[], path: string): FileNode | null => {
       if (found) return found;
     }
   }
-  // If exact match fails, try decoding path in case of mismatch
   const decodedPath = decodeURIComponent(path);
   if (decodedPath !== path) {
-      for (const node of nodes) {
-        if (node.path === decodedPath) return node;
-        if (node.children) {
-            const found = findNodeByPath(node.children, decodedPath);
-            if (found) return found;
-        }
+    for (const node of nodes) {
+      if (node.path === decodedPath) return node;
+      if (node.children) {
+        const found = findNodeByPath(node.children, decodedPath);
+        if (found) return found;
+      }
     }
   }
   return null;
 };
 
 const fetchFileContent = async (file: FileNode): Promise<string> => {
-    let fetchPath = '';
-    if (file.isSource && file.fetchPath) {
-        fetchPath = `./${file.fetchPath}`;
+  let fetchPath = '';
+  if (file.isSource && file.fetchPath) {
+    fetchPath = `./${file.fetchPath}`;
+  } else {
+    const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
+    fetchPath = `./notes/${encodedPath}`;
+  }
+
+  try {
+    let res = await fetch(fetchPath);
+    if (!res.ok) {
+      console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
+      res = await fetch(`./notes/${file.path}`);
+    }
+
+    if (res.ok) return await res.text();
+    return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`;
+  } catch (e: any) {
+    return `# Error\n${e.message}\nPath: ${file.path}`;
+  }
+};
+
+const updateUrl = (path: string | null) => {
+  try {
+    const url = new URL(window.location.href);
+    if (path) {
+      url.searchParams.set('path', path);
     } else {
-        // Safe encoding for URL
-        const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
-        fetchPath = `./notes/${encodedPath}`;
+      url.searchParams.delete('path');
     }
-    
-    try {
-        let res = await fetch(fetchPath);
-        if (!res.ok) {
-           console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
-           res = await fetch(`./notes/${file.path}`);
-        }
-        
-        if (res.ok) return await res.text();
-        return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`;
-    } catch (e: any) {
-        return `# Error\n${e.message}\nPath: ${file.path}`;
-    }
+    window.history.pushState({}, '', url.toString());
+  } catch (e) {
+    console.error("Failed to update URL", e);
+  }
 };
 
 const openFile = async (file: FileNode) => {
   currentFile.value = file;
   currentFolder.value = null;
   currentTool.value = null;
-  // Always default to Raw Mode for Source files, Render mode for Markdown
   isRawMode.value = !!file.isSource;
-  
+
   updateUrl(file.path);
   const container = document.getElementById('scroll-container');
   if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  selectionMenu.value.show = false;
-  selectionMenu.value.locked = false;
+
+  hideSelectionMenu();
 
   if (!file.content) {
     contentLoading.value = true;
     file.content = await fetchFileContent(file);
     contentLoading.value = false;
-    currentFile.value = { ...file }; 
+    currentFile.value = { ...file };
   }
-  
-  // Trigger rendering logic
+
   if (!file.isSource) {
-      await updateRenderedContent();
-      nextTick(() => generateToc());
+    await updateRenderedContent();
+    nextTick(() => generateToc());
   }
 };
 
-// Handle file selection from sidebar (auto-close sidebar on mobile)
 const handleSidebarFileSelect = async (file: FileNode) => {
   await openFile(file);
-  // Auto-close sidebar on mobile after selecting a file
   if (isMobile.value) {
     sidebarOpen.value = false;
   }
@@ -1290,7 +821,7 @@ const openFolder = (folder: FileNode) => {
   currentTool.value = null;
   updateUrl(folder.path);
   if (viewMode.value === 'latest') viewMode.value = 'files';
-  selectionMenu.value.show = false;
+  hideSelectionMenu();
 };
 
 const selectTool = (tool: string) => {
@@ -1313,32 +844,98 @@ const toggleFolder = (path: string) => {
   else expandedFolders.value.splice(idx, 1);
 };
 
-const updateUrl = (path: string | null) => {
-  try {
-    const url = new URL(window.location.href);
-    if (path) {
-        url.searchParams.set('path', path);
-    } else {
-        url.searchParams.delete('path');
-    }
-    // Use pushState to avoid reload, but replaceState if just updating query param to same page context
-    window.history.pushState({}, '', url.toString());
-  } catch (e) {
-      console.error("Failed to update URL", e);
-  }
-};
-
 const resetToHome = () => {
   currentFile.value = null;
   currentFolder.value = null;
   viewMode.value = 'latest';
-  selectionMenu.value.show = false;
+  hideSelectionMenu();
   updateUrl(null);
 };
 
-const showToast = (msg: string) => {
-  appStore.showToast(msg);
-}
+// =====================
+// Content Click Handler
+// =====================
+const { handleContentClick } = useContentClick(
+  currentFile,
+  fileSystem,
+  findNodeByPath,
+  fetchFileContent,
+  openFile,
+  codeModal.openCodeModal,
+  codeModal.setCodeModalContent,
+  codeModal.fetchSourceCodeFile,
+  handleImageClick,
+  hideSelectionMenu,
+  showToast
+);
+
+// Event handlers
+const handleContentClickEvent = async (e: MouseEvent) => {
+  if (selectionMenu.value.locked) return;
+  await handleContentClick(e, selectionMenu.value.locked);
+};
+
+const handleSelectionEvent = () => {
+  if (currentFile.value?.isSource) return;
+  handleSelection();
+};
+
+const handleSelectionContextMenuEvent = (e: MouseEvent) => {
+  if (currentFile.value?.isSource) return;
+  handleSelectionContextMenu(e);
+};
+
+const applyFormatHandler = (type: string) => {
+  applyFormat(type, t.value.selection_error);
+};
+
+// =====================
+// Actions
+// =====================
+const toggleLang = async () => {
+  const oldLang = lang.value;
+  const newLang = oldLang === 'en' ? 'zh' : 'en';
+  appStore.setLang(newLang);
+  updateLanguage(newLang);
+
+  if (viewMode.value === 'lab' && currentTool.value === 'dashboard') {
+    return;
+  }
+
+  if (currentFolder.value && !currentFile.value) {
+    return;
+  }
+
+  if (currentFile.value) {
+    const oldPath = currentFile.value.path;
+    const pathParts = oldPath.split('/');
+
+    if (pathParts[0] === oldLang) {
+      pathParts[0] = newLang;
+      const newPath = pathParts.join('/');
+      const newNode = findNodeByPath(fileSystem.value, newPath);
+
+      if (newNode && newNode.type === NodeType.FILE) {
+        await openFile(newNode);
+        return;
+      }
+    }
+
+    resetToHome();
+    return;
+  }
+};
+
+const toggleTheme = (val: boolean) => {
+  appStore.setDark(val);
+  if (val) document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+};
+
+const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
+  appStore.userSettings.petalSpeed = speed;
+  appStore.showParticles = speed !== 'off';
+};
 
 const copyLink = () => navigator.clipboard.writeText(window.location.href).then(() => showToast(t.value.link_copied));
 
@@ -1354,135 +951,12 @@ const downloadSource = () => {
   }
 };
 
-const copyCodeContent = () => {
-    navigator.clipboard.writeText(codeModalContent.value).then(() => showToast(t.value.toast_copied));
-};
+const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
 
-// 根据文件扩展名获取语言
-const getLanguageFromFileName = (fileName: string): string => {
-  const ext = fileName.split('.').pop()?.toLowerCase() || '';
-  const langMap: Record<string, string> = {
-    'vue': 'html',
-    'ts': 'typescript',
-    'tsx': 'typescript',
-    'js': 'javascript',
-    'jsx': 'javascript',
-    'json': 'json',
-    'html': 'html',
-    'css': 'css',
-    'scss': 'scss',
-    'md': 'markdown',
-    'py': 'python',
-    'sh': 'bash',
-    'yml': 'yaml',
-    'yaml': 'yaml'
-  };
-  return langMap[ext] || 'plaintext';
-};
-
-// 代码弹窗语法高亮
-const highlightedCodeContent = computed(() => {
-  if (!codeModalContent.value || codeModalContent.value === 'Loading...') {
-    return codeModalContent.value;
-  }
-  const lang = getLanguageFromFileName(codeModalTitle.value);
-  try {
-    if (hljs.getLanguage(lang)) {
-      return hljs.highlight(codeModalContent.value, { language: lang }).value;
-    }
-    return hljs.highlightAuto(codeModalContent.value).value;
-  } catch {
-    return codeModalContent.value;
-  }
-});
-
-// 保存打开弹窗前的 URL 用于恢复
-const previousUrl = ref<string | null>(null);
-
-// 打开代码弹窗并更新 URL
-const openCodeModal = async (title: string, content: string, path: string) => {
-  // 保存当前 URL
-  previousUrl.value = window.location.href;
-  
-  codeModalTitle.value = title;
-  codeModalContent.value = content;
-  codeModalPath.value = path;
-  showCodeModal.value = true;
-  
-  // 更新 URL（类似文章的路由方式）
-  const url = new URL(window.location.href);
-  url.searchParams.set('source', path);
-  window.history.pushState({ source: path }, '', url.toString());
-};
-
-// 关闭代码弹窗并恢复 URL
-const closeCodeModal = () => {
-  showCodeModal.value = false;
-  codeModalContent.value = '';
-  codeModalTitle.value = '';
-  codeModalPath.value = '';
-  
-  // 恢复 URL
-  const url = new URL(window.location.href);
-  url.searchParams.delete('source');
-  window.history.pushState({}, '', url.toString());
-};
-
-const normalizeHref = (raw: string): string => {
-  const trimmed = raw.trim();
-  if (!trimmed || trimmed.startsWith('#')) return '';
-  const hashIndex = trimmed.indexOf('#');
-  const queryIndex = trimmed.indexOf('?');
-  const cutIndex = [hashIndex, queryIndex].filter(i => i >= 0).sort((a, b) => a - b)[0];
-  const base = cutIndex !== undefined ? trimmed.slice(0, cutIndex) : trimmed;
-  try {
-    return decodeURIComponent(base);
-  } catch {
-    return base;
-  }
-};
-
-const stripHashQuery = (raw: string): string => {
-  const trimmed = raw.trim();
-  const hashIndex = trimmed.indexOf('#');
-  const queryIndex = trimmed.indexOf('?');
-  const cutIndex = [hashIndex, queryIndex].filter(i => i >= 0).sort((a, b) => a - b)[0];
-  return cutIndex !== undefined ? trimmed.slice(0, cutIndex) : trimmed;
-};
-
-// 获取项目根目录下的源代码文件（如 App.vue, vite.config.ts 等）
-const fetchSourceCodeFile = async (filePath: string): Promise<string> => {
-  // 移除开头的斜杠
-  const cleanPath = filePath.replace(/^\/+/, '');
-  
-  // 将路径转换为 raw 目录下的文件名格式（/ 替换为 _，加 .txt 后缀）
-  const rawFileName = cleanPath.replace(/\//g, '_') + '.txt';
-  
-  try {
-    // 从 raw 目录获取（构建时生成的源代码文件）
-    const res = await fetch(`./raw/${rawFileName}`);
-    if (res.ok) {
-      return await res.text();
-    }
-    
-    // 回退：尝试直接获取（开发环境）
-    const fallbackRes = await fetch(`./${cleanPath}`);
-    if (fallbackRes.ok) {
-      return await fallbackRes.text();
-    }
-    
-    return `// Error: Could not load file\n// Path: ${filePath}\n// Tried: ./raw/${rawFileName}`;
-  } catch (e: any) {
-    return `// Error: ${e.message}\n// Path: ${filePath}`;
-  }
-};
-
-// Handle search selection
 const handleSearchSelect = (result: any) => {
   showSearch.value = false;
   sidebarOpen.value = false;
-  
-  // Find the actual FileNode from the file system
+
   const node = findNodeByPath(fileSystem.value, result.path);
   if (node && node.type === NodeType.FILE) {
     openFile(node);
@@ -1491,352 +965,47 @@ const handleSearchSelect = (result: any) => {
   }
 };
 
-// Handle like action
 const handleLike = () => {
   if (currentFile.value) {
     articleStore.toggleLike(currentFile.value.path);
   }
 };
 
-// Get article view count (stored locally with likes count)
 const getArticleViews = (path: string): number => {
-  // Simulate views based on likes and local storage hash
   const likes = articleStore.getLikes(path);
-  // Views are usually 5-10x likes
   const baseViews = likes * (5 + Math.random() * 5);
   return Math.max(1, Math.round(baseViews));
 };
 
-// Selection Popup Logic
-const handleSelection = () => {
-  if (currentFile.value?.isSource) return; // No highlight for source code
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) {
-    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
-    return;
+// =====================
+// Keyboard Shortcuts
+// =====================
+const handleKeydown = (e: KeyboardEvent) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    showSearch.value = true;
   }
-  
-  const range = (selection.isCollapsed && selectionMenu.value.locked && lastSelectionRange.value)
-    ? lastSelectionRange.value
-    : selection.getRangeAt(0);
-  if (!range || range.collapsed) {
-    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
-    return;
-  }
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.startContainer) || !viewer.contains(range.endContainer)) {
-      selectionMenu.value.show = false;
-      return;
-  }
-
-  lastSelectionRange.value = range.cloneRange();
-
-  const rect = (() => {
-    const r = range.getBoundingClientRect();
-    if (r && (r.width || r.height)) return r;
-    const rects = range.getClientRects();
-    return rects.length > 0 ? rects[0] : null;
-  })();
-
-  if (!rect) {
-    selectionMenu.value.show = false;
-    return;
-  }
-
-  selectionMenu.value = {
-    show: true,
-    x: rect.left + rect.width / 2,
-    y: rect.top - 10,
-    locked: true
-  };
-};
-
-const handleSelectionContextMenu = (e: MouseEvent) => {
-  if (currentFile.value?.isSource) return;
-  
-  const selection = window.getSelection();
-  let range: Range | null = null;
-  
-  // 优先使用当前选区，如果没有则尝试使用最后保存的选区
-  if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
-    range = selection.getRangeAt(0);
-    lastSelectionRange.value = range.cloneRange(); // 保存当前选区
-  } else if (lastSelectionRange.value) {
-    range = lastSelectionRange.value;
-  }
-  
-  if (!range || range.collapsed) {
-    selectionMenu.value.show = false;
-    return;
-  }
-  
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.startContainer) || !viewer.contains(range.endContainer)) {
-    selectionMenu.value.show = false;
-    return;
-  }
-
-  e.preventDefault();
-  selectionMenu.value = {
-    show: true,
-    x: e.clientX,
-    y: e.clientY,
-    locked: true
-  };
-};
-
-const handleSelectionChange = () => {
-  if (currentFile.value?.isSource) return;
-  const sel = window.getSelection();
-  if (!sel || sel.rangeCount === 0) {
-    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
-    return;
-  }
-  const range = sel.getRangeAt(0);
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.startContainer) || !viewer.contains(range.endContainer)) {
-    if (!selectionMenu.value.locked) selectionMenu.value.show = false;
-    return;
-  }
-  lastSelectionRange.value = range.cloneRange();
-  if (!sel.isCollapsed) handleSelection();
-};
-
-const getSelectionRangeInViewer = () => {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return null;
-  const range = selection.getRangeAt(0);
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.startContainer) || !viewer.contains(range.endContainer)) return null;
-  return { range, viewer };
-};
-
-const applyFormat = (type: 'highlight-yellow' | 'highlight-green' | 'highlight-blue' | 'highlight-pink' | 'underline-wavy' | 'underline-double' | 'highlight-block') => {
-  const selection = window.getSelection();
-  if (!selection || selection.rangeCount === 0) return;
-
-  const info = getSelectionRangeInViewer();
-  if (!info) return;
-  const { range, viewer } = info;
-
-  const classMap: Record<string, string> = {
-    'highlight-yellow': 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm',
-    'highlight-green': 'bg-green-200 dark:bg-green-800/60 rounded px-0.5 transition-colors shadow-sm',
-    'highlight-blue': 'bg-blue-200 dark:bg-blue-800/60 rounded px-0.5 transition-colors shadow-sm',
-    'highlight-pink': 'bg-pink-200 dark:bg-pink-800/60 rounded px-0.5 transition-colors shadow-sm',
-    'underline-wavy': 'underline decoration-wavy decoration-sakura-500 underline-offset-4',
-    'underline-double': 'underline decoration-double decoration-blue-500 underline-offset-4',
-    'highlight-block': 'sakura-block-highlight'
-  };
-
-  try {
-    const walker = document.createTreeWalker(viewer, NodeFilter.SHOW_TEXT, {
-      acceptNode: (node) => {
-        if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
-        return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-      }
-    });
-
-    const nodes: Text[] = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode as Text);
-
-    nodes.forEach((node) => {
-      let start = 0;
-      let end = node.nodeValue?.length || 0;
-      if (node === range.startContainer) start = range.startOffset;
-      if (node === range.endContainer) end = range.endOffset;
-      if (start === end) return;
-
-      let target = node;
-      if (start > 0) target = target.splitText(start);
-      if (end - start < target.length) target.splitText(end - start);
-
-      const span = document.createElement('span');
-      span.className = classMap[type] || '';
-      target.parentNode?.insertBefore(span, target);
-      span.appendChild(target);
-    });
-
-    selection.removeAllRanges();
-    selectionMenu.value.show = false;
-    selectionMenu.value.locked = false;
-  } catch (e) {
-    showToast(t.value.selection_error);
+  if (e.key === 'Escape') {
+    showSearch.value = false;
+    musicStore.showMusicPlayer = false;
+    showWriteEditor.value = false;
+    sidebarOpen.value = false;
   }
 };
 
-// Lightbox logic & Link Interception
-const handleContentClick = async (e: MouseEvent) => {
-  const target = e.target as HTMLElement;
-  if (selectionMenu.value.locked) return;
-  
-  // 1. Handle Lightbox
-  if (target.tagName === 'IMG') {
-    lightboxImage.value = (target as HTMLImageElement).src;
-    selectionMenu.value.show = false;
-    selectionMenu.value.locked = false;
-    return;
-  }
-  
-  // 2. Intercept internal links
- const link = target.closest('a');
-  if (link) {
-    const href = link.getAttribute('href');
-    const normalized = href ? normalizeHref(href) : '';
-    
-    const isSupportedInternal = (raw?: string | null) => {
-      if (!raw) return false;
-      if (raw.startsWith('http') || raw.startsWith('//')) return false;
-      // 绝对路径 /xxx 不拦截，让浏览器正常跳转
-      if (raw.startsWith('/')) return false;
-      const cleaned = stripHashQuery(raw);
-      if (!cleaned || cleaned.startsWith('#')) return false;
-      const lower = cleaned.toLowerCase();
-      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss'];
-      return exts.some(ext => lower.endsWith(ext));
-    };
-
-    if (href && isSupportedInternal(href)) {
-      e.preventDefault(); // Stop Browser Jump
-      
-      let targetPath = '';
-      const normalizedHref = normalized || normalizeHref(href);
-      const isCodeFile = !normalizedHref.toLowerCase().endsWith('.md');
-
-      if (normalizedHref.startsWith('/')) {
-          // Absolute path from root (e.g. /App.vue -> App.vue)
-          targetPath = normalizedHref.substring(1);
-      } else if (currentFile.value?.path) {
-        // Resolve relative path
-        const currentDir = currentFile.value.path.split('/').slice(0, -1);
-        const parts = normalizedHref.split('/');
-        
-        for (const part of parts) {
-           if (part === '.') continue;
-           if (part === '..') {
-              if (currentDir.length > 0) currentDir.pop();
-           } else {
-              currentDir.push(decodeURIComponent(part)); // Ensure decoding
-           }
-        }
-        targetPath = currentDir.join('/');
-      } else {
-          targetPath = normalizedHref;
-      }
-
-      // 对于代码文件（非 .md），直接打开代码弹窗
-      if (isCodeFile) {
-        const fileName = targetPath.split('/').pop() || targetPath;
-        await openCodeModal(fileName, 'Loading...', targetPath);
-        
-        // 尝试从 fileSystem 中查找
-        let node = findNodeByPath(fileSystem.value, targetPath);
-        let content = '';
-        
-        if (node && node.type === NodeType.FILE) {
-          // 从 fileSystem 中获取内容
-          if (!node.content) {
-            node.content = await fetchFileContent(node);
-          }
-          content = node.content;
-        } else {
-          // 尝试从项目根目录获取（如 /App.vue, /vite.config.ts 等）
-          content = await fetchSourceCodeFile(targetPath);
-        }
-        
-        codeModalContent.value = content;
-        return;
-      }
-
-      // 对于 .md 文件，尝试在 fileSystem 中查找
-      let node = findNodeByPath(fileSystem.value, targetPath);
-      
-      if (node && node.type === NodeType.FILE) {
-        if (node.isSource || node.path.startsWith('source')) { 
-            // Treat source*.md as source code too for viewing
-            await openCodeModal(node.name, 'Loading...', node.path);
-            
-            if (!node.content) {
-                node.content = await fetchFileContent(node);
-            }
-            codeModalContent.value = node.content;
-        } else {
-            // Open normal Markdown file
-            openFile(node);
-        }
-      } else {
-        showToast(`File not found: ${href}`);
-      }
-    }
-  }
-
-  selectionMenu.value.show = false;
-  selectionMenu.value.locked = false;
-};
-
-const generateToc = () => {
-  if (!currentFile.value?.content || currentFile.value.isSource) { toc.value = []; return; }
-  const headers: TocItem[] = [];
-  const lines = currentFile.value.content.split(/\r?\n/);
-  let inCodeBlock = false;
-  
-  lines.forEach(line => {
-    if (line.trim().startsWith('```')) inCodeBlock = !inCodeBlock;
-    if (inCodeBlock) return;
-    
-    const match = line.match(/^(#{1,3})\s+(.+)$/);
-    if (match) {
-      const text = match[2].trim();
-      const id = text.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-\u4e00-\u9fa5]+/g, ''); 
-      headers.push({ id, text, level: match[1].length });
-    }
-  });
-  toc.value = headers;
-  
-  nextTick(() => {
-     const el = document.getElementById('scroll-container');
-     if (el) {
-       el.removeEventListener('scroll', updateActiveHeader);
-       el.addEventListener('scroll', updateActiveHeader);
-     }
-  });
-};
-
-const updateActiveHeader = () => {
-  const container = document.getElementById('scroll-container');
-  if (!container) return;
-  const scrollPosition = container.scrollTop;
-  
-  let active = '';
-  for (const item of toc.value) {
-    const el = document.getElementById(item.id);
-    if (el) {
-       if (el.offsetTop - container.offsetTop - 150 <= scrollPosition) {
-         active = item.id;
-       }
-    }
-  }
-  if (active) activeHeaderId.value = active;
-};
-
-const scrollToHeader = (id: string) => {
-  const el = document.getElementById(id);
-  const container = document.getElementById('scroll-container');
-  if (el && container) {
-     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-     activeHeaderId.value = id;
-  }
-};
-
+// =====================
+// Watchers
+// =====================
 watch(currentFile, async () => {
-    if (!currentFile.value?.isSource) {
-        await updateRenderedContent();
-        nextTick(() => generateToc());
-    }
+  if (!currentFile.value?.isSource) {
+    await updateRenderedContent();
+    nextTick(() => generateToc());
+  }
 });
 
+// =====================
+// Lifecycle
+// =====================
 onMounted(async () => {
   // Check mobile
   const checkMobile = () => {
@@ -1852,95 +1021,88 @@ onMounted(async () => {
       headerHidden.value = false;
       return;
     }
-    
+
     const currentScrollY = scrollContainer?.scrollTop || 0;
     const delta = currentScrollY - lastScrollY.value;
-    
-    // Only hide/show after scrolling a certain amount
+
     if (Math.abs(delta) > 5) {
-      headerHidden.value = delta > 0 && currentScrollY > 50; // Hide on scroll down
+      headerHidden.value = delta > 0 && currentScrollY > 50;
     }
-    
+
     lastScrollY.value = currentScrollY;
   };
 
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeydown);
-
-    document.addEventListener('selectionchange', handleSelectionChange);
+  document.addEventListener('selectionchange', handleSelectionChange);
 
   if (appStore.isDark) document.documentElement.classList.add('dark');
-  
+
   // Setup marked renderer
   setupMarkedRenderer();
 
-  // Initialize music store (load playlist)
+  // Initialize music store
   musicStore.loadPlaylist();
-  
-  // Set fetch function for search (after fetchFileContent is defined)
+
+  // Set fetch function for search
   setFetchFunction(fetchFileContent);
-  
+
   try {
-    // Explicitly using ./files.json to ensure relative fetch
     const res = await fetch(`./files.json?t=${Date.now()}`);
     if (res.ok) {
       fileSystem.value = await res.json();
       const params = new URLSearchParams(window.location.search);
       const targetPath = params.get('path');
-      const sourcePath = params.get('source'); // 代码弹窗路由
-      
+      const sourcePath = params.get('source');
+
       // 处理代码文件弹窗路由
       if (sourcePath) {
         const fileName = sourcePath.split('/').pop() || sourcePath;
-        await openCodeModal(fileName, 'Loading...', sourcePath);
-        
-        // 尝试获取内容
+        await codeModal.openCodeModal(fileName, 'Loading...', sourcePath);
+
         let node = findNodeByPath(fileSystem.value, sourcePath);
         let content = '';
-        
+
         if (node && node.type === NodeType.FILE) {
           if (!node.content) {
             node.content = await fetchFileContent(node);
           }
           content = node.content;
         } else {
-          content = await fetchSourceCodeFile(sourcePath);
+          content = await codeModal.fetchSourceCodeFile(sourcePath);
         }
-        
-        codeModalContent.value = content;
+
+        codeModal.setCodeModalContent(content);
       }
-      
+
       if (targetPath) {
-        // Decode it just in case, though browser usually does it
         const decodedTargetPath = decodeURIComponent(targetPath);
         const node = findNodeByPath(fileSystem.value, decodedTargetPath) || findNodeByPath(fileSystem.value, targetPath);
-        
+
         if (node) {
           if (targetPath.includes('VUE学习笔记') || targetPath.includes('VUE Learning')) viewMode.value = 'lab';
           else viewMode.value = 'files';
-          
+
           if (node.type === NodeType.FILE) openFile(node);
           else openFolder(node);
         } else {
-            console.warn("Path not found in file system:", targetPath);
+          console.warn("Path not found in file system:", targetPath);
         }
       }
     } else {
-       console.error("Failed to load files.json, status:", res.status);
+      console.error("Failed to load files.json, status:", res.status);
     }
   } catch (e) {
     console.error("Failed to load file system", e);
     fileSystem.value = [];
   } finally {
     loading.value = false;
-    // Initialize search index after file system is loaded
+
     if (fileSystem.value.length > 0) {
       await initSearchIndex(fileSystem.value, lang.value);
-      // 收集所有 tags（contentSnippet 已在 files.json 中预加载，无需延迟）
-      collectAllTags();
+      collectAllTags(currentLangRoot.value || [], articleStore.setAvailableTags);
     }
-    
-    // Setup scroll listener for mobile header hide/show (after content loads)
+
     nextTick(() => {
       const scrollEl = document.getElementById('scroll-container');
       if (scrollEl) {

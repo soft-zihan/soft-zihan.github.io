@@ -157,9 +157,10 @@ export const useArticleStore = defineStore('article', () => {
   function toggleTag(tag: string) {
     const idx = selectedTags.value.indexOf(tag)
     if (idx > -1) {
-      selectedTags.value.splice(idx, 1)
+      // 使用不可变更新确保响应性
+      selectedTags.value = selectedTags.value.filter((_, i) => i !== idx)
     } else {
-      selectedTags.value.push(tag)
+      selectedTags.value = [...selectedTags.value, tag]
     }
   }
   

@@ -33,24 +33,39 @@ This section describes the key files and directories in the project:
 
 - [index.html](/index.html): Main HTML entry point with Sakura-themed styling and Tailwind CSS configuration
 - [index.tsx](/index.tsx): Application bootstrap file that mounts the Vue app to the DOM
-- [App.vue](/App.vue): Root Vue component (1246 lines) that orchestrates the entire application:
-  - **State Management**: Language (`lang`), theme (`isDark`), view mode (`viewMode`), current file/folder, user settings (font, size, petal speed)
-  - **Dynamic Rendering**: Conditional rendering of Lab Dashboard, Folder View, Markdown Viewer, or Source Code Modal
-  - **Sidebar Integration**: Passes file system, expanded folders, breadcrumbs, and resource categories to `AppSidebar`
-  - **Main Content Area**: Contains wallpaper layer, decorative gradients, header, content zone, and right TOC sidebar
-  - **Interactive Features**: Selection popup menu (highlight/underline), lightbox for images, code modal for source files
-  - **Markdown Processing**: Uses `marked` library to render Markdown with custom heading IDs, image path resolution, and link interception
-  - **TOC Generation**: Auto-generates table of contents from Markdown headings with active section highlighting
-  - **URL Sync**: Updates browser URL with current file path for shareable links
-  - **Settings Persistence**: Stores theme, language, font, font size, and petal speed in `localStorage`
+- [App.vue](/App.vue): Root Vue component (~1150 lines) that orchestrates the entire application
 - [vite.config.ts](/vite.config.ts): Vite build configuration for the project
 - [package.json](/package.json): Project dependencies and scripts
-- [tsconfig.json](/package.json): TypeScript configuration
-- [README.md](/README.md) / [README_zh.md](/README_zh.md): Documentation in English and Chinese
+- [tsconfig.json](/tsconfig.json): TypeScript configuration
 - [constants.ts](/constants.ts): Internationalization constants and configuration
 - [types.ts](/types.ts): TypeScript type definitions used across the application
-- [metadata.json](/metadata.json): Auto-generated content index for the blog
-- [env.d.ts](/env.d.ts): TypeScript declaration file for environment types
+
+### Composables (Reusable Logic)
+
+The project follows Vue 3 best practices with modular composables for separation of concerns:
+
+| File | Responsibility | Lines | Reused By |
+|------|---------------|-------|----------|
+| [useArticleMeta.ts](/composables/useArticleMeta.ts) | Article metadata extraction (tags, author, contributors) | ~180 | App.vue, useContentRenderer, useRawEditor, useContentClick |
+| [useCodeModal.ts](/composables/useCodeModal.ts) | Code modal management, syntax highlighting | ~150 | App.vue |
+| [useContentRenderer.ts](/composables/useContentRenderer.ts) | Markdown rendering, TOC generation | ~210 | App.vue |
+| [useContentClick.ts](/composables/useContentClick.ts) | Link interception, file visibility filtering | ~250 | App.vue |
+| [useRawEditor.ts](/composables/useRawEditor.ts) | Source editing, GitHub commit | ~170 | App.vue |
+| [useSelectionMenu.ts](/composables/useSelectionMenu.ts) | Text selection menu, formatting | ~210 | App.vue |
+| [useLightbox.ts](/composables/useLightbox.ts) | Image lightbox | ~40 | App.vue |
+| [useSearch.ts](/composables/useSearch.ts) | Full-text search indexing | ~260 | App.vue, SearchModal |
+| [useFile.ts](/composables/useFile.ts) | File system operations | ~140 | (exported, not yet used) |
+| [useGitHubPublish.ts](/composables/useGitHubPublish.ts) | GitHub API integration | ~280 | useRawEditor, WriteEditor |
+| [useBackup.ts](/composables/useBackup.ts) | Data backup functionality | ~460 | SettingsModal |
+| [useWallpapers.ts](/composables/useWallpapers.ts) | Wallpaper management | ~100 | SettingsModal, BannerSettings, WallpaperLayer |
+
+> **Note**: The primary purpose of these composables is **separation of concerns** rather than multi-component reuse. They extract complex logic from App.vue (~1990→1150 lines) to improve maintainability and allow different developers to work on different features independently.
+
+### Stores (State Management)
+
+- [stores/appStore.ts](/stores/appStore.ts): Global settings (language, theme, wallpaper, UI state)
+- [stores/articleStore.ts](/stores/articleStore.ts): Article interactions (likes, favorites, tag filtering)
+- [stores/musicStore.ts](/stores/musicStore.ts): Music player state, playlist, lyrics
 
 ### Components
 
@@ -59,45 +74,41 @@ This section describes the key files and directories in the project:
 - [components/FileTree.vue](/components/FileTree.vue): Recursive file tree component for displaying the directory structure
 - [components/FolderView.vue](/components/FolderView.vue): Component for displaying folder contents
 - [components/SettingsModal.vue](/components/SettingsModal.vue): Modal for user preferences (theme, font, petal speed, wallpaper, etc.)
-- [components/WriteEditor.vue](/components/WriteEditor.vue): Publishing studio with Markdown preview, tag/author metadata, and bulk import (folder) upload with local images
-- [components/PetalBackground.vue](/components/PetalBackground.vue): Optimized animated sakura petal background with:
-  - Stable drag via global Pointer Events (mouse/touch unified)
-  - Grid-based bottom stacking for natural piling effect
-  - Mobile-optimized with `touch-action: none`
-  - Theme-reactive coloring
-- [components/WallpaperLayer.vue](/components/WallpaperLayer.vue): Theme-based wallpaper layer (covers main content area only, excludes sidebar):
-  - Automatically switches between light (`/image/wallpaper-light.jpg`) and dark (`/image/wallpaper-dark.jpg`) wallpapers
-  - Uses `background-size: cover` for no stretching
+- [components/WriteEditor.vue](/components/WriteEditor.vue): Publishing studio with Markdown preview, tag/author metadata, and bulk import
+- [components/SearchModal.vue](/components/SearchModal.vue): Full-text search modal with highlighting
+- [components/MusicPlayer.vue](/components/MusicPlayer.vue): Music player with lyrics display
+- [components/GiscusComments.vue](/components/GiscusComments.vue): Giscus comment integration
+- [components/PetalBackground.vue](/components/PetalBackground.vue): Optimized animated sakura petal background
+- [components/WallpaperLayer.vue](/components/WallpaperLayer.vue): Theme-based wallpaper layer
 - [components/petal/usePetals.ts](/components/petal/usePetals.ts): Composable for petal physics and stacking logic
+
+#### Lab Components (Interactive Learning)
+
 - [components/LabDashboard.vue](/components/LabDashboard.vue): Dashboard for Vue learning labs
-- [components/LabAjax.vue](/components/LabAjax.vue): Vue lab component demonstrating AJAX concepts
-- [components/LabClassStyle.vue](/components/LabClassStyle.vue): Vue lab component for class and style binding
-- [components/LabDirectives.vue](/components/LabDirectives.vue): Vue lab component demonstrating directives
-- [components/LabDom.vue](/components/LabDom.vue): Vue lab component for DOM manipulation
-- [components/LabHtml.vue](/components/LabHtml.vue): Vue lab component for HTML rendering
-- [components/LabJs.vue](/components/LabJs.vue): Vue lab component for JavaScript concepts
-- [components/LabLifecycle.vue](/components/LabLifecycle.vue): Vue lab component demonstrating lifecycle hooks
-- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): Vue lab component for props and emit communication
-- [components/LabQuizGame.vue](/components/LabQuizGame.vue): Interactive quiz game lab component
-- [components/LabReactivity.vue](/components/LabReactivity.vue): Vue lab component demonstrating reactivity
-- [components/LabVueList.vue](/components/LabVueList.vue): Vue lab component for list rendering
-- [components/LabTypeScript.vue](/components/LabTypeScript.vue): TypeScript fundamentals lab
-- [components/LabModuleSystem.vue](/components/LabModuleSystem.vue): ESM vs CommonJS lab
-- [components/LabNpm.vue](/components/LabNpm.vue): NPM package management lab
-- [components/LabBuildTools.vue](/components/LabBuildTools.vue): Vite build tools lab
-- [components/LabTailwind.vue](/components/LabTailwind.vue): TailwindCSS quickstart lab
+- [components/LabEventHandling.vue](/components/LabEventHandling.vue): Event handling lab
+- [components/LabSlot.vue](/components/LabSlot.vue): Slot system lab
+- [components/LabReactivity.vue](/components/LabReactivity.vue): Reactivity demonstration
+- [components/LabDirectives.vue](/components/LabDirectives.vue): Vue directives
+- [components/LabLifecycle.vue](/components/LabLifecycle.vue): Lifecycle hooks
+- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): Props and emit communication
+- [components/LabTypeScript.vue](/components/LabTypeScript.vue): TypeScript fundamentals
+- [components/LabTailwind.vue](/components/LabTailwind.vue): TailwindCSS quickstart
+- And more...
 
 ### Notes
 
 - [notes/](/notes/): Directory containing markdown notes in multiple languages
-  - [notes/VUE Learning/](/notes/VUE Learning/): English Vue learning notes
+  - [notes/VUE Learning/](/notes/VUE%20Learning/): English Vue learning notes
   - [notes/VUE学习笔记/](/notes/VUE学习笔记/): Chinese Vue learning notes
   - [notes/en/](/notes/en/): English technical notes
   - [notes/zh/](/notes/zh/): Chinese technical notes
 
 ### Scripts
 
-- [scripts/generate-tree.js](/scripts/generate-tree.js): Node.js script to scan notes directory and generate metadata index
+- [scripts/generate-tree.js](/scripts/generate-tree.js): Scan notes directory and generate metadata index
+- [scripts/generate-raw.js](/scripts/generate-raw.js): Generate raw source files for code preview
+- [scripts/generate-music.js](/scripts/generate-music.js): Generate music playlist metadata
+- [scripts/generate-wallpapers.js](/scripts/generate-wallpapers.js): Generate wallpaper configuration
 
 ---
 

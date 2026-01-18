@@ -29,24 +29,39 @@
 
 - [index.html](/index.html): 主 HTML 入口文件，包含樱花主题样式和 Tailwind CSS 配置
 - [index.tsx](/index.tsx): 应用程序引导文件，将 Vue 应用挂载到 DOM
-- [App.vue](/App.vue): 根 Vue 组件（1246 行），协调整个应用程序：
-  - **状态管理**：语言 (`lang`)、主题 (`isDark`)、视图模式 (`viewMode`)、当前文件/文件夹、用户设置（字体、字号、花瓣速度）
-  - **动态渲染**：条件渲染实验室仪表板、文件夹视图、Markdown 查看器或源代码模态框
-  - **侧边栏集成**：向 `AppSidebar` 传递文件系统、展开的文件夹、面包屑导航和资源分类
-  - **主内容区域**：包含壁纸层、装饰性渐变、头部、内容区和右侧目录侧边栏
-  - **交互特性**：选择弹出菜单（高亮/下划线）、图片灯箱、源文件代码模态框
-  - **Markdown 处理**：使用 `marked` 库渲染 Markdown，自定义标题 ID、图片路径解析和链接拦截
-  - **目录生成**：从 Markdown 标题自动生成目录，带活动章节高亮
-  - **URL 同步**：更新浏览器 URL 与当前文件路径，支持分享链接
-  - **设置持久化**：将主题、语言、字体、字号和花瓣速度存储到 `localStorage`
+- [App.vue](/App.vue): 根 Vue 组件（约 1150 行），协调整个应用程序
 - [vite.config.ts](/vite.config.ts): 项目的 Vite 构建配置
 - [package.json](/package.json): 项目依赖和脚本
-- [tsconfig.json](/package.json): TypeScript 配置
-- [README.md](/README.md) / [README_zh.md](/README_zh.md): 英文和中文的文档
+- [tsconfig.json](/tsconfig.json): TypeScript 配置
 - [constants.ts](/constants.ts): 国际化常量和配置
 - [types.ts](/types.ts): 应用程序中使用的 TypeScript 类型定义
-- [metadata.json](/metadata.json): 博客的自动生成内容索引
-- [env.d.ts](/env.d.ts): 环境类型的 TypeScript 声明文件
+
+### Composables（可复用逻辑）
+
+项目遵循 Vue 3 最佳实践，使用模块化 composables 实现关注点分离：
+
+| 文件 | 职责 | 行数 | 被复用于 |
+|------|------|------|----------|
+| [useArticleMeta.ts](/composables/useArticleMeta.ts) | 文章元数据提取（标签、作者、贡献者） | ~180 | App.vue, useContentRenderer, useRawEditor, useContentClick |
+| [useCodeModal.ts](/composables/useCodeModal.ts) | 代码弹窗管理、语法高亮 | ~150 | App.vue |
+| [useContentRenderer.ts](/composables/useContentRenderer.ts) | Markdown 渲染、目录生成 | ~210 | App.vue |
+| [useContentClick.ts](/composables/useContentClick.ts) | 链接拦截、文件可见性过滤 | ~250 | App.vue |
+| [useRawEditor.ts](/composables/useRawEditor.ts) | 源码编辑、GitHub 提交 | ~170 | App.vue |
+| [useSelectionMenu.ts](/composables/useSelectionMenu.ts) | 文本选择菜单、格式化 | ~210 | App.vue |
+| [useLightbox.ts](/composables/useLightbox.ts) | 图片灯箱 | ~40 | App.vue |
+| [useSearch.ts](/composables/useSearch.ts) | 全文搜索索引 | ~260 | App.vue, SearchModal |
+| [useFile.ts](/composables/useFile.ts) | 文件系统操作 | ~140 | (已导出，暂未使用) |
+| [useGitHubPublish.ts](/composables/useGitHubPublish.ts) | GitHub API 集成 | ~280 | useRawEditor, WriteEditor |
+| [useBackup.ts](/composables/useBackup.ts) | 数据备份功能 | ~460 | SettingsModal |
+| [useWallpapers.ts](/composables/useWallpapers.ts) | 壁纸管理 | ~100 | SettingsModal, BannerSettings, WallpaperLayer |
+
+> **说明**：这些 composables 的主要目的是**关注点分离**而非多组件复用。它们将复杂逻辑从 App.vue（约1990→1150行）中提取出来，提高可维护性，并允许不同开发者独立开发不同功能模块。
+
+### Stores（状态管理）
+
+- [stores/appStore.ts](/stores/appStore.ts): 全局设置（语言、主题、壁纸、UI 状态）
+- [stores/articleStore.ts](/stores/articleStore.ts): 文章交互（点赞、收藏、标签筛选）
+- [stores/musicStore.ts](/stores/musicStore.ts): 音乐播放器状态、播放列表、歌词
 
 ### 组件 (Components)
 
@@ -55,45 +70,41 @@
 - [components/FileTree.vue](/components/FileTree.vue): 用于显示目录结构的递归文件树组件
 - [components/FolderView.vue](/components/FolderView.vue): 用于显示文件夹内容的组件
 - [components/SettingsModal.vue](/components/SettingsModal.vue): 用户偏好设置模态框（主题、字体、花瓣速度、壁纸等）
-- [components/WriteEditor.vue](/components/WriteEditor.vue): 发布工作台，支持 Markdown 预览、标签/作者元信息、批量导入与本地图片上传
-- [components/PetalBackground.vue](/components/PetalBackground.vue): 优化的交互式樱花花瓣背景：
-  - 稳定拖拽：全局 Pointer 事件监听（统一鼠标/触摸）
-  - 网格堆叠：底部轻量网格系统，避免重叠，形成自然堆积效果
-  - 移动端优化：支持 `touch-action: none`，无手势冲突
-  - 主题响应：随主题切换花瓣颜色与阴影
-- [components/WallpaperLayer.vue](/components/WallpaperLayer.vue): 主题壁纸层（仅覆盖主内容区域，不影响侧边栏）：
-  - 自动切换浅色 (`/image/wallpaper-light.jpg`) 与深色 (`/image/wallpaper-dark.jpg`) 壁纸
-  - 使用 `background-size: cover`，不拉伸
+- [components/WriteEditor.vue](/components/WriteEditor.vue): 发布工作台，支持 Markdown 预览、标签/作者元信息、批量导入
+- [components/SearchModal.vue](/components/SearchModal.vue): 全文搜索模态框，支持高亮显示
+- [components/MusicPlayer.vue](/components/MusicPlayer.vue): 音乐播放器，支持歌词显示
+- [components/GiscusComments.vue](/components/GiscusComments.vue): Giscus 评论集成
+- [components/PetalBackground.vue](/components/PetalBackground.vue): 优化的交互式樱花花瓣背景
+- [components/WallpaperLayer.vue](/components/WallpaperLayer.vue): 主题壁纸层
 - [components/petal/usePetals.ts](/components/petal/usePetals.ts): 花瓣物理与堆叠逻辑的可复用组合式函数
+
+#### 实验室组件（交互学习）
+
 - [components/LabDashboard.vue](/components/LabDashboard.vue): Vue 学习实验室的仪表板
-- [components/LabAjax.vue](/components/LabAjax.vue): 展示 AJAX 概念的 Vue 实验室组件
-- [components/LabClassStyle.vue](/components/LabClassStyle.vue): 用于类和样式绑定的 Vue 实验室组件
-- [components/LabDirectives.vue](/components/LabDirectives.vue): 展示指令的 Vue 实验室组件
-- [components/LabDom.vue](/components/LabDom.vue): 用于 DOM 操作的 Vue 实验室组件
-- [components/LabHtml.vue](/components/LabHtml.vue): 用于 HTML 渲染的 Vue 实验室组件
-- [components/LabJs.vue](/components/LabJs.vue): 用于 JavaScript 概念的 Vue 实验室组件
-- [components/LabLifecycle.vue](/components/LabLifecycle.vue): 展示生命周期钩子的 Vue 实验室组件
-- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): 用于 props 和 emit 通信的 Vue 实验室组件
-- [components/LabQuizGame.vue](/components/LabQuizGame.vue): 交互式测验游戏实验室组件
-- [components/LabReactivity.vue](/components/LabReactivity.vue): 展示响应式原理的 Vue 实验室组件
-- [components/LabVueList.vue](/components/LabVueList.vue): 用于列表渲染的 Vue 实验室组件
-- [components/LabTypeScript.vue](/components/LabTypeScript.vue): TypeScript 基础实验室
-- [components/LabModuleSystem.vue](/components/LabModuleSystem.vue): ESM/CommonJS 模块实验室
-- [components/LabNpm.vue](/components/LabNpm.vue): NPM 包管理实验室
-- [components/LabBuildTools.vue](/components/LabBuildTools.vue): Vite 构建工具实验室
-- [components/LabTailwind.vue](/components/LabTailwind.vue): TailwindCSS 快速入门实验室
+- [components/LabEventHandling.vue](/components/LabEventHandling.vue): 事件处理实验室
+- [components/LabSlot.vue](/components/LabSlot.vue): 插槽系统实验室
+- [components/LabReactivity.vue](/components/LabReactivity.vue): 响应式原理演示
+- [components/LabDirectives.vue](/components/LabDirectives.vue): Vue 指令
+- [components/LabLifecycle.vue](/components/LabLifecycle.vue): 生命周期钩子
+- [components/LabPropsEmit.vue](/components/LabPropsEmit.vue): Props 和 Emit 通信
+- [components/LabTypeScript.vue](/components/LabTypeScript.vue): TypeScript 基础
+- [components/LabTailwind.vue](/components/LabTailwind.vue): TailwindCSS 快速入门
+- 更多...
 
 ### 笔记 (Notes)
 
 - [notes/](/notes/): 包含多种语言的 markdown 笔记的目录
-  - [notes/VUE_Learning/](/notes/VUE Learning/): 英文 Vue 学习笔记
+  - [notes/VUE Learning/](/notes/VUE%20Learning/): 英文 Vue 学习笔记
   - [notes/VUE学习笔记/](/notes/VUE学习笔记/): 中文 Vue 学习笔记
   - [notes/en/](/notes/en/): 英文技术笔记
   - [notes/zh/](/notes/zh/): 中文技术笔记
 
 ### 脚本 (Scripts)
 
-- [scripts/generate-tree.js](/scripts/generate-tree.js): 用于扫描 notes 目录并生成元数据索引的 Node.js 脚本
+- [scripts/generate-tree.js](/scripts/generate-tree.js): 扫描 notes 目录并生成元数据索引
+- [scripts/generate-raw.js](/scripts/generate-raw.js): 生成代码预览所需的原始源文件
+- [scripts/generate-music.js](/scripts/generate-music.js): 生成音乐播放列表元数据
+- [scripts/generate-wallpapers.js](/scripts/generate-wallpapers.js): 生成壁纸配置
 
 ---
 
