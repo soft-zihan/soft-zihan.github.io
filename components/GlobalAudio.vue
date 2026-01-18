@@ -11,8 +11,8 @@
   
   <!-- Mini FAB Button - Only spinning circle, NO card display -->
   <div 
-    v-if="musicStore.currentTrack && !isMusicPage" 
-    class="fixed bottom-8 right-8 z-50 pointer-events-auto"
+    v-if="musicStore.currentTrack && !isMusicPage && !isMobileDevice" 
+    class="fixed bottom-8 right-8 z-50 pointer-events-auto hidden md:block"
     @mouseenter="showControls"
     @mouseleave="hideControlsDelayed"
   >
@@ -204,6 +204,24 @@ const isMusicPage = computed(() => {
   return false
 })
 
+// Check if on mobile device
+const isMobileDevice = ref(false)
+
+const checkMobile = () => {
+  isMobileDevice.value = window.innerWidth < 768
+}
+
+onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
+  await musicStore.loadPlaylist()
+  
+  if (audioEl.value) {
+    audioEl.value.volume = musicStore.volume
+  }
+})
+
 // Play mode title
 const playModeTitle = computed(() => {
   const modes = {
@@ -285,11 +303,19 @@ const onError = (e: Event) => {
 }
 
 onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+  
   await musicStore.loadPlaylist()
   
   if (audioEl.value) {
     audioEl.value.volume = musicStore.volume
   }
+})
+
+onUnmounted(() => {
+  if (hideTimeout) clearTimeout(hideTimeout)
+  window.removeEventListener('resize', checkMobile)
 })
 
 // Save current track and playing state on changes

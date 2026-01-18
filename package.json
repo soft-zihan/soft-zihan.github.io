@@ -1,12 +1,13 @@
 {
   "name": "sakura-notes",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen-tree && vite build",
+    "build": "npm run gen-tree && npm run gen-raw && vite build",
     "preview": "vite preview",
-    "gen-tree": "node scripts/generate-tree.js"
+    "gen-tree": "node scripts/generate-tree.js",
+    "gen-raw": "node scripts/generate-raw.js"
   },
   "dependencies": {
     "lodash": "^4.17.21",

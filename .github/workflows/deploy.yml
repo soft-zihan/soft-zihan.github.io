@@ -34,6 +34,9 @@ jobs:
       - name: Generate File Tree
         run: npm run gen-tree
 
+      - name: Generate Raw Source Files
+        run: npm run gen-raw
+
       - name: Build
         run: npm run build
 

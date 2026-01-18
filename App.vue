@@ -8,12 +8,16 @@
 
   <div class="flex flex-col md:flex-row w-full h-full max-w-[2560px] mx-auto overflow-hidden bg-white/30 dark:bg-gray-900/60 backdrop-blur-[2px] font-sans transition-colors duration-500" :class="[appStore.userSettings.fontFamily === 'serif' ? 'font-serif' : 'font-sans', appStore.isDark ? 'dark' : '']">
     
-    <!-- Mobile Menu Button -->
+    <!-- Mobile Menu Button (repositioned to avoid overlap) -->
     <button 
       @click="sidebarOpen = !sidebarOpen"
-      class="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/80 dark:bg-gray-800/80 rounded-xl shadow-lg backdrop-blur"
+      class="md:hidden fixed z-50 p-2 bg-white/90 dark:bg-gray-800/90 rounded-xl shadow-lg backdrop-blur-md border border-sakura-100 dark:border-gray-700 transition-all duration-300"
+      :class="[
+        sidebarOpen ? 'top-4 left-[calc(100%-3.5rem)]' : 'top-2 left-2',
+        headerHidden ? 'top-2' : ''
+      ]"
     >
-      <svg class="w-6 h-6 text-sakura-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-5 h-5 text-sakura-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path v-if="!sidebarOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
         <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
       </svg>
@@ -47,7 +51,7 @@
       @reset="resetToHome"
       @select-tool="selectTool"
       @toggle-folder="toggleFolder"
-      @select-file="openFile"
+      @select-file="handleSidebarFileSelect"
       @select-folder="openFolder"
       @open-search="showSearch = true"
     />
@@ -75,6 +79,7 @@
         :show-particles="appStore.showParticles"
         :is-dark="appStore.isDark"
         :petal-speed="appStore.userSettings.petalSpeed"
+        :header-hidden="headerHidden"
         v-model:isRawMode="isRawMode"
         @reset="resetToHome"
         @navigate="navigateToBreadcrumb"
@@ -91,21 +96,52 @@
       <!-- Content Area -->
       <div class="flex-1 flex overflow-hidden z-10 relative">
         
-        <!-- Selection Menu (Floating) -->
+        <!-- Selection Menu (Floating) - Enhanced -->
         <div 
           v-show="selectionMenu.show" 
-          class="fixed z-50 flex bg-gray-900/90 text-white rounded-full shadow-xl backdrop-blur transform -translate-x-1/2 -translate-y-full mb-2 px-1 py-1"
+          class="fixed z-50 flex flex-wrap bg-gray-900/95 text-white rounded-2xl shadow-2xl backdrop-blur-xl transform -translate-x-1/2 -translate-y-full mb-2 p-1.5 gap-0.5 border border-white/10 max-w-[280px]"
           :style="{ top: selectionMenu.y + 'px', left: selectionMenu.x + 'px' }"
           @mousedown.prevent
         >
-          <button @click="applyFormat('highlight')" class="px-3 py-1.5 hover:bg-white/20 rounded-full text-xs font-bold flex items-center gap-1">
-            <span class="w-3 h-3 bg-yellow-400 rounded-full inline-block"></span>
-            {{ t.menu_highlight }}
+          <!-- Highlight Options -->
+          <button @click="applyFormat('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
+            <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
           </button>
-          <div class="w-px bg-white/20 my-1"></div>
-          <button @click="applyFormat('underline')" class="px-3 py-1.5 hover:bg-white/20 rounded-full text-xs font-bold flex items-center gap-1">
-             <span class="underline decoration-wavy decoration-white">U</span>
-             {{ t.menu_underline }}
+          <button @click="applyFormat('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
+            <span class="w-4 h-4 bg-green-400 rounded-full inline-block ring-2 ring-green-300/50"></span>
+          </button>
+          <button @click="applyFormat('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
+            <span class="w-4 h-4 bg-blue-400 rounded-full inline-block ring-2 ring-blue-300/50"></span>
+          </button>
+          <button @click="applyFormat('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
+            <span class="w-4 h-4 bg-pink-400 rounded-full inline-block ring-2 ring-pink-300/50"></span>
+          </button>
+          
+          <div class="w-px bg-white/20 mx-0.5"></div>
+          
+          <!-- Text Styles -->
+          <button @click="applyFormat('underline')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
+             <span class="underline decoration-wavy decoration-sakura-400 underline-offset-2">U</span>
+          </button>
+          <button @click="applyFormat('bold')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Bold">
+             <span class="font-black">B</span>
+          </button>
+          <button @click="applyFormat('strikethrough')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Strikethrough">
+             <span class="line-through">S</span>
+          </button>
+          
+          <div class="w-px bg-white/20 mx-0.5"></div>
+          
+          <!-- Actions -->
+          <button @click="copySelectedText" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Copy">
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+             </svg>
+          </button>
+          <button @click="searchSelectedText" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Search">
+             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+             </svg>
           </button>
         </div>
 
@@ -346,9 +382,8 @@
 
     <!-- Write Editor Modal -->
     <WriteEditor
-      v-if="showWriteEditor"
+      :show="showWriteEditor"
       @close="showWriteEditor = false"
-      :t="t"
       :lang="lang"
     />
 
@@ -477,6 +512,11 @@ const showSettings = ref(false);
 const showSearch = searchModalOpen;
 const showWriteEditor = ref(false);
 const sidebarOpen = ref(false);
+
+// Mobile header scroll behavior
+const headerHidden = ref(false);
+const lastScrollY = ref(0);
+const isMobile = ref(false);
 
 // Source Code Modal State
 const showCodeModal = ref(false);
@@ -771,6 +811,15 @@ const openFile = async (file: FileNode) => {
   }
 };
 
+// Handle file selection from sidebar (auto-close sidebar on mobile)
+const handleSidebarFileSelect = async (file: FileNode) => {
+  await openFile(file);
+  // Auto-close sidebar on mobile after selecting a file
+  if (isMobile.value) {
+    sidebarOpen.value = false;
+  }
+};
+
 const openFolder = (folder: FileNode) => {
   currentFile.value = null;
   currentFolder.value = folder;
@@ -900,23 +949,72 @@ const handleSelection = () => {
   };
 };
 
-const applyFormat = (type: 'highlight' | 'underline') => {
+const applyFormat = (type: 'highlight-yellow' | 'highlight-green' | 'highlight-blue' | 'highlight-pink' | 'underline' | 'bold' | 'strikethrough') => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
     
     const range = selection.getRangeAt(0);
     try {
         const span = document.createElement('span');
-        if (type === 'highlight') {
-            span.className = 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm';
-        } else if (type === 'underline') {
-            span.className = 'underline decoration-wavy decoration-sakura-500 underline-offset-4';
+        switch (type) {
+            case 'highlight-yellow':
+                span.className = 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm';
+                break;
+            case 'highlight-green':
+                span.className = 'bg-green-200 dark:bg-green-800/60 rounded px-0.5 transition-colors shadow-sm';
+                break;
+            case 'highlight-blue':
+                span.className = 'bg-blue-200 dark:bg-blue-800/60 rounded px-0.5 transition-colors shadow-sm';
+                break;
+            case 'highlight-pink':
+                span.className = 'bg-pink-200 dark:bg-pink-800/60 rounded px-0.5 transition-colors shadow-sm';
+                break;
+            case 'underline':
+                span.className = 'underline decoration-wavy decoration-sakura-500 underline-offset-4';
+                break;
+            case 'bold':
+                span.className = 'font-bold text-gray-900 dark:text-white';
+                break;
+            case 'strikethrough':
+                span.className = 'line-through text-gray-400 dark:text-gray-500';
+                break;
         }
         range.surroundContents(span);
         selection.removeAllRanges();
         selectionMenu.value.show = false;
     } catch (e) {
         showToast(t.value.selection_error);
+    }
+};
+
+// Copy selected text
+const copySelectedText = () => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const text = selection.toString();
+    if (text) {
+        navigator.clipboard.writeText(text);
+        showToast(t.value.copied);
+        selectionMenu.value.show = false;
+    }
+};
+
+// Search selected text
+const searchSelectedText = () => {
+    const selection = window.getSelection();
+    if (!selection) return;
+    const text = selection.toString().trim();
+    if (text) {
+        selectionMenu.value.show = false;
+        showSearch.value = true;
+        // The search modal will handle the actual search
+        nextTick(() => {
+            const searchInput = document.querySelector('.search-input') as HTMLInputElement;
+            if (searchInput) {
+                searchInput.value = text;
+                searchInput.dispatchEvent(new Event('input'));
+            }
+        });
     }
 };
 
@@ -935,7 +1033,7 @@ const handleContentClick = async (e: MouseEvent) => {
   const link = target.closest('a');
   if (link) {
     const href = link.getAttribute('href');
-    const isSupportedInternal = (raw?: string) => {
+    const isSupportedInternal = (raw?: string | null) => {
       if (!raw) return false;
       if (raw.startsWith('http') || raw.startsWith('//')) return false;
       const lower = raw.toLowerCase();
@@ -943,7 +1041,7 @@ const handleContentClick = async (e: MouseEvent) => {
       return exts.some(ext => lower.endsWith(ext));
     };
 
-    if (isSupportedInternal(href)) {
+    if (href && isSupportedInternal(href)) {
       e.preventDefault(); // Stop Browser Jump
       
       let targetPath = '';
@@ -1061,6 +1159,32 @@ watch(currentFile, async () => {
 });
 
 onMounted(async () => {
+  // Check mobile
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth < 768;
+  };
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+
+  // Mobile scroll behavior for header hide/show
+  const scrollContainer = document.getElementById('scroll-container');
+  const handleScroll = () => {
+    if (!isMobile.value) {
+      headerHidden.value = false;
+      return;
+    }
+    
+    const currentScrollY = scrollContainer?.scrollTop || 0;
+    const delta = currentScrollY - lastScrollY.value;
+    
+    // Only hide/show after scrolling a certain amount
+    if (Math.abs(delta) > 5) {
+      headerHidden.value = delta > 0 && currentScrollY > 50; // Hide on scroll down
+    }
+    
+    lastScrollY.value = currentScrollY;
+  };
+
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeydown);
 
@@ -1117,10 +1241,22 @@ onMounted(async () => {
     if (fileSystem.value.length > 0) {
       await initSearchIndex(fileSystem.value, lang.value);
     }
+    
+    // Setup scroll listener for mobile header hide/show (after content loads)
+    nextTick(() => {
+      const scrollEl = document.getElementById('scroll-container');
+      if (scrollEl) {
+        scrollEl.addEventListener('scroll', handleScroll, { passive: true });
+      }
+    });
   }
 });
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown);
+  const scrollEl = document.getElementById('scroll-container');
+  if (scrollEl) {
+    scrollEl.removeEventListener('scroll', () => {});
+  }
 });
 </script>

@@ -22,22 +22,27 @@ const props = defineProps<{
   lang: 'en' | 'zh'
   isDark: boolean
   path: string
-  // Giscus Configuration
-  repo?: string
-  repoId?: string
-  category?: string
-  categoryId?: string
+  // Giscus Configuration - 用户需要在 giscus.app 获取这些值
+  repo?: string       // 格式: "username/repo"
+  repoId?: string     // 在 giscus.app 配置页面获取
+  category?: string   // 通常是 "Announcements" 或 "General"
+  categoryId?: string // 在 giscus.app 配置页面获取
 }>()
 
 const giscusContainer = ref<HTMLElement | null>(null)
 const loaded = ref(false)
 
-// Default config - user should override these
+// Default config - 用户需要替换这些值
+// 获取步骤:
+// 1. 访问 https://giscus.app/zh-CN
+// 2. 输入你的仓库名 (如 soft-zihan/soft-zihan.github.io)
+// 3. 选择 Discussion 分类 (建议使用 Announcements)
+// 4. 复制生成的 data-repo-id 和 data-category-id
 const config = {
   repo: props.repo || 'soft-zihan/soft-zihan.github.io',
-  repoId: props.repoId || '', // Get from giscus.app
+  repoId: props.repoId || '', // ⚠️ 请在 giscus.app 获取
   category: props.category || 'Announcements',
-  categoryId: props.categoryId || '', // Get from giscus.app
+  categoryId: props.categoryId || '', // ⚠️ 请在 giscus.app 获取
 }
 
 const loadGiscus = () => {
@@ -105,17 +110,34 @@ onMounted(() => {
   if (config.repoId && config.categoryId) {
     loadGiscus()
   } else {
-    // Show placeholder message
+    // Show placeholder message with setup instructions
     loaded.value = true
     if (giscusContainer.value) {
       giscusContainer.value.innerHTML = `
-        <div class="text-center py-8 text-gray-400">
-          <p>💡 ${props.lang === 'zh' ? '评论功能需要配置 Giscus' : 'Comments require Giscus configuration'}</p>
-          <p class="text-sm mt-2">
-            <a href="https://giscus.app" target="_blank" class="text-sakura-500 hover:underline">
-              ${props.lang === 'zh' ? '前往 giscus.app 获取配置' : 'Visit giscus.app for configuration'}
-            </a>
+        <div class="text-center py-8 px-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+          <div class="text-4xl mb-4">💬</div>
+          <h4 class="font-bold text-gray-700 dark:text-gray-300 mb-2">
+            ${props.lang === 'zh' ? '评论功能配置指南' : 'Comment System Setup Guide'}
+          </h4>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            ${props.lang === 'zh' 
+              ? '请按以下步骤配置 Giscus 评论系统：' 
+              : 'Follow these steps to configure Giscus comments:'}
           </p>
+          <ol class="text-left text-sm text-gray-600 dark:text-gray-400 space-y-2 max-w-md mx-auto">
+            <li>1️⃣ ${props.lang === 'zh' ? '访问' : 'Visit'} <a href="https://giscus.app/zh-CN" target="_blank" class="text-sakura-500 hover:underline">giscus.app</a></li>
+            <li>2️⃣ ${props.lang === 'zh' ? '输入仓库名（如 soft-zihan/soft-zihan.github.io）' : 'Enter your repo name (e.g., username/repo)'}</li>
+            <li>3️⃣ ${props.lang === 'zh' ? '在仓库设置中启用 Discussions 功能' : 'Enable Discussions in your repo settings'}</li>
+            <li>4️⃣ ${props.lang === 'zh' ? '选择 Discussion 分类（推荐 Announcements）' : 'Select a Discussion category (Announcements recommended)'}</li>
+            <li>5️⃣ ${props.lang === 'zh' ? '复制 data-repo-id 和 data-category-id' : 'Copy data-repo-id and data-category-id'}</li>
+            <li>6️⃣ ${props.lang === 'zh' ? '在 GiscusComments.vue 中填入这两个值' : 'Add these values to GiscusComments.vue'}</li>
+          </ol>
+          <div class="mt-4 p-3 bg-gray-100 dark:bg-gray-900 rounded-lg text-left font-mono text-xs overflow-x-auto">
+            <code class="text-sakura-600 dark:text-sakura-400">
+              repoId: 'R_xxxxxx',<br>
+              categoryId: 'DIC_xxxxxx'
+            </code>
+          </div>
         </div>
       `
     }

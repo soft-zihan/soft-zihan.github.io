@@ -2,10 +2,18 @@
   "tracks": [
     {
       "id": "local-1",
-      "title": "你 若 三 冬",
-      "artist": "兰音 Reine",
+      "title": "你若三冬",
+      "artist": "兰音Reine",
       "cover": "/image/music-default.jpg",
-      "url": "/music/%E4%BD%A0%20%E8%8B%A5%20%E4%B8%89%20%E5%86%AC%20%E2%80%9C%E5%B0%86%E5%86%9B%E5%85%94%E7%9A%84%E4%B8%80%E9%9B%86%EF%BC%81%F0%9F%90%B0%E2%80%9D-%E5%85%B0%E9%9F%B3Reine.m4s",
+      "url": "/music/你若三冬-兰音Reine.m4s",
+      "lrc": ""
+    },
+    {
+      "id": "local-2",
+      "title": "回马枪",
+      "artist": "兰音Reine",
+      "cover": "/image/music-default.jpg",
+      "url": "/music/回马枪-兰音Reine.mp3",
       "lrc": ""
     }
   ]

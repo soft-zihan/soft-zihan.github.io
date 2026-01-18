@@ -210,6 +210,11 @@ date: "${new Date().toISOString().split('T')[0]}"
         `Add article: ${title}`
       )
       
+      // 如果发布成功，自动触发 GitHub Action 重新部署
+      if (result.success) {
+        await triggerWorkflow(options)
+      }
+      
       publishProgress.value = 100
       return result
     } catch (e: any) {
@@ -223,6 +228,42 @@ date: "${new Date().toISOString().split('T')[0]}"
     }
   }
   
+  // 触发 GitHub Action 工作流
+  const triggerWorkflow = async (options: GitHubPublishOptions): Promise<boolean> => {
+    const { owner, repo, token } = options
+    
+    try {
+      const response = await fetch(
+        `https://api.github.com/repos/${owner}/${repo}/actions/workflows/deploy.yml/dispatches`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            ref: 'main' // 或 'master'，取决于你的默认分支
+          })
+        }
+      )
+      
+      // 204 No Content 表示成功
+      if (response.status === 204 || response.ok) {
+        console.log('GitHub Action triggered successfully')
+        return true
+      }
+      
+      // 如果 workflow_dispatch 不可用，则依靠 push 触发
+      console.log('Workflow dispatch not available, relying on push trigger')
+      return true
+    } catch (e) {
+      console.warn('Failed to trigger workflow:', e)
+      // 失败不影响主流程，push 会自动触发 action
+      return false
+    }
+  }
+  
   return {
     isPublishing,
     publishError,
@@ -232,6 +273,7 @@ date: "${new Date().toISOString().split('T')[0]}"
     clearToken,
     uploadFile,
     uploadImage,
-    publishArticle
+    publishArticle,
+    triggerWorkflow
   }
 }
