@@ -52,7 +52,7 @@
             <input 
               v-model="title"
               type="text"
-              :placeholder="lang === 'zh' ? '输入文章标题...' : 'Enter article title...'"
+              :placeholder="lang === 'zh' ? '输入文章标题（文件名）' : 'Enter article title (filename)...'"
               class="w-full text-xl font-bold bg-transparent border-0 outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400"
             />
             <div class="flex flex-wrap items-center gap-2">
@@ -730,25 +730,97 @@ const publish = async () => {
     
     // 统一图片存放目录
     const imageFolder = 'notes/images'
-    
-    // 上传图片
-    if (images.value.length > 0) {
+
+    const imageUrlMap = new Map<string, string>()
+    const localImageTokenMap = new Map<string, File>()
+    const localImageNameMap = new Map<string, File>()
+
+    for (const img of images.value) {
+      const tokenKey = `local-image:${img.id}`
+      localImageTokenMap.set(tokenKey, img.file)
+      const name = img.file.name
+      localImageNameMap.set(name, img.file)
+      localImageNameMap.set(encodeURI(name), img.file)
+      localImageNameMap.set(safeDecode(name), img.file)
+    }
+
+    const imageRefs = extractImagePaths(processedContent)
+    const localRefs = new Set<string>()
+    const remoteRefs = new Set<string>()
+
+    for (const raw of imageRefs) {
+      const { path } = normalizeImageToken(raw)
+      if (!path) continue
+      if (path.startsWith('local-image:')) {
+        localRefs.add(path)
+        continue
+      }
+      if (isDataOrLocalToken(path)) continue
+      if (isHttpUrl(path)) {
+        remoteRefs.add(path)
+        continue
+      }
+      localRefs.add(path)
+    }
+
+    const totalImages = localRefs.size + remoteRefs.size
+    if (totalImages > 0) {
       publishProgress.value = 20
-      const totalImages = images.value.length
-      for (let i = 0; i < totalImages; i++) {
-        const img = images.value[i]
-        const imageUrl = await uploadImage(
-          { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
-          img.file,
-          imageFolder
-        )
-        if (imageUrl) {
-          const token = `local-image:${img.id}`
-          processedContent = processedContent
-            .replace(new RegExp(token, 'g'), imageUrl)
-            .replace(new RegExp(`src=["']${token}["']`, 'g'), `src="${imageUrl}"`)
+      let step = 0
+
+      for (const ref of localRefs) {
+        const file = localImageTokenMap.get(ref)
+          || localImageNameMap.get(ref)
+          || localImageNameMap.get(getImageBasename(ref))
+        if (file) {
+          const imageUrl = await uploadImage(
+            { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+            file,
+            imageFolder
+          )
+          if (imageUrl) {
+            imageUrlMap.set(ref, imageUrl)
+            const base = getImageBasename(ref)
+            if (base) imageUrlMap.set(base, imageUrl)
+            imageUrlMap.set(file.name, imageUrl)
+            imageUrlMap.set(encodeURI(file.name), imageUrl)
+            imageUrlMap.set(safeDecode(file.name), imageUrl)
+          }
         }
-        publishProgress.value = 20 + Math.round((i + 1) / totalImages * 40)
+        step += 1
+        publishProgress.value = 20 + Math.round((step / totalImages) * 40)
+      }
+
+      const fetchRemoteImageFile = async (rawUrl: string) => {
+        try {
+          const finalUrl = rawUrl.startsWith('//') ? `${window.location.protocol}${rawUrl}` : rawUrl
+          const res = await fetch(finalUrl)
+          if (!res.ok) return null
+          const blob = await res.blob()
+          const fileName = decodeURIComponent(new URL(finalUrl).pathname.split('/').pop() || `image-${Date.now()}`)
+          const type = blob.type || 'image/png'
+          return new File([blob], fileName, { type })
+        } catch {
+          return null
+        }
+      }
+
+      for (const imgUrl of remoteRefs) {
+        const file = await fetchRemoteImageFile(imgUrl)
+        if (file) {
+          const imageUrl = await uploadImage(
+            { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+            file,
+            imageFolder
+          )
+          if (imageUrl) imageUrlMap.set(imgUrl, imageUrl)
+        }
+        step += 1
+        publishProgress.value = 20 + Math.round((step / totalImages) * 40)
+      }
+
+      if (imageUrlMap.size > 0) {
+        processedContent = replaceImagesByUrlMap(processedContent, imageUrlMap)
       }
     } else {
       publishProgress.value = 60
@@ -885,10 +957,15 @@ const clearImportSelection = () => {
   importSelected.value = []
 }
 
-const isHttpUrl = (p: string) => /^https?:\/\//i.test(p) || p.startsWith('//')
-const isDataOrLocalToken = (p: string) => p.startsWith('data:') || p.startsWith('local-image:')
+function isHttpUrl(p: string) {
+  return /^https?:\/\//i.test(p) || p.startsWith('//')
+}
 
-const extractImagePaths = (text: string) => {
+function isDataOrLocalToken(p: string) {
+  return p.startsWith('data:') || p.startsWith('local-image:')
+}
+
+function extractImagePaths(text: string) {
   const paths: string[] = []
   for (const match of text.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) {
     paths.push(match[1])
@@ -899,7 +976,7 @@ const extractImagePaths = (text: string) => {
   return paths
 }
 
-const safeDecode = (value: string) => {
+function safeDecode(value: string) {
   try {
     return decodeURIComponent(value)
   } catch {
@@ -907,7 +984,7 @@ const safeDecode = (value: string) => {
   }
 }
 
-const normalizeImageToken = (raw: string) => {
+function normalizeImageToken(raw: string) {
   let cleaned = raw.trim()
   if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
     cleaned = cleaned.slice(1, -1)
@@ -916,7 +993,7 @@ const normalizeImageToken = (raw: string) => {
   return { path: safeDecode(pathPart), tail: rest.join(' ') }
 }
 
-const resolveImagePath = (mdRelPath: string, imgPath: string) => {
+function resolveImagePath(mdRelPath: string, imgPath: string) {
   if (!imgPath || isHttpUrl(imgPath) || isDataOrLocalToken(imgPath)) return null
   const decoded = safeDecode(imgPath)
   if (decoded.startsWith('/')) return null
@@ -931,13 +1008,13 @@ const resolveImagePath = (mdRelPath: string, imgPath: string) => {
   return normalizePath(stack.join('/'))
 }
 
-const getImageBasename = (p: string) => {
+function getImageBasename(p: string) {
   const cleaned = safeDecode(p).split('?')[0].split('#')[0]
   const parts = cleaned.split('/')
   return parts[parts.length - 1] || ''
 }
 
-const getImageKeyCandidates = (mdRelPath: string, raw: string) => {
+function getImageKeyCandidates(mdRelPath: string, raw: string) {
   const { path } = normalizeImageToken(raw)
   const keys = [path, safeDecode(path), encodeURI(path)]
   const resolved = resolveImagePath(mdRelPath, path)
@@ -947,10 +1024,35 @@ const getImageKeyCandidates = (mdRelPath: string, raw: string) => {
   return keys
 }
 
-const replaceLocalImages = (text: string, mdRelPath: string, urlMap: Map<string, string>) => {
+function replaceLocalImages(text: string, mdRelPath: string, urlMap: Map<string, string>) {
   const replacePath = (raw: string) => {
     const { path, tail } = normalizeImageToken(raw)
     const candidates = getImageKeyCandidates(mdRelPath, raw)
+    const matched = candidates.find(key => urlMap.has(key))
+    if (matched) {
+      const url = urlMap.get(matched) as string
+      return tail ? `${url} ${tail}` : url
+    }
+    return raw
+  }
+
+  let output = text.replace(/!\[[^\]]*\]\(([^)]+)\)/g, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  output = output.replace(/<img[^>]+src=["']([^"']+)["']/gi, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  return output
+}
+
+function replaceImagesByUrlMap(text: string, urlMap: Map<string, string>) {
+  const replacePath = (raw: string) => {
+    const { path, tail } = normalizeImageToken(raw)
+    const candidates = [path, safeDecode(path), encodeURI(path)]
+    const base = getImageBasename(path)
+    if (base) candidates.push(base)
     const matched = candidates.find(key => urlMap.has(key))
     if (matched) {
       const url = urlMap.get(matched) as string

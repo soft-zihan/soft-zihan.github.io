@@ -898,12 +898,7 @@ const createPullRequestForFileUpdate = async (
     'Content-Type': 'application/json'
   };
 
-  const safeSlug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 50) || 'update';
-  const branch = `edit/${safeSlug}-${Date.now()}`;
+  const branch = 'edit/raw-editor';
 
   try {
     const baseRefRes = await fetch(
@@ -924,7 +919,9 @@ const createPullRequestForFileUpdate = async (
     );
     if (!createRefRes.ok) {
       const err = await createRefRes.json();
-      throw new Error(err.message || 'Failed to create branch');
+      if (createRefRes.status !== 422) {
+        throw new Error(err.message || 'Failed to create branch');
+      }
     }
 
     let sha: string | undefined;
@@ -958,6 +955,17 @@ const createPullRequestForFileUpdate = async (
     const prBody = authorName
       ? `Contributor: ${authorName}\n\nAuto-generated from Sakura Notes raw editor.`
       : 'Auto-generated from Sakura Notes raw editor.';
+
+    const existingPrRes = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/pulls?state=open&head=${owner}:${branch}&base=${base}`,
+      { headers }
+    );
+    if (existingPrRes.ok) {
+      const prs = await existingPrRes.json();
+      if (Array.isArray(prs) && prs.length > 0) {
+        return { success: true, message: 'PR exists', url: prs[0].html_url };
+      }
+    }
 
     const prRes = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/pulls`,
@@ -1470,6 +1478,20 @@ const closeCodeModal = () => {
   window.history.pushState({}, '', url.toString());
 };
 
+const normalizeHref = (raw: string): string => {
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.startsWith('#')) return '';
+  const hashIndex = trimmed.indexOf('#');
+  const queryIndex = trimmed.indexOf('?');
+  const cutIndex = [hashIndex, queryIndex].filter(i => i >= 0).sort((a, b) => a - b)[0];
+  const base = cutIndex !== undefined ? trimmed.slice(0, cutIndex) : trimmed;
+  try {
+    return decodeURIComponent(base);
+  } catch {
+    return base;
+  }
+};
+
 // 获取项目根目录下的源代码文件（如 App.vue, vite.config.ts 等）
 const fetchSourceCodeFile = async (filePath: string): Promise<string> => {
   // 移除开头的斜杠
@@ -1699,24 +1721,18 @@ const handleContentClick = async (e: MouseEvent) => {
   }
   
   // 2. Intercept internal links
-  const link = target.closest('a');
+ const link = target.closest('a');
   if (link) {
     const href = link.getAttribute('href');
-
-    const normalizeHref = (raw?: string | null) => {
-      if (!raw) return '';
-      const trimmed = raw.trim();
-      const noHash = trimmed.split('#')[0];
-      const noQuery = noHash.split('?')[0];
-      return noQuery;
-    };
+    const normalized = href ? normalizeHref(href) : '';
     
     const isSupportedInternal = (raw?: string | null) => {
       if (!raw) return false;
       if (raw.startsWith('http') || raw.startsWith('//')) return false;
-      const normalized = normalizeHref(raw);
-      const lower = normalized.toLowerCase();
-      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.htm', '.css', '.scss'];
+      const cleaned = normalizeHref(raw);
+      if (!cleaned) return false;
+      const lower = cleaned.toLowerCase();
+      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss'];
       return exts.some(ext => lower.endsWith(ext));
     };
 
@@ -1724,7 +1740,7 @@ const handleContentClick = async (e: MouseEvent) => {
       e.preventDefault(); // Stop Browser Jump
       
       let targetPath = '';
-      const normalizedHref = normalizeHref(href);
+      const normalizedHref = normalized || normalizeHref(href);
       const isCodeFile = !normalizedHref.toLowerCase().endsWith('.md');
 
       if (normalizedHref.startsWith('/')) {
