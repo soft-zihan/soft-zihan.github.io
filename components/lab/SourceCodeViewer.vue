@@ -53,30 +53,58 @@
       <!-- Code Content with Inline Notes -->
       <div class="flex-1 overflow-auto bg-[#1e1e1e] custom-scrollbar relative" ref="codeContainer">
         <div v-if="selectedFile && fileContent" class="py-4">
+          <!-- Line 0 note (before first line) -->
+          <template v-if="showNotes && hasAnyNoteAtLine(0) && !isLineCollapsed(0)">
+            <div 
+              v-if="hasPresetNoteAtLine(0)"
+              class="flex mx-4 my-1"
+            >
+              <div class="w-12"></div>
+              <div class="flex-1 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/20 rounded-lg p-3 border border-cyan-200 dark:border-cyan-700/50 shadow-sm">
+                <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{{ getPresetNoteContent(0) }}</div>
+              </div>
+            </div>
+            <div 
+              v-if="hasUserNoteAtLine(0)"
+              class="flex mx-4 my-1"
+              draggable="true"
+              @dragstart="onDragStart($event, 0)"
+              @dragend="onDragEnd"
+            >
+              <div class="w-12"></div>
+              <div class="flex-1 bg-gradient-to-r from-sakura-50 to-amber-50 dark:from-sakura-900/30 dark:to-amber-900/20 rounded-lg p-3 border border-sakura-200 dark:border-sakura-700/50 shadow-sm group relative">
+                <div class="absolute -left-6 top-1/2 -translate-y-1/2 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-sakura-400">⋮⋮</div>
+                <div class="flex items-end justify-end gap-2 mb-1">
+                  <button @click="deleteUserNote(0)" class="text-gray-400 hover:text-red-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity">🗑️</button>
+                </div>
+                <textarea :value="getUserNoteContent(0)" @input="handleNoteInput($event, 0)" class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-200 placeholder-gray-400 overflow-hidden" :placeholder="isZh ? '在此输入笔记...' : 'Type your note here...'" rows="1"></textarea>
+              </div>
+            </div>
+          </template>
+          
           <!-- Render each line with possible inline note -->
           <template v-for="(line, idx) in fileLines" :key="idx">
             <!-- Drop indicator line -->
             <div 
-              v-if="showNotes && dragOverLine === idx + 1 && draggingNoteLine !== idx + 1"
+              v-if="showNotes && dragOverLine === idx && draggingNoteLine !== idx"
               class="h-1 mx-4 bg-sakura-400 rounded-full animate-pulse"
             ></div>
             
             <!-- Code Line -->
             <div 
               class="flex hover:bg-[#2a2d2e] group"
-              :class="{ 'bg-sakura-900/20': hasAnyNoteAtLine(idx + 1) && !isLineCollapsed(idx + 1) }"
-              @dragover.prevent="onDragOver($event, idx + 1)"
+              :class="{ 'bg-sakura-900/20': hasNonEmptyNoteAtLine(idx) && !isLineCollapsed(idx) }"
+              @dragover.prevent="onDragOver($event, idx)"
               @dragleave="onDragLeave"
-              @drop.prevent="onDrop($event, idx + 1)"
+              @drop.prevent="onDrop($event, idx)"
             >
               <!-- Line Number - click to toggle notes -->
               <div 
                 class="flex-shrink-0 w-12 pl-4 pr-2 text-right select-none font-mono text-xs leading-6 cursor-pointer transition-colors"
-                :class="getLineNumberClass(idx + 1)"
-                @click="toggleNoteAtLine(idx + 1)"
+                :class="getLineNumberClass(idx)"
+                @click="toggleNoteAtLine(idx)"
               >
-                {{ idx + 1 }}
-              </div>
+                {{ idx }}</div>
               <!-- Code Content -->
               <pre 
                 class="flex-1 pr-4 text-sm font-mono leading-6 whitespace-pre-wrap break-all"
@@ -85,26 +113,21 @@
             
             <!-- Preset Note (below the line) - Blue/Cyan theme -->
             <div 
-              v-if="showNotes && hasPresetNoteAtLine(idx + 1) && !isLineCollapsed(idx + 1)"
+              v-if="showNotes && hasPresetNoteAtLine(idx) && !isLineCollapsed(idx)"
               class="flex mx-4 my-1"
             >
               <div class="w-8"></div>
               <div class="flex-1 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/20 rounded-lg p-3 border border-cyan-200 dark:border-cyan-700/50 shadow-sm">
-                <div class="flex items-start justify-between gap-2 mb-1">
-                  <span class="text-[10px] font-mono text-cyan-600 dark:text-cyan-400 bg-cyan-100 dark:bg-cyan-900/50 px-1.5 py-0.5 rounded flex items-center gap-1">
-                    📚 {{ isZh ? '预置' : 'Preset' }}
-                  </span>
-                </div>
-                <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{{ getPresetNoteContent(idx + 1) }}</div>
+                <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap">{{ getPresetNoteContent(idx) }}</div>
               </div>
             </div>
             
             <!-- User Note (below the line) - Pink/Sakura theme -->
             <div 
-              v-if="showNotes && hasUserNoteAtLine(idx + 1) && !isLineCollapsed(idx + 1)"
+              v-if="showNotes && hasUserNoteAtLine(idx) && !isLineCollapsed(idx)"
               class="flex mx-4 my-1"
               draggable="true"
-              @dragstart="onDragStart($event, idx + 1)"
+              @dragstart="onDragStart($event, idx)"
               @dragend="onDragEnd"
             >
               <div class="w-8"></div>
@@ -113,20 +136,17 @@
                 <div class="absolute -left-6 top-1/2 -translate-y-1/2 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity text-gray-400 hover:text-sakura-400">
                   ⋮⋮
                 </div>
-                <div class="flex items-start justify-between gap-2 mb-1">
-                  <span class="text-[10px] font-mono text-sakura-600 dark:text-sakura-400 bg-sakura-100 dark:bg-sakura-900/50 px-1.5 py-0.5 rounded flex items-center gap-1">
-                    ✏️ {{ isZh ? '我的笔记' : 'My Note' }}
-                  </span>
+                <div class="flex items-end justify-end gap-2 mb-1">
                   <button 
-                    @click="deleteUserNote(idx + 1)"
+                    @click="deleteUserNote(idx)"
                     class="text-gray-400 hover:text-red-500 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                   >
                     🗑️
                   </button>
                 </div>
                 <textarea
-                  :value="getUserNoteContent(idx + 1)"
-                  @input="handleNoteInput($event, idx + 1)"
+                  :value="getUserNoteContent(idx)"
+                  @input="handleNoteInput($event, idx)"
                   class="w-full text-sm bg-transparent border-none outline-none resize-none text-gray-700 dark:text-gray-200 placeholder-gray-400 overflow-hidden"
                   :placeholder="isZh ? '在此输入笔记...' : 'Type your note here...'"
                   rows="1"
@@ -137,7 +157,7 @@
           
           <!-- Drop indicator at the end -->
           <div 
-            v-if="showNotes && dragOverLine === fileLines.length + 1"
+            v-if="showNotes && dragOverLine === fileLines.length"
             class="h-1 mx-4 bg-sakura-400 rounded-full animate-pulse"
           ></div>
         </div>
@@ -241,43 +261,38 @@ onMounted(() => {
   hasToken.value = checkHasToken()
 })
 
-// Project file tree (hardcoded for this project)
+// Project file tree (hardcoded for this project) - without root level
 const projectTree = ref<SourceFile[]>([
+  { name: 'index.html', path: 'index.html', type: 'file' },
+  { name: 'index.tsx', path: 'index.tsx', type: 'file' },
+  { name: 'App.vue', path: 'App.vue', type: 'file' },
+  { name: 'constants.ts', path: 'constants.ts', type: 'file' },
+  { name: 'types.ts', path: 'types.ts', type: 'file' },
+  { name: 'vite.config.ts', path: 'vite.config.ts', type: 'file' },
+  { name: 'package.json', path: 'package.json', type: 'file' },
+  { name: 'tsconfig.json', path: 'tsconfig.json', type: 'file' },
   {
-    name: 'Root',
-    path: '',
+    name: 'components',
+    path: 'components',
     type: 'directory',
     children: [
-      { name: 'index.html', path: 'index.html', type: 'file' },
-      { name: 'index.tsx', path: 'index.tsx', type: 'file' },
-      { name: 'App.vue', path: 'App.vue', type: 'file' },
-      { name: 'constants.ts', path: 'constants.ts', type: 'file' },
-      { name: 'types.ts', path: 'types.ts', type: 'file' },
-      { name: 'vite.config.ts', path: 'vite.config.ts', type: 'file' },
-      { name: 'package.json', path: 'package.json', type: 'file' },
-      { name: 'tsconfig.json', path: 'tsconfig.json', type: 'file' },
+      { name: 'AppHeader.vue', path: 'components/AppHeader.vue', type: 'file' },
+      { name: 'AppSidebar.vue', path: 'components/AppSidebar.vue', type: 'file' },
+      { name: 'ArticleCard.vue', path: 'components/ArticleCard.vue', type: 'file' },
+      { name: 'FileTree.vue', path: 'components/FileTree.vue', type: 'file' },
+      { name: 'FolderView.vue', path: 'components/FolderView.vue', type: 'file' },
+      { name: 'SearchModal.vue', path: 'components/SearchModal.vue', type: 'file' },
+      { name: 'SettingsModal.vue', path: 'components/SettingsModal.vue', type: 'file' },
+      { name: 'WriteEditor.vue', path: 'components/WriteEditor.vue', type: 'file' },
+      { name: 'MusicPlayer.vue', path: 'components/MusicPlayer.vue', type: 'file' },
+      { name: 'GiscusComments.vue', path: 'components/GiscusComments.vue', type: 'file' },
+      { name: 'PetalBackground.vue', path: 'components/PetalBackground.vue', type: 'file' },
+      { name: 'WallpaperLayer.vue', path: 'components/WallpaperLayer.vue', type: 'file' },
       {
-        name: 'components',
-        path: 'components',
+        name: 'lab',
+        path: 'components/lab',
         type: 'directory',
         children: [
-          { name: 'AppHeader.vue', path: 'components/AppHeader.vue', type: 'file' },
-          { name: 'AppSidebar.vue', path: 'components/AppSidebar.vue', type: 'file' },
-          { name: 'ArticleCard.vue', path: 'components/ArticleCard.vue', type: 'file' },
-          { name: 'FileTree.vue', path: 'components/FileTree.vue', type: 'file' },
-          { name: 'FolderView.vue', path: 'components/FolderView.vue', type: 'file' },
-          { name: 'SearchModal.vue', path: 'components/SearchModal.vue', type: 'file' },
-          { name: 'SettingsModal.vue', path: 'components/SettingsModal.vue', type: 'file' },
-          { name: 'WriteEditor.vue', path: 'components/WriteEditor.vue', type: 'file' },
-          { name: 'MusicPlayer.vue', path: 'components/MusicPlayer.vue', type: 'file' },
-          { name: 'GiscusComments.vue', path: 'components/GiscusComments.vue', type: 'file' },
-          { name: 'PetalBackground.vue', path: 'components/PetalBackground.vue', type: 'file' },
-          { name: 'WallpaperLayer.vue', path: 'components/WallpaperLayer.vue', type: 'file' },
-          {
-            name: 'lab',
-            path: 'components/lab',
-            type: 'directory',
-            children: [
               { name: 'index.ts', path: 'components/lab/index.ts', type: 'file' },
               { name: 'LabDashboard.vue', path: 'components/lab/LabDashboard.vue', type: 'file' },
               { name: 'LabProjectTour.vue', path: 'components/lab/LabProjectTour.vue', type: 'file' },
@@ -339,8 +354,6 @@ const projectTree = ref<SourceFile[]>([
           { name: 'generate-wallpapers.js', path: 'scripts/generate-wallpapers.js', type: 'file' },
         ]
       }
-    ]
-  }
 ])
 
 const selectedFile = ref<SourceFile | null>(null)
@@ -505,21 +518,28 @@ const hasAnyNoteAtLine = (line: number) => {
   return hasPresetNoteAtLine(line) || hasUserNoteAtLine(line)
 }
 
+// Check if line has non-empty note (for highlighting)
+const hasNonEmptyNoteAtLine = (line: number) => {
+  const hasPreset = currentPresetNotes.value.some(n => n.line === line && n.content.trim())
+  const hasUser = currentUserNotes.value.some(n => n.line === line && n.content.trim())
+  return hasPreset || hasUser
+}
+
 // Check if line is collapsed
 const isLineCollapsed = (line: number) => {
   return currentCollapsedLines.value.includes(line)
 }
 
-// Get line number class
+// Get line number class - only highlight if note has content
 const getLineNumberClass = (line: number) => {
-  const hasNote = hasAnyNoteAtLine(line)
-  const isCollapsed = isLineCollapsed(line)
+  const hasPreset = currentPresetNotes.value.some(n => n.line === line && n.content.trim())
+  const hasUser = currentUserNotes.value.some(n => n.line === line && n.content.trim())
   
-  if (hasNote) {
-    if (hasPresetNoteAtLine(line) && hasUserNoteAtLine(line)) {
+  if (hasPreset || hasUser) {
+    if (hasPreset && hasUser) {
       // Both types - purple highlight
       return 'text-purple-400 font-bold bg-purple-900/20'
-    } else if (hasPresetNoteAtLine(line)) {
+    } else if (hasPreset) {
       // Preset only - cyan highlight
       return 'text-cyan-400 font-bold bg-cyan-900/20'
     } else {
@@ -549,7 +569,16 @@ const toggleNoteAtLine = (line: number) => {
       // Expand
       collapsedState.value[path] = collapsedState.value[path].filter(l => l !== line)
     } else {
-      // Collapse
+      // Collapse - if user note is empty, delete it instead
+      if (hasUser) {
+        const userNote = currentUserNotes.value.find(n => n.line === line)
+        if (userNote && !userNote.content.trim()) {
+          // Empty user note - delete it
+          userNotes.value[path] = userNotes.value[path].filter(n => n.line !== line)
+          saveUserNotes()
+          return
+        }
+      }
       collapsedState.value[path].push(line)
     }
     saveCollapsedState()

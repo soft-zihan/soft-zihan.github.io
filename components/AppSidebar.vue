@@ -69,6 +69,29 @@
                 <div class="text-[10px] text-indigo-500 dark:text-indigo-400">{{ t.lab_dashboard_desc }}</div>
               </div>
             </div>
+            
+            <!-- Lab Stage Tabs (when dashboard is selected) -->
+            <div v-if="currentTool === 'dashboard' && labTabs && labTabs.length > 0" class="mb-4 space-y-1">
+              <h3 class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 flex items-center gap-1 pl-1">
+                🎯 {{ lang === 'zh' ? '学习阶段' : 'Learning Stages' }}
+              </h3>
+              <div 
+                v-for="tab in labTabs" 
+                :key="tab.id"
+                @click="$emit('update:activeLabTab', tab.id)"
+                class="p-2 rounded-lg cursor-pointer transition-all hover:bg-white dark:hover:bg-gray-800 hover:shadow-sm border flex items-center gap-2"
+                :class="activeLabTab === tab.id 
+                  ? 'bg-gradient-to-r from-sakura-50 to-purple-50 dark:from-sakura-900/30 dark:to-purple-900/20 border-sakura-200 dark:border-sakura-700/50' 
+                  : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'"
+              >
+                <span class="text-lg">{{ tab.icon }}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">{{ tab.shortLabel }}</div>
+                  <div v-if="tab.noteNum" class="text-[10px] text-gray-400 dark:text-gray-500">{{ lang === 'zh' ? `笔记 ${tab.noteNum}` : `Note ${tab.noteNum}` }}</div>
+                </div>
+                <span v-if="activeLabTab === tab.id" class="w-1.5 h-1.5 rounded-full bg-sakura-500"></span>
+              </div>
+            </div>
 
             <!-- VUE Learning Notes Section -->
             <div v-if="labFolder" class="mb-4">
@@ -239,6 +262,8 @@ const props = defineProps<{
   labFolder: FileNode | null;
   resourceCategories: any[];
   currentTool: string | null;
+  labTabs?: any[]; // Lab dashboard tabs from parent
+  activeLabTab?: string; // Current active lab tab
 }>();
 
 // Compute files in labFolder (VUE学习笔记 or VUE Learning)
@@ -257,7 +282,8 @@ const emit = defineEmits([
   'toggle-folder',
   'select-file',
   'select-folder',
-  'open-search'
+  'open-search',
+  'update:activeLabTab' // For lab tab switching
 ]);
 
 // Avatar Logic: Prefer external, fallback to local

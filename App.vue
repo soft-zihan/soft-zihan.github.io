@@ -46,6 +46,8 @@
       :lab-folder="labFolder"
       :resource-categories="resourceCategories"
       :current-tool="currentTool"
+      :lab-tabs="labTabs"
+      :active-lab-tab="labDashboardTab"
       @toggle-lang="toggleLang"
       @reset="resetToHome"
       @select-tool="selectTool"
@@ -53,6 +55,7 @@
       @select-file="handleSidebarFileSelect"
       @select-folder="openFolder"
       @open-search="showSearch = true"
+      @update:activeLabTab="handleLabTabChange"
     />
 
     <!-- Main Content Wrapper -->
@@ -160,7 +163,7 @@
 
           <!-- Lab Tool View (Unified Dashboard) -->
           <div v-else-if="viewMode === 'lab' && currentTool === 'dashboard'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
-             <LabDashboard :lang="lang" :initial-tab="labDashboardTab" @tab-change="handleLabTabChange" @select-lab="selectTool" />
+             <LabDashboard :lang="lang" v-model="labDashboardTab" @tab-change="handleLabTabChange" @select-lab="selectTool" />
           </div>
 
           <!-- Lab: Source Code Viewer -->
@@ -202,7 +205,6 @@
              <div class="mb-8 border-b border-gray-100 dark:border-gray-700 pb-6">
                  <div class="flex justify-between items-start gap-4">
                    <div class="flex flex-wrap items-center gap-3 flex-1">
-                     <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight">{{ currentFile.name.replace('.md', '') }}</h1>
                      <span v-if="currentAuthorName || currentAuthorUrl" class="text-sm text-gray-400 flex items-center gap-1">
                        <span>👤</span>
                        <a
@@ -502,6 +504,9 @@
       :t="t"
       :is-dark="appStore.isDark"
       :settings="appStore.userSettings"
+      :lang="lang"
+      :file-system="fileSystem"
+      :lab-folder="labFolder"
     />
 
     <!-- Search Modal -->
@@ -915,7 +920,19 @@ const selectTool = (tool: string) => {
   dualColumnMode.value = false; // Exit dual column when selecting specific tool
 };
 
-const labDashboardTab = ref<string>('foundation');
+const labDashboardTab = ref<string>('note1-html-css');
+
+// Lab tabs for sidebar (synced with LabDashboard)
+const labTabs = computed(() => {
+  const isZh = lang.value === 'zh'
+  return [
+    { id: 'note1-html-css', shortLabel: isZh ? 'HTML/CSS' : 'HTML/CSS', icon: '🎨', noteNum: 1 },
+    { id: 'note2-javascript', shortLabel: 'JavaScript', icon: '⚡', noteNum: 2 },
+    { id: 'note3-vue-basics', shortLabel: isZh ? 'Vue基础' : 'Vue Basics', icon: '🥝', noteNum: 3 },
+    { id: 'note4-vue-engineering', shortLabel: isZh ? '工程化' : 'Engineering', icon: '🚀', noteNum: 4 },
+    { id: 'challenge', shortLabel: isZh ? '挑战' : 'Challenge', icon: '🏆', noteNum: 0 },
+  ]
+})
 
 const handleLabTabChange = (tab: string) => {
   labDashboardTab.value = tab;

@@ -1,90 +1,34 @@
 <template>
   <div class="space-y-8">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-2">{{ t.lab_dashboard }}</h1>
-      <p class="text-sakura-500">{{ t.lab_dashboard_desc }}</p>
-      <p class="text-xs text-gray-400 mt-2">
-        {{ isZh ? '🌸 所有示例均来自 Sakura Notes 真实源码，与学习笔记1-4对应' : '🌸 All examples from Sakura Notes real source code, aligned with Notes 1-4' }}
-      </p>
-    </div>
-
-    <!-- Tab Navigation - 4 Main Stages aligned with Notes 1-4 -->
-    <div class="flex justify-center mb-8 px-4">
-      <div class="bg-gradient-to-r from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-750 dark:to-gray-800 p-2 rounded-2xl flex flex-wrap justify-center gap-2 shadow-lg border border-gray-200/50 dark:border-gray-700/50">
-        <button 
-          v-for="tab in tabs" 
-          :key="tab.id"
-          @click="activeTab = tab.id"
-          class="group px-4 md:px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 flex flex-col items-center gap-1 min-w-[80px] md:min-w-[110px] relative overflow-hidden"
-          :class="activeTab === tab.id 
-            ? 'bg-gradient-to-br from-sakura-400 to-sakura-500 text-white shadow-lg shadow-sakura-500/30 transform scale-105' 
-            : 'text-gray-500 hover:text-sakura-600 hover:bg-sakura-50 dark:hover:bg-gray-700/50'"
-        >
-          <span class="text-xl md:text-2xl transition-transform group-hover:scale-110" :class="{ 'animate-bounce': activeTab === tab.id }">{{ tab.icon }}</span>
-          <span class="text-xs md:text-sm">{{ tab.shortLabel }}</span>
-          <span v-if="tab.noteNum" class="text-[9px] md:text-[10px] opacity-70">{{ isZh ? `笔记${tab.noteNum}` : `Note ${tab.noteNum}` }}</span>
-          <!-- Active indicator dot -->
-          <span v-if="activeTab === tab.id" class="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white"></span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Learning Progress Indicator -->
-    <div class="max-w-3xl mx-auto mb-8 px-4">
-      <div class="flex items-center gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
-        <template v-for="(tab, index) in tabs" :key="tab.id">
-          <div 
-            class="flex-1 h-2.5 rounded-full transition-all duration-500 cursor-pointer relative overflow-hidden group"
-            :class="activeTabIndex >= index 
-              ? 'bg-gradient-to-r from-sakura-400 to-sakura-500 shadow-sm' 
-              : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'"
-            @click="activeTab = tab.id"
-          >
-            <!-- Shimmer effect for completed stages -->
-            <div 
-              v-if="activeTabIndex >= index" 
-              class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
-            ></div>
+    <!-- Stage Info Banner (simplified, no header/tabs) -->
+    <div class="max-w-4xl mx-auto px-4">
+      <div class="bg-gradient-to-r from-sakura-50 to-purple-50 dark:from-sakura-900/20 dark:to-purple-900/20 rounded-2xl p-4 md:p-6 border border-sakura-100 dark:border-sakura-800/30">
+        <div class="flex items-start gap-4">
+          <div class="text-4xl">{{ activeTabInfo?.icon }}</div>
+          <div class="flex-1">
+            <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">
+              {{ activeTabInfo?.noteNum ? (isZh ? `笔记${activeTabInfo?.noteNum}：` : `Note ${activeTabInfo?.noteNum}: `) : '' }}
+              {{ activeTabInfo?.label }}
+            </h3>
+            <p class="text-sm text-sakura-600 dark:text-sakura-400 mt-1">
+              🎯 {{ activeTabInfo?.goal }}
+            </p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+              {{ activeTabInfo?.desc }}
+            </p>
           </div>
-        </template>
-      </div>
-      <div class="flex justify-between mt-2 text-[10px] font-medium">
-        <span class="text-gray-400">🌱 {{ isZh ? '入门' : 'Beginner' }}</span>
-        <span class="text-sakura-500">🌸 {{ isZh ? `第 ${activeTabIndex + 1}/${tabs.length} 阶段` : `Stage ${activeTabIndex + 1}/${tabs.length}` }}</span>
-        <span class="text-gray-400">🏆 {{ isZh ? '进阶' : 'Advanced' }}</span>
+          <div class="hidden md:block text-right">
+            <span class="text-xs text-gray-400">{{ isZh ? '关联本站代码' : 'Related Code' }}</span>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              {{ activeTabInfo?.relatedCode }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Content Area -->
     <div class="min-h-[500px] transition-all duration-500">
-      
-      <!-- Stage Info Banner -->
-      <div class="max-w-4xl mx-auto mb-8 px-4">
-        <div class="bg-gradient-to-r from-sakura-50 to-purple-50 dark:from-sakura-900/20 dark:to-purple-900/20 rounded-2xl p-4 md:p-6 border border-sakura-100 dark:border-sakura-800/30">
-          <div class="flex items-start gap-4">
-            <div class="text-4xl">{{ activeTabInfo?.icon }}</div>
-            <div class="flex-1">
-              <h3 class="font-bold text-gray-800 dark:text-gray-100 text-lg">
-                {{ isZh ? `笔记${activeTabInfo?.noteNum}：` : `Note ${activeTabInfo?.noteNum}: ` }}
-                {{ activeTabInfo?.label }}
-              </h3>
-              <p class="text-sm text-sakura-600 dark:text-sakura-400 mt-1">
-                🎯 {{ activeTabInfo?.goal }}
-              </p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                {{ activeTabInfo?.desc }}
-              </p>
-            </div>
-            <div class="hidden md:block text-right">
-              <span class="text-xs text-gray-400">{{ isZh ? '关联本站代码' : 'Related Code' }}</span>
-              <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {{ activeTabInfo?.relatedCode }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Note 1: HTML & CSS -->
       <div v-if="activeTab === 'note1-html-css'" class="space-y-12 animate-fade-in">
@@ -674,10 +618,12 @@ const NextStageGuide = {
 const props = defineProps<{
   lang: 'en' | 'zh'
   initialTab?: string
+  modelValue?: string // v-model support for external tab control
 }>()
 
 const emit = defineEmits<{
   (e: 'tab-change', tab: string): void
+  (e: 'update:modelValue', tab: string): void
 }>()
 
 const t = computed(() => I18N[props.lang as 'en' | 'zh'])
@@ -777,9 +723,17 @@ watch(
   { immediate: true }
 )
 
+// Sync with v-model
+watch(() => props.modelValue, (val) => {
+  if (val && tabs.value.some((tab: LabTab) => tab.id === val)) {
+    activeTab.value = val
+  }
+}, { immediate: true })
+
 watch(activeTab, (val: string) => {
   localStorage.setItem(labTabStorageKey.value, val)
   emit('tab-change', val)
+  emit('update:modelValue', val)
 })
 
 watch(() => props.lang, () => {
@@ -794,6 +748,12 @@ const standards = reactive({
   html: true,
   css: false,
   js: false
+})
+
+// Expose tabs for sidebar
+defineExpose({
+  tabs,
+  activeTab
 })
 </script>
 
