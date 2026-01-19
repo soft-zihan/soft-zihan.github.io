@@ -18,7 +18,8 @@ export const useAppStore = defineStore('app', () => {
     fontSize: 'normal' as 'small' | 'normal' | 'large',
     fontFamily: 'sans' as 'sans' | 'serif',
     petalSpeed: 'slow' as 'off' | 'slow' | 'fast',
-    bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide'
+    bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide',
+    petalLayer: 'back' as 'front' | 'back'  // 樱花在文章前还是后，默认在后
   })
   
   // UI State

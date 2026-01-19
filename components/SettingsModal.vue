@@ -55,6 +55,20 @@
           </div>
       </div>
 
+      <!-- Petal Layer -->
+      <div class="mb-6">
+          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.petal_layer || '🌸 樱花层级' }}</label>
+          <div class="flex gap-2">
+            <button @click="settings.petalLayer = 'back'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.petalLayer === 'back' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+              <span>📄</span> {{ t.petal_back || '文章前' }}
+            </button>
+            <button @click="settings.petalLayer = 'front'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.petalLayer === 'front' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
+              <span>🌸</span> {{ t.petal_front || '文章后' }}
+            </button>
+          </div>
+          <p class="text-[10px] text-gray-400 mt-1.5">{{ t.petal_layer_hint || '设置樱花显示在文章内容的前面还是后面' }}</p>
+      </div>
+
       <!-- GitHub Configuration -->
       <div class="mb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">GitHub {{ t.connection || '连接' }}</label>
@@ -215,6 +229,7 @@ defineProps<{
     fontFamily: string;
     petalSpeed: string;
     bannerMode?: string;
+    petalLayer?: string;
   };
 }>();
 

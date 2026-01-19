@@ -175,7 +175,7 @@
         </div>
       </div>
 
-      <!-- Latest View -->
+      <!-- Latest View (only for latest mode) -->
       <div v-if="viewMode === 'latest'" class="space-y-3 pb-20">
           <div v-if="filteredFlatFiles.length === 0" class="text-center text-gray-400 py-10 text-sm italic">
           {{ t.no_notes }}
@@ -191,8 +191,8 @@
         />
       </div>
 
-      <!-- Tree View -->
-      <div v-else class="animate-fade-in pb-20 pt-2">
+      <!-- Tree View (only for files mode, NOT lab mode) -->
+      <div v-else-if="viewMode === 'files'" class="animate-fade-in pb-20 pt-2">
         <FileTree 
           :nodes="filteredFileSystem" 
           :expanded-paths="expandedFolders"

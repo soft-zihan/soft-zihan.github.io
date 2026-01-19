@@ -13,7 +13,7 @@
       <div class="flex items-center gap-4">
         <!-- Left Panel Selector -->
         <div class="flex items-center gap-2">
-          <span class="text-xs text-gray-500">{{ isZh ? '左栏' : 'Left' }}:</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ isZh ? '左栏' : 'Left' }}:</span>
           <select 
             :value="leftPanel" 
             @change="emit('update:left-panel', ($event.target as HTMLSelectElement).value as any)"
@@ -27,7 +27,7 @@
         
         <!-- Right Panel Selector -->
         <div class="flex items-center gap-2">
-          <span class="text-xs text-gray-500">{{ isZh ? '右栏' : 'Right' }}:</span>
+          <span class="text-xs text-gray-500 dark:text-gray-400">{{ isZh ? '右栏' : 'Right' }}:</span>
           <select 
             :value="rightPanel" 
             @change="emit('update:right-panel', ($event.target as HTMLSelectElement).value as any)"

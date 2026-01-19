@@ -1,7 +1,8 @@
 <template>
   <!-- Container: pointer-events-none by default, never blocks page interaction -->
   <div 
-    class="fixed inset-0 pointer-events-none z-50 overflow-hidden"
+    class="fixed inset-0 pointer-events-none overflow-hidden"
+    :class="layer === 'front' ? 'z-50' : 'z-0'"
   >
     <!-- Vortex interaction layer: only visible when active -->
     <div 
@@ -42,13 +43,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { createPetal, updatePetals, vortexState, startLongPress, updateLongPress, endLongPress, longPressTimer, type Petal } from './petal/usePetals';
 
 const props = defineProps<{
   speed: 'off' | 'slow' | 'fast';
   isDark: boolean;
+  layer?: 'front' | 'back';
 }>();
+
+const layer = computed(() => props.layer || 'back');
 
 const isDark = ref(props.isDark);
 watch(() => props.isDark, (v) => isDark.value = v);

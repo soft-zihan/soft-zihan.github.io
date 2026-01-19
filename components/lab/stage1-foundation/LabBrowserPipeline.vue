@@ -24,27 +24,27 @@
         <div class="flex gap-2">
           <button
             class="flex-1 px-3 py-2 rounded-xl text-xs font-bold border transition"
-            :class="scriptMode === 'sync' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600'"
+            :class="scriptMode === 'sync' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'"
             @click="scriptMode = 'sync'"
           >
             {{ isZh ? '同步（阻塞）' : 'Sync (blocking)' }}
           </button>
           <button
             class="flex-1 px-3 py-2 rounded-xl text-xs font-bold border transition"
-            :class="scriptMode === 'defer' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600'"
+            :class="scriptMode === 'defer' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'"
             @click="scriptMode = 'defer'"
           >
             defer
           </button>
           <button
             class="flex-1 px-3 py-2 rounded-xl text-xs font-bold border transition"
-            :class="scriptMode === 'async' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600'"
+            :class="scriptMode === 'async' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'"
             @click="scriptMode = 'async'"
           >
             async
           </button>
         </div>
-        <p class="text-[11px] text-gray-500 mt-3 leading-relaxed">
+        <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-3 leading-relaxed">
           {{ scriptModeDesc }}
         </p>
       </div>

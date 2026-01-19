@@ -59,17 +59,9 @@
               <p class="text-sm text-sakura-600 dark:text-sakura-400 mt-1">
                 🎯 {{ activeTabInfo?.goal }}
               </p>
-              <p class="text-xs text-gray-500 mt-2">
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
                 {{ activeTabInfo?.desc }}
               </p>
-              <!-- Note Link -->
-              <a 
-                :href="activeTabInfo?.noteLink" 
-                class="inline-flex items-center gap-1.5 mt-3 text-xs bg-white dark:bg-gray-800 px-3 py-1.5 rounded-lg text-sakura-600 dark:text-sakura-400 hover:bg-sakura-50 dark:hover:bg-sakura-900/20 transition-colors border border-sakura-100 dark:border-sakura-800"
-              >
-                <span>📖</span>
-                {{ isZh ? '阅读配套笔记' : 'Read Companion Note' }}
-              </a>
             </div>
             <div class="hidden md:block text-right">
               <span class="text-xs text-gray-400">{{ isZh ? '关联本站代码' : 'Related Code' }}</span>
@@ -131,7 +123,7 @@
                       <div class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-orange-600 dark:text-orange-300 font-bold text-lg">H</div>
                       <div>
                         <div class="font-bold text-gray-800 dark:text-gray-200 text-sm">{{ t.lab_st_html }}</div>
-                        <div class="text-[10px] text-gray-500 leading-tight mt-0.5">{{ t.lab_st_info_html }}</div>
+                        <div class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{{ t.lab_st_info_html }}</div>
                       </div>
                       <div class="ml-auto">
                         <div class="w-4 h-4 rounded-full border border-gray-400" :class="{'bg-orange-500 border-orange-500': standards.html}"></div>
@@ -142,7 +134,7 @@
                       <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-lg">C</div>
                       <div>
                         <div class="font-bold text-gray-800 dark:text-gray-200 text-sm">{{ t.lab_st_css }}</div>
-                        <div class="text-[10px] text-gray-500 leading-tight mt-0.5">{{ t.lab_st_info_css }}</div>
+                        <div class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{{ t.lab_st_info_css }}</div>
                       </div>
                       <div class="ml-auto">
                         <div class="w-4 h-4 rounded-full border border-gray-400" :class="{'bg-blue-500 border-blue-500': standards.css}"></div>
@@ -153,7 +145,7 @@
                       <div class="w-10 h-10 rounded-full bg-yellow-100 dark:bg-yellow-900 flex items-center justify-center text-yellow-600 dark:text-yellow-300 font-bold text-lg">J</div>
                       <div>
                         <div class="font-bold text-gray-800 dark:text-gray-200 text-sm">{{ t.lab_st_js }}</div>
-                        <div class="text-[10px] text-gray-500 leading-tight mt-0.5">{{ t.lab_st_info_js }}</div>
+                        <div class="text-[10px] text-gray-500 dark:text-gray-400 leading-tight mt-0.5">{{ t.lab_st_info_js }}</div>
                       </div>
                       <div class="ml-auto">
                         <div class="w-4 h-4 rounded-full border border-gray-400" :class="{'bg-yellow-500 border-yellow-500': standards.js}"></div>
@@ -654,7 +646,7 @@ const NextStageGuide = {
         <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
           {{ isZh ? '🎉 完成本阶段后' : '🎉 After this stage' }}
         </h3>
-        <p class="text-gray-500 text-sm mb-6">{{ nextText }}</p>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mb-6">{{ nextText }}</p>
         <button 
           @click="$emit('next')"
           class="px-6 py-3 bg-sakura-500 hover:bg-sakura-600 text-white rounded-xl font-bold transition-all hover:scale-105"

@@ -24,7 +24,7 @@
           <span>{{ getFileIcon(selectedFile.name) }}</span>
           <span class="text-gray-300 font-mono text-xs">{{ selectedFile.name }}</span>
         </div>
-        <div v-else class="text-gray-500 text-sm italic">
+        <div v-else class="text-gray-500 dark:text-gray-400 text-sm italic">
           {{ isZh ? '选择文件查看源码' : 'Select a file to view source' }}
         </div>
         <div class="ml-auto flex items-center gap-2">
@@ -59,7 +59,7 @@
             <!-- Code -->
             <pre class="flex-1 py-4 pr-4 text-sm font-mono leading-6 overflow-visible"><code v-html="highlightedCode" class="hljs"></code></pre>
           </div>
-          <div v-else class="flex items-center justify-center h-full text-gray-500">
+          <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
             <div class="text-center">
               <div class="text-4xl mb-4">📂</div>
               <p>{{ isZh ? '从左侧选择文件开始阅读' : 'Select a file from the left to start reading' }}</p>

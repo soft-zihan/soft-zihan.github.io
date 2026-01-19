@@ -1,6 +1,6 @@
 <template>
   <!-- Dynamic Petals Container -->
-  <PetalBackground v-if="appStore.showParticles" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" />
+  <PetalBackground v-if="appStore.showParticles" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" :layer="appStore.userSettings.petalLayer" />
 
   <!-- Global Audio Player -->
   <GlobalAudio />
