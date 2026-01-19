@@ -73,15 +73,18 @@ function scanDirectory(basePath, relativePath, isSourceCode = false) {
     } else {
       // Filter for Notes or Source Code
       const isMd = item.endsWith('.md');
+      const isPdf = item.endsWith('.pdf');
       const isCode = isSourceCode && (item.endsWith('.vue') || item.endsWith('.ts') || item.endsWith('.js') || item.endsWith('.json') || item.endsWith('.html'));
 
-      if (isMd || isCode) {
-        // Read content once to compute stats and provide a lightweight snippet for search/metadata
+      if (isMd || isPdf || isCode) {
+        // Read content only for markdown to compute stats and provide snippet
         let content = '';
-        try {
-          content = fs.readFileSync(fullPath, 'utf-8');
-        } catch (err) {
-          console.warn(`⚠️  Failed to read file ${fullPath}:`, err);
+        if (isMd) {
+          try {
+            content = fs.readFileSync(fullPath, 'utf-8');
+          } catch (err) {
+            console.warn(`⚠️  Failed to read file ${fullPath}:`, err);
+          }
         }
 
         const lines = content ? content.split(/\r?\n/) : [];

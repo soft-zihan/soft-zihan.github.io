@@ -781,6 +781,8 @@ const updateUrl = (path: string | null) => {
   }
 };
 
+const isPdfFile = (file: FileNode) => file.path.toLowerCase().endsWith('.pdf')
+
 const openFile = async (file: FileNode) => {
   currentFile.value = file;
   currentFolder.value = null;
@@ -793,7 +795,7 @@ const openFile = async (file: FileNode) => {
 
   hideSelectionMenu();
 
-  if (!file.content) {
+  if (!file.content && !isPdfFile(file)) {
     contentLoading.value = true;
     file.content = await fetchFileContent(file);
     contentLoading.value = false;

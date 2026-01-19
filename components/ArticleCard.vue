@@ -10,9 +10,9 @@
     <!-- Header: Title & Icon -->
     <div class="flex justify-between items-start relative z-10 mb-3">
       <div class="flex items-center gap-2 flex-1 min-w-0">
-        <span class="text-xl shrink-0">{{ file.isSource ? '💻' : '📝' }}</span>
+        <span class="text-xl shrink-0">{{ getFileIcon(file) }}</span>
         <span class="font-bold text-gray-700 dark:text-gray-200 group-hover:text-sakura-600 dark:group-hover:text-sakura-400 truncate text-sm">
-          {{ file.name.replace('.md', '') }}
+          {{ getDisplayName(file.name) }}
         </span>
       </div>
     </div>
@@ -105,5 +105,19 @@ const formatNumber = (num: number): string => {
     return (num / 1000).toFixed(1) + 'k'
   }
   return num.toString()
+}
+
+const isPdfFile = (file: FileNode) => file.path.toLowerCase().endsWith('.pdf')
+
+const getFileIcon = (file: FileNode) => {
+  if (file.isSource) return '💻'
+  if (isPdfFile(file)) return '📕'
+  return '📝'
+}
+
+const getDisplayName = (name: string) => {
+  if (name.toLowerCase().endsWith('.md')) return name.slice(0, -3)
+  if (name.toLowerCase().endsWith('.pdf')) return name.slice(0, -4)
+  return name
 }
 </script>

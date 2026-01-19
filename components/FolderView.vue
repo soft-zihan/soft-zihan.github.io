@@ -18,16 +18,16 @@
        >
          <div class="absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br from-sakura-50 to-transparent dark:from-sakura-900/30 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
          <div class="flex items-start justify-between mb-4 relative z-10">
-           <span class="text-5xl group-hover:scale-110 transition-transform drop-shadow-sm">{{ child.type === 'directory' ? '📂' : (child.isSource ? '💻' : '📝') }}</span>
+           <span class="text-5xl group-hover:scale-110 transition-transform drop-shadow-sm">{{ getNodeIcon(child) }}</span>
            <div class="flex flex-col items-end gap-1">
              <span v-if="child.type === 'file'" class="text-[10px] text-sakura-500 dark:text-sakura-400 bg-sakura-50 dark:bg-gray-900 px-2 py-1 rounded-full font-bold">{{ formatDate(child.lastModified) }}</span>
              <span v-if="child.type === 'directory'" class="text-[10px] text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-900 px-2 py-0.5 rounded-full">{{ lang === 'zh' ? '双击打开' : 'Double-click' }}</span>
            </div>
          </div>
          <div class="mt-auto relative z-10">
-           <h3 class="font-bold text-gray-700 dark:text-gray-200 truncate text-lg group-hover:text-sakura-600 dark:group-hover:text-sakura-400 transition-colors" :title="child.name">{{ child.name.replace('.md', '') }}</h3>
+           <h3 class="font-bold text-gray-700 dark:text-gray-200 truncate text-lg group-hover:text-sakura-600 dark:group-hover:text-sakura-400 transition-colors" :title="child.name">{{ getDisplayName(child.name) }}</h3>
            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 truncate font-medium">
-             {{ child.type === 'directory' ? `${child.children?.length || 0} items` : (child.isSource ? 'Source Code' : 'Markdown Note') }}
+             {{ child.type === 'directory' ? `${child.children?.length || 0} items` : getFileLabel(child) }}
            </p>
          </div>
        </div>
@@ -91,4 +91,25 @@ const handleDoubleClick = (child: FileNode) => {
 };
 
 const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
+
+const isPdfFile = (node: FileNode) => node.path.toLowerCase().endsWith('.pdf')
+
+const getNodeIcon = (node: FileNode) => {
+  if (node.type === NodeType.DIRECTORY) return '📂'
+  if (node.isSource) return '💻'
+  if (isPdfFile(node)) return '📕'
+  return '📝'
+}
+
+const getDisplayName = (name: string) => {
+  if (name.toLowerCase().endsWith('.md')) return name.slice(0, -3)
+  if (name.toLowerCase().endsWith('.pdf')) return name.slice(0, -4)
+  return name
+}
+
+const getFileLabel = (node: FileNode) => {
+  if (node.isSource) return 'Source Code'
+  if (isPdfFile(node)) return 'PDF'
+  return 'Markdown Note'
+}
 </script>

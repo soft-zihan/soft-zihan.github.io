@@ -31,7 +31,7 @@ export const stripHashQuery = (raw: string): string => {
 /**
  * 支持的内部链接文件扩展名
  */
-const SUPPORTED_EXTENSIONS = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss']
+const SUPPORTED_EXTENSIONS = ['.md', '.pdf', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss']
 
 /**
  * 检查是否为支持的内部链接
@@ -55,7 +55,13 @@ export const isSupportedInternalLink = (raw?: string | null): boolean => {
  */
 export const isCodeFile = (path: string): boolean => {
   const lower = path.toLowerCase()
+  if (lower.endsWith('.pdf')) return false
   return !lower.endsWith('.md') && SUPPORTED_EXTENSIONS.some(ext => lower.endsWith(ext))
+}
+
+export const isPdfFile = (path: string): boolean => {
+  const lower = path.toLowerCase()
+  return lower.endsWith('.pdf')
 }
 
 /**
@@ -128,7 +134,19 @@ export function useContentClick(
         e.stopPropagation()
         
         const targetPath = resolveTargetPath(href!, currentFile.value?.path)
+        const isPdf = isPdfFile(targetPath)
         const isCode = isCodeFile(targetPath)
+
+        if (isPdf) {
+          const node = findNodeByPath(fileSystem.value, targetPath)
+          if (node && node.type === NodeType.FILE) {
+            await openFile(node)
+          } else if (href) {
+            window.open(href, '_blank')
+          }
+          hideSelectionMenu()
+          return
+        }
 
         // 对于代码文件，直接打开代码弹窗
         if (isCode) {

@@ -50,7 +50,7 @@
         class="flex items-center gap-2 px-2 py-1.5 ml-5 rounded-lg cursor-pointer transition-all duration-200 text-sm group"
         :class="currentPath === node.path ? 'bg-sakura-400 text-white shadow-md' : 'hover:bg-sakura-50 text-gray-600'"
       >
-        <span class="text-lg group-hover:scale-110 transition-transform">{{ currentPath === node.path ? '🌸' : '📄' }}</span>
+        <span class="text-lg group-hover:scale-110 transition-transform">{{ currentPath === node.path ? '🌸' : getFileIcon(node) }}</span>
         <span class="truncate">{{ node.name }}</span>
       </div>
     </li>
@@ -73,4 +73,12 @@ const props = defineProps<{
 const emit = defineEmits(['toggle-folder', 'select-file', 'select-folder']);
 
 const isOpen = (path: string) => props.expandedPaths.includes(path);
+
+const isPdfFile = (node: FileNode) => node.path.toLowerCase().endsWith('.pdf')
+
+const getFileIcon = (node: FileNode) => {
+  if (node.isSource) return '💻'
+  if (isPdfFile(node)) return '📕'
+  return '📄'
+}
 </script>

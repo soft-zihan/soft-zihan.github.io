@@ -36,7 +36,7 @@
       <div class="flex gap-2 shrink-0 items-center">
         <!-- File Actions (before search) -->
         <template v-if="currentFile">
-          <button v-if="!currentFile.isSource" @click="$emit('update:isRawMode', !isRawMode)" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="isRawMode ? t.view_render : t.view_source">
+          <button v-if="!currentFile.isSource && !isPdf" @click="$emit('update:isRawMode', !isRawMode)" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="isRawMode ? t.view_render : t.view_source">
             <span class="text-lg">{{ isRawMode ? '👁️' : '🖊️' }}</span>
           </button>
           <button @click="$emit('copy-link')" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="t.copy_link">
@@ -149,7 +149,7 @@
         <!-- Left: File Actions -->
         <div class="flex items-center gap-1">
           <template v-if="currentFile">
-            <button v-if="!currentFile.isSource" @click="$emit('update:isRawMode', !isRawMode)" class="p-1.5 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">
+            <button v-if="!currentFile.isSource && !isPdf" @click="$emit('update:isRawMode', !isRawMode)" class="p-1.5 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">
               {{ isRawMode ? '👁️' : '🖊️' }}
             </button>
             <button @click="$emit('copy-link')" class="p-1.5 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">🔗</button>
@@ -218,6 +218,8 @@ const isMobile = ref(false);
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768;
 };
+
+const isPdf = computed(() => !!props.currentFile?.path && props.currentFile.path.toLowerCase().endsWith('.pdf'))
 
 onMounted(() => {
   checkMobile();

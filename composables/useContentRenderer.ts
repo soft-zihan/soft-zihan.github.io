@@ -146,6 +146,11 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
    */
   const updateRenderedContent = async () => {
     if (!currentFile.value?.content) {
+      if (currentFile.value?.path && isPdfPath(currentFile.value.path)) {
+        const href = resolveContentPath(`notes/${currentFile.value.path}`)
+        renderedHtml.value = renderPdfEmbed(href, currentFile.value.name, currentFile.value.name)
+        return
+      }
       renderedHtml.value = ''
       return
     }
