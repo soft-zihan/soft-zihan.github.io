@@ -1,6 +1,6 @@
 <template>
-  <!-- Dynamic Petals Container -->
-  <PetalBackground v-if="appStore.showParticles" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" :layer="appStore.userSettings.petalLayer" />
+  <!-- Dynamic Petals Container (Front layer - outside main for highest z-index) -->
+  <PetalBackground v-if="appStore.showParticles && appStore.userSettings.petalLayer === 'front'" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" layer="front" />
 
   <!-- Global Audio Player -->
   <GlobalAudio />
@@ -62,6 +62,9 @@
     <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
       <!-- Wallpaper Layer (behind decorations, excluding sidebar) -->
       <WallpaperLayer :is-dark="appStore.isDark" :light-url="wallpaperLightUrl" :dark-url="wallpaperDarkUrl" :bannerMode="appStore.userSettings.bannerMode" />
+
+      <!-- Dynamic Petals Container (Back layer - inside main for proper z-index with isolate) -->
+      <PetalBackground v-if="appStore.showParticles && appStore.userSettings.petalLayer === 'back'" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" layer="back" />
 
       <!-- Decorative Background Elements -->
       <div class="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
