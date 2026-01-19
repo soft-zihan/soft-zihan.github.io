@@ -1,4 +1,3 @@
-
 <template>
   <!-- Dynamic Petals Container -->
   <PetalBackground v-if="appStore.showParticles" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" />
@@ -104,27 +103,34 @@
           @mousedown.prevent
         >
           <!-- Highlight Options -->
-          <button @click="applyFormat('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
+          <button @click="applyFormatHandler('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
             <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
+          <button @click="applyFormatHandler('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
             <span class="w-4 h-4 bg-green-400 rounded-full inline-block ring-2 ring-green-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
+          <button @click="applyFormatHandler('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
             <span class="w-4 h-4 bg-blue-400 rounded-full inline-block ring-2 ring-blue-300/50"></span>
           </button>
-          <button @click="applyFormat('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
+          <button @click="applyFormatHandler('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
             <span class="w-4 h-4 bg-pink-400 rounded-full inline-block ring-2 ring-pink-300/50"></span>
           </button>
           
           <div class="w-px bg-white/20 mx-0.5"></div>
           
           <!-- Underline Styles -->
-          <button @click="applyFormat('underline-wavy')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
+          <button @click="applyFormatHandler('underline-wavy')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
              <span class="underline decoration-wavy decoration-sakura-400 underline-offset-2">〰</span>
           </button>
-          <button @click="applyFormat('underline-double')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Double Underline">
+          <button @click="applyFormatHandler('underline-double')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Double Underline">
              <span class="underline decoration-double decoration-blue-400 underline-offset-2">≡</span>
+          </button>
+
+          <div class="w-px bg-white/20 mx-0.5"></div>
+
+          <!-- Block Highlight -->
+          <button @click="applyFormatHandler('highlight-block')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Block Highlight">
+            <span class="px-2 py-0.5 border border-yellow-300 rounded bg-yellow-200/40">▭</span>
           </button>
         </div>
 
@@ -172,8 +178,23 @@
 
              <!-- Header with Like/Favorite buttons -->
              <div class="mb-8 border-b border-gray-100 dark:border-gray-700 pb-6">
-                 <div class="flex justify-between items-start">
-                   <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight flex-1">{{ currentFile.name.replace('.md', '') }}</h1>
+                 <div class="flex justify-between items-start gap-4">
+                   <div class="flex flex-wrap items-center gap-3 flex-1">
+                     <h1 class="text-3xl md:text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight leading-tight">{{ currentFile.name.replace('.md', '') }}</h1>
+                     <span v-if="currentAuthorName || currentAuthorUrl" class="text-sm text-gray-400 flex items-center gap-1">
+                       <span>👤</span>
+                       <a
+                         v-if="currentAuthorUrl"
+                         :href="currentAuthorUrl"
+                         target="_blank"
+                         rel="noopener"
+                         class="text-sakura-600 dark:text-sakura-300 hover:underline"
+                       >
+                         {{ currentAuthorName || currentAuthorUrl }}
+                       </a>
+                       <span v-else>{{ currentAuthorName }}</span>
+                     </span>
+                   </div>
                    <span v-if="currentFile.isSource" class="bg-gray-100 dark:bg-gray-700 text-gray-500 px-3 py-1 rounded text-xs font-mono">Read Only</span>
                  </div>
                  <!-- Article Actions -->
@@ -203,6 +224,18 @@
                    <span class="text-xs text-gray-400 flex items-center gap-1">
                      🕐 {{ t.updated }}: {{ formatDate(currentFile.lastModified) }}
                    </span>
+                   <span v-if="currentTags.length" class="text-xs text-gray-400 flex items-center gap-1">
+                     🏷️
+                     <span class="flex flex-wrap gap-1.5">
+                       <span
+                         v-for="tag in currentTags"
+                         :key="tag"
+                         class="text-[10px] px-2 py-0.5 rounded-full bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300"
+                       >
+                         {{ tag }}
+                       </span>
+                     </span>
+                   </span>
                  </div>
              </div>
 
@@ -212,14 +245,86 @@
               id="markdown-viewer"
               v-html="renderedHtml" 
               class="markdown-body dark:text-gray-300 selection:bg-sakura-200 dark:selection:bg-sakura-900"
-              @click="handleContentClick"
-              @mouseup="handleSelection"
-              @contextmenu="handleSelectionContextMenu"
+              @click="handleContentClickEvent"
+              @mousedown="selectionMenuComposable.lockSelectionMenu()"
+              @mouseup="handleSelectionEvent"
+              @touchend="handleSelectionEvent"
+              @contextmenu="handleSelectionContextMenuEvent"
             ></div>
 
-            <!-- Source Code / Raw Mode -->
+            <!-- Source Code / Raw Mode (Editable) -->
             <div v-else class="relative group">
-               <pre class="whitespace-pre-wrap font-mono text-sm bg-[#1e1e1e] text-blue-200 p-6 rounded-xl border border-gray-700 overflow-x-auto select-text shadow-inner"><code :class="currentFile.name.endsWith('.vue') ? 'language-html' : ''">{{ currentFile.content }}</code></pre>
+               <!-- Edit Mode Toolbar -->
+               <div class="flex items-center justify-between mb-3 bg-[#252526] px-4 py-2 rounded-t-xl border border-gray-700 border-b-0">
+                 <div class="flex items-center gap-2">
+                   <span class="text-xs text-gray-400 font-mono">{{ isRawMode ? 'Markdown' : 'Source' }}</span>
+                   <span v-if="rawEditor.isEditingRaw.value" class="text-xs text-yellow-400 px-2 py-0.5 bg-yellow-900/30 rounded">{{ lang === 'zh' ? '编辑中' : 'Editing' }}</span>
+                 </div>
+                 <div class="flex items-center gap-2">
+                   <button
+                     v-if="!rawEditor.isEditingRaw.value && !currentFile.isSource"
+                     @click="rawEditor.startEditingRaw()"
+                     class="text-xs px-3 py-1.5 bg-sakura-500 hover:bg-sakura-600 text-white rounded transition-colors"
+                   >
+                     {{ lang === 'zh' ? '编辑' : 'Edit' }}
+                   </button>
+                   <template v-if="rawEditor.isEditingRaw.value">
+                     <button
+                       @click="rawEditor.cancelEditingRaw()"
+                       class="text-xs px-3 py-1.5 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
+                       :disabled="rawEditor.isSavingRaw.value"
+                     >
+                       {{ lang === 'zh' ? '取消' : 'Cancel' }}
+                     </button>
+                     <button
+                       @click="rawEditor.saveRawContent()"
+                       class="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded transition-colors flex items-center gap-1"
+                       :disabled="rawEditor.isSavingRaw.value"
+                     >
+                       <svg v-if="rawEditor.isSavingRaw.value" class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                       </svg>
+                       {{ rawEditor.isSavingRaw.value ? (lang === 'zh' ? '提交中...' : 'Publishing...') : (lang === 'zh' ? '提交修改' : 'Submit Changes') }}
+                     </button>
+                   </template>
+                 </div>
+               </div>
+               <!-- Editable Textarea -->
+               <textarea
+                 v-if="rawEditor.isEditingRaw.value"
+                 v-model="rawEditor.editedRawContent.value"
+                 class="w-full h-[60vh] font-mono text-sm bg-[#1e1e1e] text-blue-200 p-6 rounded-b-xl border border-gray-700 resize-none outline-none focus:ring-2 focus:ring-sakura-500/50"
+                 spellcheck="false"
+               ></textarea>
+               <!-- Read-only Code View -->
+               <pre v-else class="whitespace-pre-wrap font-mono text-sm bg-[#1e1e1e] text-blue-200 p-6 rounded-b-xl border border-gray-700 overflow-x-auto select-text shadow-inner"><code :class="currentFile.name.endsWith('.vue') ? 'language-html' : ''">{{ currentFile.content }}</code></pre>
+            </div>
+
+            <!-- Contributors Section -->
+            <div v-if="currentContributors.length > 0" class="mt-8 pt-6 border-t border-sakura-100 dark:border-gray-700">
+              <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
+                <span>👥</span> {{ lang === 'zh' ? '贡献者' : 'Contributors' }}
+              </h3>
+              <div class="flex flex-wrap gap-2">
+                <template v-for="contributor in currentContributors" :key="contributor.name">
+                  <a
+                    v-if="contributor.url"
+                    :href="contributor.url"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-sm px-3 py-1 rounded-full bg-sakura-50 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300 hover:bg-sakura-100 dark:hover:bg-sakura-900/50 transition-colors"
+                  >
+                    {{ contributor.name }}
+                  </a>
+                  <span
+                    v-else
+                    class="text-sm px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                  >
+                    {{ contributor.name }}
+                  </span>
+                </template>
+              </div>
             </div>
             
             <div class="mt-12 pt-8 border-t border-sakura-100 dark:border-gray-700 flex justify-center text-xs text-sakura-300 dark:text-gray-500">
@@ -299,17 +404,17 @@
     <div 
       v-if="lightboxImage" 
       class="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex items-center justify-center cursor-zoom-out animate-fade-in p-4"
-      @click="lightboxImage = null"
+      @click="lightbox.closeLightbox()"
     >
        <img :src="lightboxImage" class="max-w-full max-h-full rounded-lg shadow-2xl scale-100 object-contain transition-transform duration-300" alt="Fullscreen preview" />
        <div class="absolute bottom-10 text-white/50 text-sm bg-black/50 px-4 py-2 rounded-full">Click anywhere to close</div>
     </div>
 
-    <!-- Source Code Modal (New) -->
+    <!-- Source Code Modal (Enhanced with Syntax Highlighting) -->
     <div 
-      v-if="showCodeModal" 
+      v-if="codeModal.showCodeModal.value" 
       class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-center justify-center animate-fade-in p-4 md:p-10"
-      @click.self="showCodeModal = false"
+      @click.self="codeModal.closeCodeModal()"
     >
        <div class="bg-[#1e1e1e] w-full max-w-5xl h-[85vh] rounded-2xl shadow-2xl border border-gray-700 flex flex-col overflow-hidden relative transform transition-all duration-300 scale-100">
           <!-- Modal Header -->
@@ -317,18 +422,18 @@
              <div class="flex items-center gap-2">
                 <span class="text-2xl">📝</span>
                 <div>
-                   <h3 class="text-sm font-bold text-gray-200 font-mono">{{ codeModalTitle }}</h3>
-                   <span class="text-[10px] text-gray-500">Read Only Preview</span>
+                   <h3 class="text-sm font-bold text-gray-200 font-mono">{{ codeModal.codeModalTitle.value }}</h3>
+                   <span class="text-[10px] text-gray-500">{{ codeModal.codeModalPath.value || 'Read Only Preview' }}</span>
                 </div>
              </div>
              <div class="flex gap-2">
-               <button @click="copyCodeContent" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded transition-colors border border-gray-600">Copy</button>
-               <button @click="showCodeModal = false" class="text-gray-400 hover:text-white transition-colors bg-gray-700/50 hover:bg-red-500/50 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
+               <button @click="codeModal.copyCodeContent(showToast, t.toast_copied)" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1.5 rounded transition-colors border border-gray-600">Copy</button>
+               <button @click="codeModal.closeCodeModal()" class="text-gray-400 hover:text-white transition-colors bg-gray-700/50 hover:bg-red-500/50 rounded-full w-8 h-8 flex items-center justify-center">✕</button>
              </div>
           </div>
-          <!-- Modal Content -->
+          <!-- Modal Content with Syntax Highlighting -->
           <div class="flex-1 overflow-auto custom-scrollbar p-0 bg-[#1e1e1e]">
-             <pre class="p-6 text-sm font-mono text-blue-100 leading-relaxed whitespace-pre-wrap"><code>{{ codeModalContent }}</code></pre>
+             <pre class="p-6 text-sm font-mono leading-relaxed whitespace-pre-wrap hljs"><code v-html="codeModal.highlightedCodeContent.value"></code></pre>
           </div>
        </div>
     </div>
@@ -381,9 +486,9 @@ import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { I18N } from './constants';
 import { NodeType } from './types';
 import type { FileNode, BreadcrumbItem, TocItem } from './types';
-import LabDashboard from './components/LabDashboard.vue';
-import LabEventHandling from './components/LabEventHandling.vue';
-import LabSlot from './components/LabSlot.vue';
+
+// Components
+import LabDashboard from './components/lab/LabDashboard.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import PetalBackground from './components/PetalBackground.vue';
 import WallpaperLayer from './components/WallpaperLayer.vue';
@@ -395,102 +500,54 @@ import MusicPlayer from './components/MusicPlayer.vue';
 import SearchModal from './components/SearchModal.vue';
 import WriteEditor from './components/WriteEditor.vue';
 import GiscusComments from './components/GiscusComments.vue';
-import ArticleCard from './components/ArticleCard.vue';
-import { marked } from 'marked';
 
 // Pinia Stores
 import { useAppStore } from './stores/appStore';
 import { useArticleStore } from './stores/articleStore';
 import { useMusicStore } from './stores/musicStore';
-import { useSearch } from './composables/useSearch';
 
+// Composables
+import { useSearch } from './composables/useSearch';
+import { useArticleMeta } from './composables/useArticleMeta';
+import { useCodeModal } from './composables/useCodeModal';
+import { useContentRenderer } from './composables/useContentRenderer';
+import { useRawEditor } from './composables/useRawEditor';
+import { useLightbox } from './composables/useLightbox';
+import { useSelectionMenu } from './composables/useSelectionMenu';
+import { useContentClick, useFileVisibility, isSupportedInternalLink } from './composables/useContentClick';
+
+// =====================
+// Stores
+// =====================
 const appStore = useAppStore();
 const articleStore = useArticleStore();
 const musicStore = useMusicStore();
-const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, rebuildSearchIndex, isLoadingContent, setFetchFunction, updateLanguage } = useSearch();
 
-// i18n with Persistence (from store)
+// =====================
+// Search
+// =====================
+const { initSearchIndex, search, highlightMatches, showSearchModal: searchModalOpen, isLoadingContent, setFetchFunction, updateLanguage } = useSearch();
+
+// =====================
+// i18n
+// =====================
 const lang = computed({
   get: () => appStore.lang,
   set: (val) => appStore.setLang(val)
 });
 const t = computed(() => I18N[lang.value]);
 
-const toggleLang = async () => {
-  const oldLang = lang.value;
-  const newLang = oldLang === 'en' ? 'zh' : 'en';
-  appStore.setLang(newLang);
-  
-  // Update search language filter
-  updateLanguage(newLang);
-  
-  // Preserve current state during language switch
-  // 1. If in lab mode, stay in lab mode (LabDashboard is language-aware)
-  if (viewMode.value === 'lab' && currentTool.value === 'dashboard') {
-    // Lab dashboard will automatically update with new lang prop
-    return;
-  }
-  
-  // 2. If viewing a folder, stay in folder view (folders exist in both lang roots)
-  if (currentFolder.value && !currentFile.value) {
-    // Keep folder view, UI will update via reactive lang/t
-    return;
-  }
-  
-  // 3. If viewing a file (note), we need to refresh because note files differ between languages
-  if (currentFile.value) {
-    // Try to find equivalent file in new language root
-    const oldPath = currentFile.value.path;
-    const pathParts = oldPath.split('/');
-    
-    // Replace language root (first segment) with new language
-    if (pathParts[0] === oldLang) {
-      pathParts[0] = newLang;
-      const newPath = pathParts.join('/');
-      const newNode = findNodeByPath(fileSystem.value, newPath);
-      
-      if (newNode && newNode.type === NodeType.FILE) {
-        // Found equivalent file in new language
-        await openFile(newNode);
-        return;
-      }
-    }
-    
-    // If no equivalent file found, go home
-    resetToHome();
-    return;
-  }
-  
-  // 4. If on home screen, stay on home (already reactive via lang/t)
-  // No action needed, UI will update automatically
-};
-
-// Theme (using store)
-const toggleTheme = (val: boolean) => {
-  appStore.setDark(val);
-  if (val) document.documentElement.classList.add('dark');
-  else document.documentElement.classList.remove('dark');
-};
-
-// Handle petal speed change
-const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
-  appStore.userSettings.petalSpeed = speed;
-  // When speed is 'off', hide particles; otherwise show them
-  appStore.showParticles = speed !== 'off';
-};
-
-// Data
+// =====================
+// Core State
+// =====================
 const fileSystem = ref<FileNode[]>([]);
 const currentFile = ref<FileNode | null>(null);
-const currentFolder = ref<FileNode | null>(null); 
+const currentFolder = ref<FileNode | null>(null);
 const viewMode = ref<'latest' | 'files' | 'lab'>('latest');
 const expandedFolders = ref<string[]>([]);
-const toc = ref<TocItem[]>([]);
-const activeHeaderId = ref<string>('');
 const loading = ref(true);
 const contentLoading = ref(false);
 const currentTool = ref<'dashboard' | 'event-handling' | 'slot' | null>(null);
-const lightboxImage = ref<string | null>(null);
 const isRawMode = ref(false);
 
 // Modal States
@@ -504,33 +561,42 @@ const headerHidden = ref(false);
 const lastScrollY = ref(0);
 const isMobile = ref(false);
 
-// Source Code Modal State
-const showCodeModal = ref(false);
-const codeModalContent = ref('');
-const codeModalTitle = ref('');
-
-const selectionMenu = ref({ show: false, x: 0, y: 0 });
-const lastSelectionRange = ref<Range | null>(null);
-
-// Wallpaper URLs (user to place files in project; hardcoded paths)
+// Wallpaper URLs
 const wallpaperLightUrl = '/image/wallpaper-light.jpg';
 const wallpaperDarkUrl = '/image/wallpaper-dark.jpg';
 
-// Keyboard Shortcuts (Cmd+K for search)
-const handleKeydown = (e: KeyboardEvent) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault();
-    showSearch.value = true;
-  }
-  if (e.key === 'Escape') {
-    showSearch.value = false;
-    musicStore.showMusicPlayer = false;
-    showWriteEditor.value = false;
-    sidebarOpen.value = false;
-  }
-};
+// =====================
+// Composables 初始化
+// =====================
+const showToast = (msg: string) => appStore.showToast(msg);
 
+// 文章元数据
+const { currentMeta, currentTags, currentAuthorName, currentAuthorUrl, currentContributors } = useArticleMeta(currentFile);
+
+// 代码弹窗
+const codeModal = useCodeModal();
+
+// 内容渲染
+const contentRenderer = useContentRenderer(currentFile, isRawMode);
+const { renderedHtml, toc, activeHeaderId, activeIndicatorTop, setupMarkedRenderer, updateRenderedContent, generateToc, scrollToHeader } = contentRenderer;
+
+// Raw 编辑器
+const rawEditor = useRawEditor(currentFile, isRawMode, updateRenderedContent, showToast, lang);
+
+// 图片灯箱
+const lightbox = useLightbox();
+const { lightboxImage, handleImageClick } = lightbox;
+
+// 选择菜单
+const selectionMenuComposable = useSelectionMenu(showToast);
+const { selectionMenu, handleSelection, handleSelectionContextMenu, handleSelectionChange, applyFormat, hideSelectionMenu } = selectionMenuComposable;
+
+// 文件可见性
+const { isFileVisible, collectAllTags } = useFileVisibility(articleStore);
+
+// =====================
 // Computed
+// =====================
 const fontSizeClass = computed(() => {
   switch(appStore.userSettings.fontSize) {
     case 'small': return 'text-sm lg:text-base leading-relaxed';
@@ -560,43 +626,24 @@ const currentLineCount = computed(() => {
 
 const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '');
 
-// Resource Categories Data (Reactive to lang change)
-const resourceCategories = computed(() => [
-  {
-    title: t.value.res_cat_platform,
-    items: [
-       { name: 'Vue Mastery', url: 'https://vuemastery.com', icon: '🎮', desc: lang.value === 'zh' ? '官方推荐的游戏化教程' : 'Gamified learning path' },
-       { name: 'Scrimba', url: 'https://scrimba.com/learn/vue', icon: '📺', desc: lang.value === 'zh' ? '交互式视频编码' : 'Interactive video tutorials' },
-       { name: 'Frontend Mentor', url: 'https://frontendmentor.io', icon: '🎨', desc: lang.value === 'zh' ? '真实设计稿还原挑战' : 'Real-world design challenges' },
-    ]
-  },
-  {
-    title: t.value.res_cat_frontend_games,
-    items: [
-       { name: 'Flexbox Froggy', url: 'https://flexboxfroggy.com', icon: '🐸', desc: lang.value === 'zh' ? '青蛙跳荷叶学布局' : 'Learn Flexbox with frogs' },
-       { name: 'Grid Garden', url: 'https://cssgridgarden.com', icon: '🥕', desc: lang.value === 'zh' ? '种胡萝卜学网格' : 'Learn CSS Grid via gardening' },
-       { name: 'CSS Diner', url: 'https://flukeout.github.io', icon: '🍽️', desc: lang.value === 'zh' ? '选择器餐厅' : 'Master CSS selectors' },
-       { name: 'JavaScript 30', url: 'https://javascript30.com', icon: '🎹', desc: lang.value === 'zh' ? '30天原生JS挑战' : '30 Day Vanilla JS Challenge' },
-    ]
-  },
-  {
-     title: t.value.res_cat_vue_projects,
-     items: [
-       { name: 'Vue Tutorial', url: 'https://vuejs.org/tutorial/', icon: '🟩', desc: lang.value === 'zh' ? 'Vue 官方交互教程' : 'Official Interactive Tutorial' },
-       { name: 'Vue Snake', url: 'https://github.com/search?q=vue+snake+game', icon: '🐍', desc: lang.value === 'zh' ? '贪吃蛇源码搜索' : 'Search Snake Game code' },
-       { name: 'Vue Memory', url: 'https://codepen.io/search/pens?q=vue+memory+game', icon: '🃏', desc: lang.value === 'zh' ? '记忆卡片游戏' : 'Memory Card Game' },
-     ]
-  }
-]);
-
 // Root Directory Logic based on Language
 const currentLangRoot = computed(() => {
-   const root = fileSystem.value.find(node => node.name === lang.value);
-   return root ? root.children : [];
+  const root = fileSystem.value.find(node => node.name === lang.value);
+  return root ? root.children : [];
 });
 
 const filteredFileSystem = computed(() => {
-  return currentLangRoot.value || [];
+  const filterTree = (nodes: FileNode[]): FileNode[] => {
+    return nodes.map((node) => {
+      if (node.type === NodeType.FILE) {
+        return isFileVisible(node) ? node : null;
+      }
+      const children = node.children ? filterTree(node.children) : [];
+      return { ...node, children } as FileNode;
+    }).filter(Boolean) as FileNode[];
+  };
+
+  return filterTree(currentLangRoot.value || []);
 });
 
 const filteredFlatFiles = computed(() => {
@@ -608,100 +655,35 @@ const filteredFlatFiles = computed(() => {
     }
     return files;
   };
-  
-  let files = flatten(filteredFileSystem.value);
-  
-  // 应用收藏筛选
-  if (articleStore.showFavoritesOnly) {
-    files = files.filter(f => articleStore.isFavorite(f.path));
-  }
-  
-  // 应用 tag 筛选
-  if (articleStore.selectedTags.length < articleStore.availableTags.length) {
-    files = files.filter(f => {
-      const fileTags = extractTagsFromContent(f.content || '');
-      if (fileTags.length === 0) {
-        // 无 tag 的文章，检查 notag 是否被选中
-        return articleStore.isTagSelected('notag');
-      }
-      // 有 tag 的文章，检查是否有任一 tag 被选中
-      return fileTags.some(tag => articleStore.isTagSelected(tag));
-    });
-  }
-  
+
+  let files = flatten(currentLangRoot.value || []);
+  files = files.filter(isFileVisible);
+
   return files.sort((a, b) => new Date(b.lastModified || 0).getTime() - new Date(a.lastModified || 0).getTime());
 });
-
-// 从文章内容中提取 tags
-const extractTagsFromContent = (content: string): string[] => {
-  if (!content) return [];
-  
-  // 尝试从 frontmatter 中提取 tags
-  const fmMatch = content.match(/^---\s*\n([\s\S]*?)\n---/);
-  if (fmMatch) {
-    const frontmatter = fmMatch[1];
-    // 匹配 tags: [tag1, tag2] 或 tags: tag1
-    const tagsMatch = frontmatter.match(/tags:\s*\[([^\]]*)\]/);
-    if (tagsMatch) {
-      return tagsMatch[1].split(',').map(t => t.trim().replace(/['"]/g, '')).filter(t => t);
-    }
-    const singleTagMatch = frontmatter.match(/tags:\s*(\S+)/);
-    if (singleTagMatch) {
-      return [singleTagMatch[1].trim()];
-    }
-    // 也尝试提取 author 作为 tag
-    const authorMatch = frontmatter.match(/author:\s*(\S+)/);
-    if (authorMatch) {
-      return [authorMatch[1].trim()];
-    }
-  }
-  return [];
-};
-
-// 从所有文章中收集 tags
-const collectAllTags = () => {
-  const allFiles = filteredFileSystem.value;
-  const flatten = (nodes: FileNode[]): FileNode[] => {
-    let files: FileNode[] = [];
-    for (const node of nodes) {
-      if (node.type === NodeType.FILE) files.push(node);
-      else if (node.children) files = files.concat(flatten(node.children));
-    }
-    return files;
-  };
-  
-  const tags = new Set<string>();
-  for (const file of flatten(allFiles)) {
-    const fileTags = extractTagsFromContent(file.content || '');
-    fileTags.forEach(t => tags.add(t));
-  }
-  
-  articleStore.setAvailableTags([...tags]);
-};
 
 const labFolder = computed(() => {
   const targetName = lang.value === 'zh' ? 'VUE学习笔记' : 'VUE Learning';
   const findFolderByName = (nodes: FileNode[]): FileNode | null => {
-      for (const node of nodes) {
-          if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
-              return node;
-          }
-          if (node.children) {
-              const found = findFolderByName(node.children);
-              if (found) return found;
-          }
+    for (const node of nodes) {
+      if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
+        return node;
       }
-      return null;
-  }
-  const folder = findFolderByName(fileSystem.value);
-  return folder;
+      if (node.children) {
+        const found = findFolderByName(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return findFolderByName(fileSystem.value);
 });
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const path = currentPath.value;
   if (!path) return [];
   const parts = path.split('/');
-  
+
   let accumulatedPath = '';
   return parts.map((part) => {
     accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part;
@@ -709,91 +691,39 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   });
 });
 
-// Marked Configuration
-const setupMarkedRenderer = () => {
-  const renderer = new marked.Renderer();
-  renderer.heading = function(text, level) {
-      const id = text.toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-\u4e00-\u9fa5]+/g, '');
-      return `<h${level} id="${id}">${text}</h${level}>`;
-  };
-  marked.use({ renderer });
-};
+// Resource Categories
+const resourceCategories = computed(() => [
+  {
+    title: t.value.res_cat_platform,
+    items: [
+      { name: 'Vue Mastery', url: 'https://vuemastery.com', icon: '🎮', desc: lang.value === 'zh' ? '官方推荐的游戏化教程' : 'Gamified learning path' },
+      { name: 'Scrimba', url: 'https://scrimba.com/learn/vue', icon: '📺', desc: lang.value === 'zh' ? '交互式视频编码' : 'Interactive video tutorials' },
+      { name: 'Frontend Mentor', url: 'https://frontendmentor.io', icon: '🎨', desc: lang.value === 'zh' ? '真实设计稿还原挑战' : 'Real-world design challenges' },
+    ]
+  },
+  {
+    title: t.value.res_cat_frontend_games,
+    items: [
+      { name: 'Flexbox Froggy', url: 'https://flexboxfroggy.com', icon: '🐸', desc: lang.value === 'zh' ? '青蛙跳荷叶学布局' : 'Learn Flexbox with frogs' },
+      { name: 'Grid Garden', url: 'https://cssgridgarden.com', icon: '🥕', desc: lang.value === 'zh' ? '种胡萝卜学网格' : 'Learn CSS Grid via gardening' },
+      { name: 'CSS Diner', url: 'https://flukeout.github.io', icon: '🍽️', desc: lang.value === 'zh' ? '选择器餐厅' : 'Master CSS selectors' },
+      { name: 'JavaScript 30', url: 'https://javascript30.com', icon: '🎹', desc: lang.value === 'zh' ? '30天原生JS挑战' : '30 Day Vanilla JS Challenge' },
+    ]
+  },
+  {
+    title: t.value.res_cat_vue_projects,
+    items: [
+      { name: 'Vue Tutorial', url: 'https://vuejs.org/tutorial/', icon: '🟩', desc: lang.value === 'zh' ? 'Vue 官方交互教程' : 'Official Interactive Tutorial' },
+      { name: 'Vue Snake', url: 'https://github.com/search?q=vue+snake+game', icon: '🐍', desc: lang.value === 'zh' ? '贪吃蛇源码搜索' : 'Search Snake Game code' },
+      { name: 'Vue Memory', url: 'https://codepen.io/search/pens?q=vue+memory+game', icon: '🃏', desc: lang.value === 'zh' ? '记忆卡片游戏' : 'Memory Card Game' },
+    ]
+  }
+]);
 
-// Async Rendering Logic
-const renderedHtml = ref('');
-
-const updateRenderedContent = async () => {
-    if (!currentFile.value?.content) {
-        renderedHtml.value = '';
-        return;
-    }
-    
-    // If it's source or raw mode, we don't render md
-    if (currentFile.value.isSource || isRawMode.value) return;
-
-    let rawContent = currentFile.value.content;
-
-    // Image Path Resolution
-    if (currentFile.value.path) {
-        const parentDirParts = currentFile.value.path.split('/');
-        parentDirParts.pop(); // remove filename
-        const parentDir = parentDirParts.join('/'); 
-        const serverPrefix = 'notes/'; 
-        
-        const resolvePath = (relPath: string) => {
-            if (relPath.startsWith('http') || relPath.startsWith('/') || relPath.startsWith('data:')) return relPath;
-            
-            const parts = relPath.split('/');
-            const parentParts = parentDir.split('/').filter(p => p); 
-            
-            for (const part of parts) {
-                if (part === '.') continue;
-                if (part === '..') {
-                    if (parentParts.length > 0) parentParts.pop();
-                } else {
-                    parentParts.push(part);
-                }
-            }
-            return `${serverPrefix}${parentParts.join('/')}`;
-        };
-
-        rawContent = rawContent.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, relPath) => {
-            return `![${alt}](${resolvePath(relPath)})`;
-        });
-
-        rawContent = rawContent.replace(/src="([^"]+)"/g, (match, src) => {
-            return `src="${resolvePath(src)}"`;
-        });
-    }
-
-    try {
-        // marked.parse is async in some configs, or sync in others, but returns promise or string.
-        // await is safe for both.
-        renderedHtml.value = await marked.parse(rawContent);
-    } catch (e) {
-        console.error("Marked render error:", e);
-        renderedHtml.value = `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`;
-    }
-};
-
-const activeIndicatorTop = computed(() => {
-  if (!activeHeaderId.value) return 0;
-  const idx = toc.value.findIndex(t => t.id === activeHeaderId.value);
-  return idx * 28; 
-});
-
-const getCleanParentPath = (path: string) => {
-  const parts = path.split('/');
-  const parent = parts.slice(0, -1).join('/');
-  return parent || 'Root';
-};
-
-const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
-
+// =====================
+// File Operations
+// =====================
 const findNodeByPath = (nodes: FileNode[], path: string): FileNode | null => {
-  // Try exact match
   for (const node of nodes) {
     if (node.path === path) return node;
     if (node.children) {
@@ -801,75 +731,83 @@ const findNodeByPath = (nodes: FileNode[], path: string): FileNode | null => {
       if (found) return found;
     }
   }
-  // If exact match fails, try decoding path in case of mismatch
   const decodedPath = decodeURIComponent(path);
   if (decodedPath !== path) {
-      for (const node of nodes) {
-        if (node.path === decodedPath) return node;
-        if (node.children) {
-            const found = findNodeByPath(node.children, decodedPath);
-            if (found) return found;
-        }
+    for (const node of nodes) {
+      if (node.path === decodedPath) return node;
+      if (node.children) {
+        const found = findNodeByPath(node.children, decodedPath);
+        if (found) return found;
+      }
     }
   }
   return null;
 };
 
 const fetchFileContent = async (file: FileNode): Promise<string> => {
-    let fetchPath = '';
-    if (file.isSource && file.fetchPath) {
-        fetchPath = `./${file.fetchPath}`;
+  let fetchPath = '';
+  if (file.isSource && file.fetchPath) {
+    fetchPath = `./${file.fetchPath}`;
+  } else {
+    const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
+    fetchPath = `./notes/${encodedPath}`;
+  }
+
+  try {
+    let res = await fetch(fetchPath);
+    if (!res.ok) {
+      console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
+      res = await fetch(`./notes/${file.path}`);
+    }
+
+    if (res.ok) return await res.text();
+    return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`;
+  } catch (e: any) {
+    return `# Error\n${e.message}\nPath: ${file.path}`;
+  }
+};
+
+const updateUrl = (path: string | null) => {
+  try {
+    const url = new URL(window.location.href);
+    if (path) {
+      url.searchParams.set('path', path);
     } else {
-        // Safe encoding for URL
-        const encodedPath = file.path.split('/').map(p => encodeURIComponent(p)).join('/');
-        fetchPath = `./notes/${encodedPath}`;
+      url.searchParams.delete('path');
     }
-    
-    try {
-        let res = await fetch(fetchPath);
-        if (!res.ok) {
-           console.warn(`Fetch failed for ${fetchPath}, trying fallback...`);
-           res = await fetch(`./notes/${file.path}`);
-        }
-        
-        if (res.ok) return await res.text();
-        return `# Error ${res.status}\nCould not load file content.\nPath: ${file.path}`;
-    } catch (e: any) {
-        return `# Error\n${e.message}\nPath: ${file.path}`;
-    }
+    window.history.pushState({}, '', url.toString());
+  } catch (e) {
+    console.error("Failed to update URL", e);
+  }
 };
 
 const openFile = async (file: FileNode) => {
   currentFile.value = file;
   currentFolder.value = null;
   currentTool.value = null;
-  // Always default to Raw Mode for Source files, Render mode for Markdown
   isRawMode.value = !!file.isSource;
-  
+
   updateUrl(file.path);
   const container = document.getElementById('scroll-container');
   if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
-  
-  selectionMenu.value.show = false;
+
+  hideSelectionMenu();
 
   if (!file.content) {
     contentLoading.value = true;
     file.content = await fetchFileContent(file);
     contentLoading.value = false;
-    currentFile.value = { ...file }; 
+    currentFile.value = { ...file };
   }
-  
-  // Trigger rendering logic
+
   if (!file.isSource) {
-      await updateRenderedContent();
-      nextTick(() => generateToc());
+    await updateRenderedContent();
+    nextTick(() => generateToc());
   }
 };
 
-// Handle file selection from sidebar (auto-close sidebar on mobile)
 const handleSidebarFileSelect = async (file: FileNode) => {
   await openFile(file);
-  // Auto-close sidebar on mobile after selecting a file
   if (isMobile.value) {
     sidebarOpen.value = false;
   }
@@ -881,7 +819,7 @@ const openFolder = (folder: FileNode) => {
   currentTool.value = null;
   updateUrl(folder.path);
   if (viewMode.value === 'latest') viewMode.value = 'files';
-  selectionMenu.value.show = false;
+  hideSelectionMenu();
 };
 
 const selectTool = (tool: string) => {
@@ -904,32 +842,119 @@ const toggleFolder = (path: string) => {
   else expandedFolders.value.splice(idx, 1);
 };
 
-const updateUrl = (path: string | null) => {
-  try {
-    const url = new URL(window.location.href);
-    if (path) {
-        url.searchParams.set('path', path);
-    } else {
-        url.searchParams.delete('path');
-    }
-    // Use pushState to avoid reload, but replaceState if just updating query param to same page context
-    window.history.pushState({}, '', url.toString());
-  } catch (e) {
-      console.error("Failed to update URL", e);
-  }
-};
-
 const resetToHome = () => {
   currentFile.value = null;
   currentFolder.value = null;
   viewMode.value = 'latest';
-  selectionMenu.value.show = false;
+  hideSelectionMenu();
   updateUrl(null);
 };
 
-const showToast = (msg: string) => {
-  appStore.showToast(msg);
-}
+// =====================
+// Content Click Handler
+// =====================
+const { handleContentClick } = useContentClick(
+  currentFile,
+  fileSystem,
+  findNodeByPath,
+  fetchFileContent,
+  openFile,
+  codeModal.openCodeModal,
+  codeModal.setCodeModalContent,
+  codeModal.fetchSourceCodeFile,
+  handleImageClick,
+  hideSelectionMenu,
+  showToast
+);
+
+// 捕获阶段拦截内部链接点击（仅阻止默认跳转，不阻止传播，让冒泡阶段处理弹窗逻辑）
+const handleLinkCapture = (e: Event) => {
+  const mouseEvent = e as MouseEvent;
+  const target = mouseEvent.target as HTMLElement;
+  // 确保在 markdown-viewer 内部
+  if (!target.closest('#markdown-viewer')) return;
+  
+  const link = target.closest('a');
+  if (link) {
+    const internalHref = link.getAttribute('data-internal-href');
+    const href = link.getAttribute('href');
+    // 如果有 data-internal-href 或者是支持的内部链接，立即阻止默认行为
+    // 注意：不调用 stopPropagation()，让事件继续传播到冒泡阶段的 handleContentClickEvent
+    if (internalHref || (href && isSupportedInternalLink(href))) {
+      mouseEvent.preventDefault();
+    }
+  }
+};
+
+// Event handlers
+const handleContentClickEvent = (e: MouseEvent) => {
+  if (selectionMenu.value.locked) return;
+  
+  // 然后异步处理点击逻辑（捕获阶段已阻止默认行为，这里直接处理）
+  handleContentClick(e, selectionMenu.value.locked);
+};
+
+const handleSelectionEvent = () => {
+  if (currentFile.value?.isSource) return;
+  handleSelection();
+};
+
+const handleSelectionContextMenuEvent = (e: MouseEvent) => {
+  if (currentFile.value?.isSource) return;
+  handleSelectionContextMenu(e);
+};
+
+const applyFormatHandler = (type: string) => {
+  applyFormat(type, t.value.selection_error);
+};
+
+// =====================
+// Actions
+// =====================
+const toggleLang = async () => {
+  const oldLang = lang.value;
+  const newLang = oldLang === 'en' ? 'zh' : 'en';
+  appStore.setLang(newLang);
+  updateLanguage(newLang);
+
+  if (viewMode.value === 'lab' && currentTool.value === 'dashboard') {
+    return;
+  }
+
+  if (currentFolder.value && !currentFile.value) {
+    return;
+  }
+
+  if (currentFile.value) {
+    const oldPath = currentFile.value.path;
+    const pathParts = oldPath.split('/');
+
+    if (pathParts[0] === oldLang) {
+      pathParts[0] = newLang;
+      const newPath = pathParts.join('/');
+      const newNode = findNodeByPath(fileSystem.value, newPath);
+
+      if (newNode && newNode.type === NodeType.FILE) {
+        await openFile(newNode);
+        return;
+      }
+    }
+
+    resetToHome();
+    return;
+  }
+};
+
+const toggleTheme = (val: boolean) => {
+  appStore.setDark(val);
+  if (val) document.documentElement.classList.add('dark');
+  else document.documentElement.classList.remove('dark');
+};
+
+const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
+  appStore.userSettings.petalSpeed = speed;
+  appStore.showParticles = speed !== 'off';
+};
 
 const copyLink = () => navigator.clipboard.writeText(window.location.href).then(() => showToast(t.value.link_copied));
 
@@ -945,16 +970,12 @@ const downloadSource = () => {
   }
 };
 
-const copyCodeContent = () => {
-    navigator.clipboard.writeText(codeModalContent.value).then(() => showToast(t.value.toast_copied));
-};
+const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
 
-// Handle search selection
 const handleSearchSelect = (result: any) => {
   showSearch.value = false;
   sidebarOpen.value = false;
-  
-  // Find the actual FileNode from the file system
+
   const node = findNodeByPath(fileSystem.value, result.path);
   if (node && node.type === NodeType.FILE) {
     openFile(node);
@@ -963,267 +984,47 @@ const handleSearchSelect = (result: any) => {
   }
 };
 
-// Handle like action
 const handleLike = () => {
   if (currentFile.value) {
     articleStore.toggleLike(currentFile.value.path);
   }
 };
 
-// Get article view count (stored locally with likes count)
 const getArticleViews = (path: string): number => {
-  // Simulate views based on likes and local storage hash
   const likes = articleStore.getLikes(path);
-  // Views are usually 5-10x likes
   const baseViews = likes * (5 + Math.random() * 5);
   return Math.max(1, Math.round(baseViews));
 };
 
-// Selection Popup Logic
-const handleSelection = () => {
-  if (currentFile.value?.isSource) return; // No highlight for source code
-  const selection = window.getSelection();
-  if (!selection || selection.isCollapsed || selection.rangeCount === 0) {
-    selectionMenu.value.show = false;
-    return;
+// =====================
+// Keyboard Shortcuts
+// =====================
+const handleKeydown = (e: KeyboardEvent) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    showSearch.value = true;
   }
-  
-  const range = selection.getRangeAt(0);
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.commonAncestorContainer)) {
-      selectionMenu.value.show = false;
-      return;
-  }
-
-  lastSelectionRange.value = range.cloneRange();
-
-  const rect = (() => {
-    const r = range.getBoundingClientRect();
-    if (r && (r.width || r.height)) return r;
-    const rects = range.getClientRects();
-    return rects.length > 0 ? rects[0] : null;
-  })();
-
-  if (!rect) {
-    selectionMenu.value.show = false;
-    return;
-  }
-
-  selectionMenu.value = {
-    show: true,
-    x: rect.left + rect.width / 2,
-    y: rect.top - 10
-  };
-};
-
-const handleSelectionContextMenu = (e: MouseEvent) => {
-  if (currentFile.value?.isSource) return;
-  
-  const selection = window.getSelection();
-  let range: Range | null = null;
-  
-  // 优先使用当前选区，如果没有则尝试使用最后保存的选区
-  if (selection && !selection.isCollapsed && selection.rangeCount > 0) {
-    range = selection.getRangeAt(0);
-    lastSelectionRange.value = range.cloneRange(); // 保存当前选区
-  } else if (lastSelectionRange.value) {
-    range = lastSelectionRange.value;
-  }
-  
-  if (!range || range.collapsed) {
-    selectionMenu.value.show = false;
-    return;
-  }
-  
-  const viewer = document.getElementById('markdown-viewer');
-  if (!viewer || !viewer.contains(range.commonAncestorContainer)) {
-    selectionMenu.value.show = false;
-    return;
-  }
-
-  e.preventDefault();
-  selectionMenu.value = {
-    show: true,
-    x: e.clientX,
-    y: e.clientY
-  };
-};
-
-const applyFormat = (type: 'highlight-yellow' | 'highlight-green' | 'highlight-blue' | 'highlight-pink' | 'underline-wavy' | 'underline-double') => {
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
-    
-    const range = selection.getRangeAt(0);
-    try {
-        const span = document.createElement('span');
-        switch (type) {
-            case 'highlight-yellow':
-                span.className = 'bg-yellow-200 dark:bg-yellow-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-green':
-                span.className = 'bg-green-200 dark:bg-green-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-blue':
-                span.className = 'bg-blue-200 dark:bg-blue-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'highlight-pink':
-                span.className = 'bg-pink-200 dark:bg-pink-800/60 rounded px-0.5 transition-colors shadow-sm';
-                break;
-            case 'underline-wavy':
-                span.className = 'underline decoration-wavy decoration-sakura-500 underline-offset-4';
-                break;
-            case 'underline-double':
-                span.className = 'underline decoration-double decoration-blue-500 underline-offset-4';
-                break;
-        }
-        range.surroundContents(span);
-        selection.removeAllRanges();
-        selectionMenu.value.show = false;
-    } catch (e) {
-        showToast(t.value.selection_error);
-    }
-};
-
-// Lightbox logic & Link Interception
-const handleContentClick = async (e: MouseEvent) => {
-  const target = e.target as HTMLElement;
-  
-  // 1. Handle Lightbox
-  if (target.tagName === 'IMG') {
-    lightboxImage.value = (target as HTMLImageElement).src;
-    selectionMenu.value.show = false;
-    return;
-  }
-  
-  // 2. Intercept internal links
-  const link = target.closest('a');
-  if (link) {
-    const href = link.getAttribute('href');
-    const isSupportedInternal = (raw?: string | null) => {
-      if (!raw) return false;
-      if (raw.startsWith('http') || raw.startsWith('//')) return false;
-      const lower = raw.toLowerCase();
-      const exts = ['.md', '.vue', '.ts', '.tsx', '.js', '.jsx', '.json', '.html', '.css', '.scss'];
-      return exts.some(ext => lower.endsWith(ext));
-    };
-
-    if (href && isSupportedInternal(href)) {
-      e.preventDefault(); // Stop Browser Jump
-      
-      let targetPath = '';
-      const isCodeFile = !href.toLowerCase().endsWith('.md');
-
-      if (href.startsWith('/')) {
-          // Absolute path from root (e.g. /source.md -> source.md)
-          targetPath = href.substring(1);
-      } else if (currentFile.value?.path) {
-        // Resolve relative path
-        const currentDir = currentFile.value.path.split('/').slice(0, -1);
-        const parts = href.split('/');
-        
-        for (const part of parts) {
-           if (part === '.') continue;
-           if (part === '..') {
-              if (currentDir.length > 0) currentDir.pop();
-           } else {
-              currentDir.push(decodeURIComponent(part)); // Ensure decoding
-           }
-        }
-        targetPath = currentDir.join('/');
-      } else {
-          targetPath = href;
-      }
-
-      // Try to find exact match
-      let node = findNodeByPath(fileSystem.value, targetPath);
-      
-      if (node && node.type === NodeType.FILE) {
-        if (node.isSource || node.path.startsWith('source')) { 
-            // Treat source*.md as source code too for viewing
-            codeModalTitle.value = node.name;
-            codeModalContent.value = 'Loading...';
-            showCodeModal.value = true;
-            
-            if (!node.content) {
-                node.content = await fetchFileContent(node);
-            }
-            codeModalContent.value = node.content;
-        } else {
-            // Open normal Markdown file
-            openFile(node);
-        }
-      } else {
-        showToast(`File not found: ${href}`);
-      }
-    }
-  }
-
-  selectionMenu.value.show = false;
-};
-
-const generateToc = () => {
-  if (!currentFile.value?.content || currentFile.value.isSource) { toc.value = []; return; }
-  const headers: TocItem[] = [];
-  const lines = currentFile.value.content.split(/\r?\n/);
-  let inCodeBlock = false;
-  
-  lines.forEach(line => {
-    if (line.trim().startsWith('```')) inCodeBlock = !inCodeBlock;
-    if (inCodeBlock) return;
-    
-    const match = line.match(/^(#{1,3})\s+(.+)$/);
-    if (match) {
-      const text = match[2].trim();
-      const id = text.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-\u4e00-\u9fa5]+/g, ''); 
-      headers.push({ id, text, level: match[1].length });
-    }
-  });
-  toc.value = headers;
-  
-  nextTick(() => {
-     const el = document.getElementById('scroll-container');
-     if (el) {
-       el.removeEventListener('scroll', updateActiveHeader);
-       el.addEventListener('scroll', updateActiveHeader);
-     }
-  });
-};
-
-const updateActiveHeader = () => {
-  const container = document.getElementById('scroll-container');
-  if (!container) return;
-  const scrollPosition = container.scrollTop;
-  
-  let active = '';
-  for (const item of toc.value) {
-    const el = document.getElementById(item.id);
-    if (el) {
-       if (el.offsetTop - container.offsetTop - 150 <= scrollPosition) {
-         active = item.id;
-       }
-    }
-  }
-  if (active) activeHeaderId.value = active;
-};
-
-const scrollToHeader = (id: string) => {
-  const el = document.getElementById(id);
-  const container = document.getElementById('scroll-container');
-  if (el && container) {
-     el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-     activeHeaderId.value = id;
+  if (e.key === 'Escape') {
+    showSearch.value = false;
+    musicStore.showMusicPlayer = false;
+    showWriteEditor.value = false;
+    sidebarOpen.value = false;
   }
 };
 
+// =====================
+// Watchers
+// =====================
 watch(currentFile, async () => {
-    if (!currentFile.value?.isSource) {
-        await updateRenderedContent();
-        nextTick(() => generateToc());
-    }
+  if (!currentFile.value?.isSource) {
+    await updateRenderedContent();
+    nextTick(() => generateToc());
+  }
 });
 
+// =====================
+// Lifecycle
+// =====================
 onMounted(async () => {
   // Check mobile
   const checkMobile = () => {
@@ -1239,81 +1040,90 @@ onMounted(async () => {
       headerHidden.value = false;
       return;
     }
-    
+
     const currentScrollY = scrollContainer?.scrollTop || 0;
     const delta = currentScrollY - lastScrollY.value;
-    
-    // Only hide/show after scrolling a certain amount
+
     if (Math.abs(delta) > 5) {
-      headerHidden.value = delta > 0 && currentScrollY > 50; // Hide on scroll down
+      headerHidden.value = delta > 0 && currentScrollY > 50;
     }
-    
+
     lastScrollY.value = currentScrollY;
   };
 
   // Keyboard shortcuts
   document.addEventListener('keydown', handleKeydown);
-
-    document.addEventListener('selectionchange', () => {
-      const sel = window.getSelection();
-      if (sel && !sel.isCollapsed && sel.rangeCount > 0) {
-        lastSelectionRange.value = sel.getRangeAt(0).cloneRange();
-      } else {
-        selectionMenu.value.show = false;
-      }
-    });
+  document.addEventListener('selectionchange', handleSelectionChange);
+  // 捕获阶段拦截内部链接点击
+  document.addEventListener('click', handleLinkCapture, { capture: true });
 
   if (appStore.isDark) document.documentElement.classList.add('dark');
-  
+
   // Setup marked renderer
   setupMarkedRenderer();
 
-  // Initialize music store (load playlist)
+  // Initialize music store
   musicStore.loadPlaylist();
-  
-  // Set fetch function for search (after fetchFileContent is defined)
+
+  // Set fetch function for search
   setFetchFunction(fetchFileContent);
-  
+
   try {
-    // Explicitly using ./files.json to ensure relative fetch
     const res = await fetch(`./files.json?t=${Date.now()}`);
     if (res.ok) {
       fileSystem.value = await res.json();
       const params = new URLSearchParams(window.location.search);
-      const targetPath = params.get('path'); 
-      
+      const targetPath = params.get('path');
+      const sourcePath = params.get('source');
+
+      // 处理代码文件弹窗路由
+      if (sourcePath) {
+        const fileName = sourcePath.split('/').pop() || sourcePath;
+        await codeModal.openCodeModal(fileName, 'Loading...', sourcePath);
+
+        let node = findNodeByPath(fileSystem.value, sourcePath);
+        let content = '';
+
+        if (node && node.type === NodeType.FILE) {
+          if (!node.content) {
+            node.content = await fetchFileContent(node);
+          }
+          content = node.content;
+        } else {
+          content = await codeModal.fetchSourceCodeFile(sourcePath);
+        }
+
+        codeModal.setCodeModalContent(content);
+      }
+
       if (targetPath) {
-        // Decode it just in case, though browser usually does it
         const decodedTargetPath = decodeURIComponent(targetPath);
         const node = findNodeByPath(fileSystem.value, decodedTargetPath) || findNodeByPath(fileSystem.value, targetPath);
-        
+
         if (node) {
           if (targetPath.includes('VUE学习笔记') || targetPath.includes('VUE Learning')) viewMode.value = 'lab';
           else viewMode.value = 'files';
-          
+
           if (node.type === NodeType.FILE) openFile(node);
           else openFolder(node);
         } else {
-            console.warn("Path not found in file system:", targetPath);
+          console.warn("Path not found in file system:", targetPath);
         }
       }
     } else {
-       console.error("Failed to load files.json, status:", res.status);
+      console.error("Failed to load files.json, status:", res.status);
     }
   } catch (e) {
     console.error("Failed to load file system", e);
     fileSystem.value = [];
   } finally {
     loading.value = false;
-    // Initialize search index after file system is loaded
+
     if (fileSystem.value.length > 0) {
       await initSearchIndex(fileSystem.value, lang.value);
-      // 收集所有 tags（在搜索索引初始化后，因为此时内容可能还没完全加载）
-      // 延迟执行以等待内容加载
-      setTimeout(() => collectAllTags(), 2000);
+      collectAllTags(currentLangRoot.value || [], articleStore.setAvailableTags);
     }
-    
-    // Setup scroll listener for mobile header hide/show (after content loads)
+
     nextTick(() => {
       const scrollEl = document.getElementById('scroll-container');
       if (scrollEl) {
@@ -1325,9 +1135,39 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown);
+  document.removeEventListener('selectionchange', handleSelectionChange);
+  document.removeEventListener('click', handleLinkCapture, { capture: true });
   const scrollEl = document.getElementById('scroll-container');
   if (scrollEl) {
     scrollEl.removeEventListener('scroll', () => {});
   }
 });
 </script>
+
+<style>
+body {
+  user-select: none;
+}
+
+#markdown-viewer,
+#markdown-viewer * {
+  user-select: text;
+}
+
+input,
+textarea,
+[contenteditable="true"],
+pre,
+code {
+  user-select: text;
+}
+
+.sakura-block-highlight {
+  background: rgba(252, 211, 77, 0.35);
+  border: 1px solid rgba(252, 211, 77, 0.8);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.05em 0.2em;
+  border-radius: 0.35rem;
+}
+</style>

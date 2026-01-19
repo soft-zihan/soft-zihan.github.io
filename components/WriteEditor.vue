@@ -33,19 +33,8 @@
                 :class="hasToken ? 'bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-50 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400'"
               >
                 <div class="w-2 h-2 rounded-full" :class="hasToken ? 'bg-green-500' : 'bg-yellow-500'"></div>
-                {{ hasToken ? (lang === 'zh' ? 'GitHub 已连接' : 'GitHub Connected') : (lang === 'zh' ? '未配置 Token' : 'No Token') }}
+                {{ hasToken ? (lang === 'zh' ? 'GitHub 已连接' : 'GitHub Connected') : (lang === 'zh' ? '请在设置中配置' : 'Configure in Settings') }}
               </div>
-              
-              <button 
-                @click="showTokenModal = true"
-                class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors text-gray-500"
-                :title="lang === 'zh' ? '配置 GitHub Token' : 'Configure GitHub Token'"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-              </button>
               
               <button 
                 @click="confirmClose"
@@ -59,13 +48,38 @@
           </div>
           
           <!-- Title Input -->
-          <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+          <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 space-y-2">
             <input 
               v-model="title"
               type="text"
-              :placeholder="lang === 'zh' ? '输入文章标题...' : 'Enter article title...'"
+              :placeholder="lang === 'zh' ? '输入文章标题（文件名）' : 'Enter article title (filename)...'"
               class="w-full text-xl font-bold bg-transparent border-0 outline-none text-gray-800 dark:text-gray-100 placeholder-gray-400"
             />
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs text-gray-400">🏷️</span>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  v-for="tag in publishTags"
+                  :key="tag"
+                  class="text-xs px-2 py-0.5 rounded-full bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300 flex items-center gap-1"
+                >
+                  {{ tag }}
+                  <button
+                    class="text-[10px] text-sakura-400 hover:text-sakura-600"
+                    @click="removeTag(tag)"
+                  >✕</button>
+                </span>
+              </div>
+              <input
+                v-model="tagInput"
+                type="text"
+                :placeholder="lang === 'zh' ? '添加标签，回车确认' : 'Add tag, press Enter'"
+                class="flex-1 min-w-[160px] text-sm bg-transparent border-0 outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                @keydown.enter.prevent="addTagFromInput"
+                @blur="addTagFromInput"
+              />
+              <span class="text-[10px] text-gray-400">{{ publishTags.length }}/5</span>
+            </div>
           </div>
           
           <!-- Editor Body -->
@@ -130,36 +144,19 @@
             
             <div class="flex items-center gap-3">
               <!-- 目录选择 -->
-              <div class="relative">
-                <button 
-                  @click="showFolderBrowser = !showFolderBrowser"
-                  class="px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <span>📁</span>
-                  <span class="max-w-[200px] truncate">{{ targetFolder }}</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                  </svg>
-                </button>
-                
-                <!-- 目录下拉列表 -->
-                <div 
-                  v-if="showFolderBrowser"
-                  class="absolute bottom-full mb-2 left-0 w-80 max-h-64 overflow-y-auto bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-xl z-50"
-                >
-                  <div class="p-2 border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500">
-                    {{ lang === 'zh' ? '选择发布目录' : 'Select publish folder' }}
-                  </div>
-                  <div 
-                    v-for="folder in availableFolders"
-                    :key="folder"
-                    @click="targetFolder = folder; showFolderBrowser = false"
-                    class="px-3 py-2 text-sm cursor-pointer hover:bg-sakura-50 dark:hover:bg-gray-700 transition-colors"
-                    :class="targetFolder === folder ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600' : ''"
-                  >
-                    {{ folder }}
-                  </div>
-                </div>
+              <div class="flex items-center gap-2 px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg">
+                <span>📁</span>
+                <span class="text-xs text-gray-400">{{ getRootFolder() }}/</span>
+                <input
+                  v-model="pathSuffix"
+                  type="text"
+                  list="folder-suffix-options"
+                  :placeholder="lang === 'zh' ? '子目录 (可选)' : 'Subfolder (optional)'"
+                  class="w-48 text-sm bg-transparent border-0 outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                />
+                <datalist id="folder-suffix-options">
+                  <option v-for="opt in folderSuffixOptions" :key="opt" :value="opt"></option>
+                </datalist>
               </div>
               
               <button 
@@ -167,6 +164,20 @@
                 class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
               >
                 {{ lang === 'zh' ? '保存草稿' : 'Save Draft' }}
+              </button>
+
+              <button 
+                @click="triggerMarkdownFiles"
+                class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {{ lang === 'zh' ? '导入 Markdown' : 'Import Markdown' }}
+              </button>
+
+              <button 
+                @click="triggerMarkdownFolder"
+                class="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {{ lang === 'zh' ? '导入文件夹' : 'Import Folder' }}
               </button>
               
               <button 
@@ -190,64 +201,166 @@
               :style="{ width: publishProgress + '%' }"
             ></div>
           </div>
+
+          <!-- Hidden Inputs: Markdown Import -->
+          <input
+            ref="markdownFileInput"
+            type="file"
+            class="hidden"
+            accept=".md,.markdown"
+            multiple
+            @change="handleMarkdownFiles"
+          />
+          <input
+            ref="markdownFolderInput"
+            type="file"
+            class="hidden"
+            accept=".md,.markdown"
+            multiple
+            webkitdirectory
+            directory
+            @change="handleMarkdownFolder"
+          />
         </div>
-        
-        <!-- Token Configuration Modal -->
-        <div 
-          v-if="showTokenModal"
-          class="absolute inset-0 flex items-center justify-center z-10"
-        >
-          <div class="absolute inset-0 bg-black/50" @click="showTokenModal = false"></div>
-          <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md">
-            <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4">
-              {{ lang === 'zh' ? '配置 GitHub Token' : 'Configure GitHub Token' }}
-            </h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              {{ lang === 'zh' 
-                ? '需要一个有 repo 权限的 Personal Access Token 才能发布文章。' 
-                : 'A Personal Access Token with repo permission is required to publish articles.' }}
-            </p>
-            <input 
-              v-model="tokenInput"
-              type="password"
-              placeholder="ghp_xxxxxxxxxxxxxxxx"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100 mb-4"
-            />
-            <div class="flex items-center gap-2 mb-4">
-              <input v-model="repoOwner" type="text" placeholder="Owner" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm" />
-              <span class="text-gray-400">/</span>
-              <input v-model="repoName" type="text" placeholder="Repo" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-sm" />
-            </div>
-            
-            <!-- 作者名称 -->
-            <div class="mb-4">
-              <label class="block text-sm text-gray-600 dark:text-gray-400 mb-2">
-                {{ lang === 'zh' ? '作者名称 (GitHub 用户名)' : 'Author Name (GitHub username)' }}
-              </label>
-              <input 
-                v-model="authorName" 
-                type="text" 
-                placeholder="your-github-username"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-100"
-              />
-              <p class="text-xs text-gray-400 mt-1">
-                {{ lang === 'zh' ? '将作为文章标签添加，用于筛选' : 'Will be added as article tag for filtering' }}
-              </p>
-            </div>
-            
-            <div class="flex justify-end gap-2">
-              <button 
-                @click="showTokenModal = false"
-                class="px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+
+        <!-- Import Preview Modal -->
+        <div v-if="showImportModal" class="fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8">
+          <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeImportModal"></div>
+          <div class="relative w-full max-w-6xl h-[85vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden">
+            <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+              <div>
+                <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100">
+                  {{ lang === 'zh' ? '导入预览' : 'Import Preview' }}
+                </h3>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ lang === 'zh'
+                    ? '本地图片必须包含在导入的文件夹内，否则无法上传。'
+                    : 'Local images must be inside the imported folder to be uploaded.' }}
+                </p>
+              </div>
+              <button
+                @click="closeImportModal"
+                class="p-2 hover:bg-red-50 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
               >
-                {{ lang === 'zh' ? '取消' : 'Cancel' }}
+                ✕
               </button>
-              <button 
-                @click="saveToken"
-                class="px-4 py-2 text-sm font-medium text-white bg-sakura-500 hover:bg-sakura-600 rounded-lg transition-colors"
-              >
-                {{ lang === 'zh' ? '保存' : 'Save' }}
-              </button>
+            </div>
+
+            <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 overflow-hidden">
+              <!-- File List -->
+              <div class="md:col-span-1 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col">
+                <div class="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                  <span>{{ lang === 'zh' ? '待上传文件' : 'Files' }}</span>
+                  <span class="text-[10px]">{{ importSelected.length }}/{{ importMdFiles.length }}</span>
+                </div>
+                <div class="flex items-center gap-2 px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                  <button @click="selectAllImport" class="px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    {{ lang === 'zh' ? '全选' : 'All' }}
+                  </button>
+                  <button @click="clearImportSelection" class="px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    {{ lang === 'zh' ? '清空' : 'None' }}
+                  </button>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scrollbar">
+                  <div
+                    v-for="item in importMdFiles"
+                    :key="item.relPath"
+                    class="flex items-start gap-2 px-3 py-2 text-xs border-b border-gray-100 dark:border-gray-800 hover:bg-sakura-50/60 dark:hover:bg-gray-800/50"
+                  >
+                    <input
+                      type="checkbox"
+                      class="mt-0.5"
+                      :value="item.relPath"
+                      v-model="importSelected"
+                    />
+                    <button
+                      class="text-left flex-1 truncate"
+                      @click="importPreviewPath = item.relPath"
+                    >
+                      <span class="font-medium text-gray-700 dark:text-gray-200">{{ item.relPath }}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Preview & Meta -->
+              <div class="md:col-span-2 flex flex-col gap-4 overflow-hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input
+                    v-model="importAuthorName"
+                    type="text"
+                    :placeholder="lang === 'zh' ? '作者名（可选）' : 'Author name (optional)'"
+                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+                  />
+                  <input
+                    v-model="importAuthorUrl"
+                    type="url"
+                    :placeholder="lang === 'zh' ? '作者链接（可选）' : 'Author URL (optional)'"
+                    class="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
+                  />
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs text-gray-400">🏷️</span>
+                  <div class="flex flex-wrap gap-2">
+                    <span
+                      v-for="tag in importTags"
+                      :key="tag"
+                      class="text-xs px-2 py-0.5 rounded-full bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300 flex items-center gap-1"
+                    >
+                      {{ tag }}
+                      <button
+                        class="text-[10px] text-sakura-400 hover:text-sakura-600"
+                        @click="removeImportTag(tag)"
+                      >✕</button>
+                    </span>
+                  </div>
+                  <input
+                    v-model="importTagInput"
+                    type="text"
+                    :placeholder="lang === 'zh' ? '添加标签，回车确认' : 'Add tag, press Enter'"
+                    class="flex-1 min-w-[160px] text-sm bg-transparent border-0 outline-none text-gray-700 dark:text-gray-200 placeholder-gray-400"
+                    @keydown.enter.prevent="addImportTagFromInput"
+                    @blur="addImportTagFromInput"
+                  />
+                  <span class="text-[10px] text-gray-400">{{ importTags.length }}/5</span>
+                </div>
+
+                  <div class="flex-1 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden flex flex-col">
+                  <div class="px-4 py-2 bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-500 dark:text-gray-400 flex items-center justify-between">
+                    <span>{{ lang === 'zh' ? '预览' : 'Preview' }}</span>
+                    <span class="text-[10px] text-gray-400" v-if="importPreviewStatus">
+                      {{ importPreviewStatus }}
+                    </span>
+                  </div>
+                    <div
+                      v-if="importMissingImages > 0"
+                      class="px-4 py-2 text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border-b border-red-100 dark:border-red-900/30"
+                    >
+                      {{ lang === 'zh'
+                        ? `检测到 ${importMissingImages} 张本地图片未在导入文件夹内，请把图片放到同一文件夹后再上传。`
+                        : `Found ${importMissingImages} local images not in the imported folder. Please include them before uploading.` }}
+                    </div>
+                  <div class="flex-1 p-4 overflow-y-auto prose prose-sakura dark:prose-invert max-w-none" v-html="importPreviewHtml"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="px-5 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ lang === 'zh' ? '目标目录：' : 'Target:' }}
+                <span class="font-mono">{{ targetFolder }}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <div v-if="isImporting" class="text-xs text-gray-400">{{ importProgress }}%</div>
+                <button
+                  @click="publishImportedFiles"
+                  :disabled="isImporting || !importSelected.length || !hasToken || importMissingImages > 0"
+                  class="px-5 py-2 text-sm font-medium text-white bg-sakura-500 hover:bg-sakura-600 disabled:bg-gray-300 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  {{ isImporting ? (lang === 'zh' ? '上传中...' : 'Uploading...') : (lang === 'zh' ? '开始上传' : 'Start Upload') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -271,39 +384,103 @@ const emit = defineEmits<{
   (e: 'published', path: string): void
 }>()
 
-const { isPublishing, publishProgress, getToken, setToken, publishArticle } = useGitHubPublish()
+const { isPublishing, publishProgress, getToken, uploadFile, uploadImage } = useGitHubPublish()
 
 const editorRef = ref<HTMLTextAreaElement | null>(null)
 const title = ref('')
 const content = ref('')
 const targetFolder = ref('notes/zh')
+const pathSuffix = ref('')
 const images = ref<Array<{ id: string; file: File; preview: string }>>([])
-const showTokenModal = ref(false)
-const showFolderBrowser = ref(false)
-const tokenInput = ref('')
+const publishTags = ref<string[]>([])
+const tagInput = ref('')
+const markdownFileInput = ref<HTMLInputElement | null>(null)
+const markdownFolderInput = ref<HTMLInputElement | null>(null)
+
+const showImportModal = ref(false)
+const importMode = ref<'file' | 'folder'>('file')
+const importFiles = ref<File[]>([])
+const importSelected = ref<string[]>([])
+const importPreviewPath = ref('')
+const importPreviewContent = ref('')
+const importPreviewStatus = ref('')
+const importTags = ref<string[]>([])
+const importTagInput = ref('')
+const importAuthorName = ref('')
+const importAuthorUrl = ref('')
+const isImporting = ref(false)
+const importProgress = ref(0)
+const importError = ref('')
+const importMissingImages = ref(0)
+const importImageUrlCache = ref(new Map<string, string>())
+
+// 从设置中读取配置
 const repoOwner = ref('soft-zihan')
 const repoName = ref('soft-zihan.github.io')
-const authorName = ref('') // 作者名称
-const tokenValue = ref('') // 用于追踪 token 状态
 
-// 可选的发布目录列表
-const availableFolders = [
-  'notes/zh',
-  'notes/zh/Linux命令行',
-  'notes/zh/Linux命令行/01_基础',
-  'notes/zh/Linux命令行/02_核心',
-  'notes/zh/Linux命令行/03_进阶',
-  'notes/zh/Linux命令行/04_实战',
-  'notes/en',
-  'notes/en/Linux Command Line',
-  'notes/en/Linux Command Line/1 Basics',
-  'notes/en/Linux Command Line/2 Intermediate',
-  'notes/en/Linux Command Line/3 Tips and Tricks',
-  'notes/VUE学习笔记',
-  'notes/VUE Learning'
-]
+// 默认的发布目录列表（按语言）
+const defaultFoldersByLang: Record<'zh' | 'en', string[]> = {
+  zh: [
+    'notes/zh',
+    'notes/zh/Linux命令行',
+    'notes/zh/Linux命令行/01_基础',
+    'notes/zh/Linux命令行/02_核心',
+    'notes/zh/Linux命令行/03_进阶',
+    'notes/zh/Linux命令行/04_实战'
+  ],
+  en: [
+    'notes/en',
+    'notes/en/Linux Command Line',
+    'notes/en/Linux Command Line/1 Basics',
+    'notes/en/Linux Command Line/2 Intermediate',
+    'notes/en/Linux Command Line/3 Tips and Tricks'
+  ]
+}
 
-const hasToken = computed(() => !!tokenValue.value)
+const customFoldersByLang = ref<Record<'zh' | 'en', string[]>>({
+  zh: [],
+  en: []
+})
+
+const availableFolders = computed(() => {
+  const langKey = props.lang as 'zh' | 'en'
+  const base = defaultFoldersByLang[langKey] || []
+  const custom = customFoldersByLang.value[langKey] || []
+  const merged = [...base, ...custom]
+  return Array.from(new Set(merged))
+})
+
+const folderSuffixOptions = computed(() => {
+  const rootFolder = getRootFolder()
+  return availableFolders.value
+    .filter((f: string) => f.startsWith(rootFolder))
+    .map((f: string) => f.replace(rootFolder, '').replace(/^\/+/, ''))
+    .filter((f: string) => f.length > 0)
+})
+
+// 根据语言获取根目录
+const getRootFolder = () => props.lang === 'zh' ? 'notes/zh' : 'notes/en'
+
+const sanitizeSuffix = (suffix: string) => {
+  let clean = suffix.trim().replace(/\\/g, '/')
+  if (!clean) return ''
+  clean = clean.replace(/^\/+/, '')
+  if (clean.includes('..')) {
+    alert(props.lang === 'zh' 
+      ? '路径非法：禁止使用 ..' 
+      : 'Invalid path: do not use ..')
+    return ''
+  }
+  return clean.replace(/\/+$/g, '')
+}
+
+const syncTargetFolder = () => {
+  const rootFolder = getRootFolder()
+  const cleanSuffix = sanitizeSuffix(pathSuffix.value)
+  targetFolder.value = cleanSuffix ? `${rootFolder}/${cleanSuffix}` : rootFolder
+}
+
+const hasToken = computed(() => !!localStorage.getItem('github_pat'))
 
 const wordCount = computed(() => {
   const chinese = (content.value.match(/[\u4e00-\u9fa5]/g) || []).length
@@ -316,6 +493,25 @@ const lineCount = computed(() => content.value.split('\n').length)
 const previewHtml = computed(() => {
   try {
     return marked.parse(content.value)
+  } catch {
+    return '<p class="text-red-500">Preview Error</p>'
+  }
+})
+
+const stripMetaComment = (text: string) => text.replace(/^\s*<!--[\s\S]*?-->\s*/, '')
+
+const importMdFiles = computed(() => {
+  return importFiles.value
+    .filter((f: File) => /\.(md|markdown)$/i.test(f.name))
+    .map((file: File) => {
+      const relPath = normalizePath(getFileRelPath(file, importMode.value))
+      return { file, relPath }
+    })
+})
+
+const importPreviewHtml = computed(() => {
+  try {
+    return marked.parse(stripMetaComment(importPreviewContent.value || ''))
   } catch {
     return '<p class="text-red-500">Preview Error</p>'
   }
@@ -375,7 +571,6 @@ const insertMarkdown = (action: string) => {
   
   content.value = content.value.substring(0, start) + insertion + content.value.substring(end)
   
-  // Restore focus and cursor
   setTimeout(() => {
     textarea.focus()
     const newPos = start + insertion.length + cursorOffset
@@ -393,7 +588,6 @@ const handleImageUpload = (e: Event) => {
   
   images.value.push({ id, file, preview })
   
-  // Insert placeholder in content
   const placeholder = `![${file.name}](local-image:${id})`
   const textarea = editorRef.value
   if (textarea) {
@@ -420,6 +614,96 @@ const handleDrop = async (e: DragEvent) => {
   }
 }
 
+const parseMetaComment = (text: string) => {
+  const result = { tags: [] as string[], author: '', authorUrl: '' }
+  const match = text.match(/^\s*<!--([\s\S]*?)-->/)
+  if (!match) return result
+  const block = match[1]
+  const tagsMatch = block.match(/tags?\s*:\s*([^\n]+)/i)
+  if (tagsMatch) {
+    result.tags = tagsMatch[1]
+      .split(/[,，]/)
+      .map(t => t.trim().replace(/['"]/g, ''))
+      .filter(Boolean)
+  }
+  const authorMatch = block.match(/author\s*:\s*([^\n]+)/i)
+  if (authorMatch) result.author = authorMatch[1].trim()
+  const authorUrlMatch = block.match(/authorUrl\s*:\s*([^\n]+)/i)
+  if (authorUrlMatch) result.authorUrl = authorUrlMatch[1].trim()
+  return result
+}
+
+const buildMetaComment = (tags: string[], author: string, authorUrl: string) => {
+  const lines: string[] = []
+  if (tags.length) lines.push(`tags: ${tags.join(', ')}`)
+  if (author) lines.push(`author: ${author}`)
+  if (authorUrl) lines.push(`authorUrl: ${authorUrl}`)
+  if (!lines.length) return ''
+  return `<!--\n${lines.join('\n')}\n-->\n\n`
+}
+
+const applyMetaComment = (text: string, tags: string[], author: string, authorUrl: string) => {
+  const stripped = text.replace(/^\s*<!--[\s\S]*?-->\s*/, '')
+  const metaBlock = buildMetaComment(tags, author, authorUrl)
+  return metaBlock + stripped
+}
+
+const buildTagsForPublish = (text: string) => {
+  const existing = parseMetaComment(text).tags
+  const selected = publishTags.value
+  const merged = [...selected, ...existing.filter(t => !selected.includes(t))]
+  return merged.slice(0, 5)
+}
+
+const normalizeTags = (raw: string) => {
+  return raw
+    .split(/[,，]/)
+    .map(t => t.trim())
+    .filter(Boolean)
+}
+
+const addTagFromInput = () => {
+  if (!tagInput.value.trim()) return
+  const newTags = normalizeTags(tagInput.value)
+  const merged = [...publishTags.value]
+  for (const t of newTags) {
+    if (merged.includes(t)) continue
+    if (merged.length >= 5) {
+      alert(props.lang === 'zh' ? '标签最多 5 个' : 'Up to 5 tags')
+      break
+    }
+    merged.push(t)
+  }
+  publishTags.value = merged
+  tagInput.value = ''
+  localStorage.setItem(`publish_tags_${props.lang}`, JSON.stringify(publishTags.value))
+}
+
+const removeTag = (tag: string) => {
+  publishTags.value = publishTags.value.filter((t: string) => t !== tag)
+  localStorage.setItem(`publish_tags_${props.lang}`, JSON.stringify(publishTags.value))
+}
+
+const addImportTagFromInput = () => {
+  if (!importTagInput.value.trim()) return
+  const newTags = normalizeTags(importTagInput.value)
+  const merged = [...importTags.value]
+  for (const t of newTags) {
+    if (merged.includes(t)) continue
+    if (merged.length >= 5) {
+      alert(props.lang === 'zh' ? '标签最多 5 个' : 'Up to 5 tags')
+      break
+    }
+    merged.push(t)
+  }
+  importTags.value = merged
+  importTagInput.value = ''
+}
+
+const removeImportTag = (tag: string) => {
+  importTags.value = importTags.value.filter((t: string) => t !== tag)
+}
+
 const saveDraft = () => {
   localStorage.setItem('sakura_draft', JSON.stringify({
     title: title.value,
@@ -436,72 +720,800 @@ const loadDraft = () => {
     const { title: t, content: c, targetFolder: f } = JSON.parse(draft)
     title.value = t || ''
     content.value = c || ''
-    targetFolder.value = f || 'notes/zh'
+    const rootFolder = getRootFolder()
+    targetFolder.value = (f && f.startsWith(rootFolder)) ? f : rootFolder
+    pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
   }
-}
-
-const saveToken = () => {
-  if (tokenInput.value) {
-    setToken(tokenInput.value)
-    tokenValue.value = tokenInput.value // 更新本地状态
-    localStorage.setItem('github_repo_owner', repoOwner.value)
-    localStorage.setItem('github_repo_name', repoName.value)
-  }
-  if (authorName.value) {
-    localStorage.setItem('author_name', authorName.value)
-  }
-  showTokenModal.value = false
 }
 
 const publish = async () => {
   const token = getToken()
-  if (!token || !title.value.trim() || !content.value.trim()) return
-  
-  // 构建带有作者信息的 frontmatter
-  let finalContent = content.value
-  const author = authorName.value.trim()
-  if (author) {
-    const frontmatter = `---
-author: ${author}
-authorUrl: https://github.com/${author}
-date: ${new Date().toISOString().split('T')[0]}
-tags: [${author}]
----
-
-`
-    // 如果内容已有 frontmatter，则合并
-    if (finalContent.startsWith('---')) {
-      const endIndex = finalContent.indexOf('---', 3)
-      if (endIndex > 0) {
-        const existingFm = finalContent.slice(0, endIndex + 3)
-        finalContent = existingFm.replace('---\n', `---\nauthor: ${author}\nauthorUrl: https://github.com/${author}\ntags: [${author}]\n`) + finalContent.slice(endIndex + 3)
-      }
-    } else {
-      finalContent = frontmatter + finalContent
-    }
+  if (!token) {
+    alert(props.lang === 'zh' ? '请先在设置中配置 GitHub Token' : 'Please configure GitHub Token in Settings')
+    return
+  }
+  if (!title.value.trim() || !content.value.trim()) {
+    alert(props.lang === 'zh' ? '请输入标题和内容' : 'Please enter title and content')
+    return
   }
   
-  const result = await publishArticle(
-    {
-      owner: repoOwner.value,
-      repo: repoName.value,
-      branch: 'main',
-      token
-    },
-    title.value,
-    finalContent,
-    targetFolder.value,
-    images.value.map(img => ({ id: img.id, file: img.file }))
-  )
+  isPublishing.value = true
+  publishProgress.value = 10
   
-  if (result.success) {
-    emit('published', result.url || '')
-    title.value = ''
-    content.value = ''
-    images.value = []
-    localStorage.removeItem('sakura_draft')
+  try {
+    // 从设置读取作者信息
+    const authorName = localStorage.getItem('author_name') || ''
+    const authorUrl = localStorage.getItem('author_url') || ''
+    
+    let processedContent = content.value
+    
+    // 统一图片存放目录
+    const imageFolder = 'notes/images'
+
+    const imageUrlMap = new Map<string, string>()
+    const localImageTokenMap = new Map<string, File>()
+    const localImageNameMap = new Map<string, File>()
+
+    for (const img of images.value) {
+      const tokenKey = `local-image:${img.id}`
+      localImageTokenMap.set(tokenKey, img.file)
+      const name = img.file.name
+      localImageNameMap.set(name, img.file)
+      localImageNameMap.set(encodeURI(name), img.file)
+      localImageNameMap.set(safeDecode(name), img.file)
+    }
+
+    const imageRefs = extractImagePaths(processedContent)
+    const localRefs = new Set<string>()
+
+    for (const raw of imageRefs) {
+      const { path } = normalizeImageToken(raw)
+      if (!path) continue
+      if (path.startsWith('local-image:')) {
+        localRefs.add(path)
+        continue
+      }
+      if (isDataOrLocalToken(path)) continue
+      if (isHttpUrl(path)) continue
+      localRefs.add(path)
+    }
+
+    const totalImages = localRefs.size
+    if (totalImages > 0) {
+      publishProgress.value = 20
+      let step = 0
+
+      const fetchLocalImageFile = async (rawPath: string) => {
+        try {
+          const base = new URL(window.location.href)
+          const target = new URL(rawPath, base)
+          const res = await fetch(target.toString())
+          if (!res.ok) return null
+          const blob = await res.blob()
+          const fileName = decodeURIComponent(target.pathname.split('/').pop() || `image-${Date.now()}`)
+          const type = blob.type || 'image/png'
+          return new File([blob], fileName, { type })
+        } catch {
+          return null
+        }
+      }
+
+      const resolvedLocalFiles = new Map<string, File>()
+      const missingRefs: string[] = []
+
+      for (const ref of localRefs) {
+        let file: File | undefined = localImageTokenMap.get(ref)
+          || localImageNameMap.get(ref)
+          || localImageNameMap.get(getImageBasename(ref))
+        if (!file) {
+          const fetched = await fetchLocalImageFile(ref)
+          if (fetched) file = fetched
+        }
+        if (file) {
+          resolvedLocalFiles.set(ref, file)
+        } else {
+          missingRefs.push(ref)
+        }
+      }
+
+      if (missingRefs.length > 0) {
+        alert(props.lang === 'zh'
+          ? `检测到 ${missingRefs.length} 张本地图片未找到，请确保图片在同一文件夹或已导入后再发布。`
+          : `Found ${missingRefs.length} local images missing. Please include them before publishing.`)
+        return
+      }
+
+      for (const [ref, file] of resolvedLocalFiles.entries()) {
+        const imageUrl = await uploadImage(
+          { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+          file,
+          imageFolder
+        )
+        if (imageUrl) {
+          imageUrlMap.set(ref, imageUrl)
+          const base = getImageBasename(ref)
+          if (base) imageUrlMap.set(base, imageUrl)
+          imageUrlMap.set(file.name, imageUrl)
+          imageUrlMap.set(encodeURI(file.name), imageUrl)
+          imageUrlMap.set(safeDecode(file.name), imageUrl)
+        }
+        step += 1
+        publishProgress.value = 20 + Math.round((step / totalImages) * 40)
+      }
+
+      if (imageUrlMap.size > 0) {
+        processedContent = replaceImagesByUrlMap(processedContent, imageUrlMap)
+      }
+    } else {
+      publishProgress.value = 60
+    }
+  
+    // 使用注释写入 meta 信息，避免出现在正文
+    const publishTags = buildTagsForPublish(processedContent)
+    let finalContent = applyMetaComment(processedContent, publishTags, authorName, authorUrl)
+    
+    // 生成文件名
+    const fileName = title.value
+      .toLowerCase()
+      .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+      .replace(/^-|-$/g, '')
+      + '.md'
+    
+    // 确保目标文件夹不以斜杠开头或结尾，并限制在语言根目录
+    const rootFolder = getRootFolder()
+    const cleanFolder = targetFolder.value.replace(/^\/+|\/+$/g, '')
+    if (!cleanFolder.startsWith(rootFolder) || cleanFolder.includes('..')) {
+      alert(props.lang === 'zh' 
+        ? `发布路径必须在 ${rootFolder} 目录下` 
+        : `Publish path must be under ${rootFolder}`)
+      return
+    }
+    const path = `${cleanFolder}/${fileName}`
+    
+    publishProgress.value = 80
+    
+    const result = await uploadFile(
+      { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+      path,
+      finalContent,
+      `Add article: ${title.value}`
+    )
+    
+    publishProgress.value = 100
+    
+    if (result.success) {
+      emit('published', result.url || '')
+      title.value = ''
+      content.value = ''
+      images.value = []
+      localStorage.removeItem('sakura_draft')
+      alert(props.lang === 'zh' ? '发布成功！' : 'Published successfully!')
+    } else {
+      alert(`${props.lang === 'zh' ? '发布失败' : 'Publish failed'}: ${result.message}`)
+    }
+  } catch (e: any) {
+    alert(`${props.lang === 'zh' ? '发布出错' : 'Publish error'}: ${e.message || e}`)
+  } finally {
+    isPublishing.value = false
+    publishProgress.value = 0
+  }
+}
+
+const triggerMarkdownFiles = () => markdownFileInput.value?.click()
+const triggerMarkdownFolder = () => markdownFolderInput.value?.click()
+
+const handleMarkdownFiles = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  await openImportModal(Array.from(input.files), 'file')
+  input.value = ''
+}
+
+const handleMarkdownFolder = async (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (!input.files?.length) return
+  await openImportModal(Array.from(input.files), 'folder')
+  input.value = ''
+}
+
+function getFileRelPath(file: File, mode: 'file' | 'folder') {
+  const rel = (mode === 'folder' && (file as any).webkitRelativePath)
+    ? (file as any).webkitRelativePath
+    : file.name
+  return rel || file.name
+}
+
+function normalizePath(raw: string) {
+  const cleaned = raw.replace(/\\/g, '/').replace(/^\/+/, '')
+  const parts = cleaned.split('/').filter(Boolean)
+  const stack: string[] = []
+  for (const part of parts) {
+    if (part === '.') continue
+    if (part === '..') stack.pop()
+    else stack.push(part)
+  }
+  return stack.join('/')
+}
+
+const prepareImportPreview = async (relPath: string) => {
+  const item = importMdFiles.value.find((m: { relPath: string }) => m.relPath === relPath)
+  if (!item) {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+    importMissingImages.value = 0
+    return
+  }
+
+  const rawText = await item.file.text()
+  const token = getToken()
+  if (!token) {
+    importPreviewContent.value = rawText
+    importPreviewStatus.value = props.lang === 'zh' ? '未配置 Token，无法上传图片' : 'Token missing, image upload skipped'
+    importMissingImages.value = 0
+    return
+  }
+
+  importPreviewStatus.value = props.lang === 'zh' ? '图片上传中...' : 'Uploading images...'
+
+  const imageFiles = importFiles.value.filter((f: File) => /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name))
+  const imageMap = new Map<string, File>()
+  const imageNameMap = new Map<string, File>()
+  for (const file of imageFiles) {
+    const rel = normalizePath(getFileRelPath(file, importMode.value))
+    imageMap.set(rel, file)
+    imageMap.set(encodeURI(rel), file)
+    imageMap.set(safeDecode(rel), file)
+    imageNameMap.set(file.name, file)
+    imageNameMap.set(encodeURI(file.name), file)
+    imageNameMap.set(safeDecode(file.name), file)
+  }
+
+  const imageRefs = extractImagePaths(rawText)
+  const localImageRefs = new Set<string>()
+  const localImageRefToFile = new Map<string, File | null>() // 记录引用到文件的映射
+  
+  for (const raw of imageRefs) {
+    const { path } = normalizeImageToken(raw)
+    if (!path || isDataOrLocalToken(path) || isHttpUrl(path)) continue
+    
+    // 获取所有可能的路径变体
+    const variants = getImagePathVariants(path, relPath)
+    let matchedFile: File | null = null
+    let matchedKey = path
+    
+    // 尝试在 imageMap 和 imageNameMap 中查找匹配
+    for (const variant of variants) {
+      if (imageMap.has(variant)) {
+        matchedFile = imageMap.get(variant)!
+        matchedKey = variant
+        break
+      }
+      if (imageNameMap.has(variant)) {
+        matchedFile = imageNameMap.get(variant)!
+        matchedKey = variant
+        break
+      }
+    }
+    
+    // 无论是否找到文件，都记录这个本地图片引用（用原始路径作为 key）
+    localImageRefs.add(path)
+    localImageRefToFile.set(path, matchedFile)
+  }
+
+  const total = localImageRefs.size
+  if (total === 0) {
+    importPreviewContent.value = rawText
+    importPreviewStatus.value = props.lang === 'zh' ? '无本地图片' : 'No local images'
+    importMissingImages.value = 0
+    return
+  }
+
+  const imageUrlMap = new Map<string, string>()
+  let success = 0
+  let failed = 0
+  let notFound = 0
+
+  for (const ref of localImageRefs) {
+    const cached = getCachedImageUrl(ref, importImageUrlCache.value)
+    if (cached) {
+      imageUrlMap.set(ref, cached)
+      setCacheForKey(ref, cached, importImageUrlCache.value)
+      success += 1
+      continue
+    }
+
+    // 优先使用之前匹配到的文件
+    let file = localImageRefToFile.get(ref)
+    
+    // 如果没有匹配到，再尝试其他方式查找
+    if (!file) {
+      const variants = getImagePathVariants(ref, relPath)
+      for (const variant of variants) {
+        file = imageMap.get(variant) || imageNameMap.get(variant)
+        if (file) break
+      }
+    }
+
+    if (!file) {
+      notFound += 1
+      // 记录未找到的图片，方便调试
+      console.warn(`[WriteEditor] Image not found in import files: ${ref}`)
+      continue
+    }
+
+    const url = await uploadImage(
+      { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+      file,
+      'notes/images'
+    )
+    if (url) {
+      imageUrlMap.set(ref, url)
+      setCacheForKey(ref, url, importImageUrlCache.value)
+      success += 1
+    } else {
+      failed += 1
+    }
+  }
+
+  const replaced = imageUrlMap.size > 0
+    ? replaceLocalImages(rawText, relPath, imageUrlMap)
+    : rawText
+
+  importPreviewContent.value = replaced
+  importMissingImages.value = notFound
+  
+  // 更详细的状态信息
+  if (notFound > 0) {
+    importPreviewStatus.value = props.lang === 'zh'
+      ? `检测到 ${total} 张本地图片，${notFound} 张未在导入文件夹中找到`
+      : `Found ${total} local images, ${notFound} not in imported folder`
+  } else if (failed === 0) {
+    importPreviewStatus.value = props.lang === 'zh'
+      ? `图片上传成功：${success}/${total}`
+      : `Images uploaded: ${success}/${total}`
   } else {
-    alert(`${props.lang === 'zh' ? '发布失败' : 'Publish failed'}: ${result.message}`)
+    importPreviewStatus.value = props.lang === 'zh'
+      ? `图片上传：${success}/${total} 成功，${failed} 失败`
+      : `Images: ${success}/${total} ok, ${failed} failed`
+  }
+}
+
+const openImportModal = async (files: File[], mode: 'file' | 'folder') => {
+  importFiles.value = files
+  importMode.value = mode
+  const mdList = importMdFiles.value
+  if (!mdList.length) {
+    alert(props.lang === 'zh' ? '未检测到 Markdown 文件' : 'No Markdown files found')
+    return
+  }
+  importSelected.value = mdList.map((m: { relPath: string }) => m.relPath)
+  importPreviewPath.value = mdList[0]?.relPath || ''
+  if (importPreviewPath.value) {
+    await prepareImportPreview(importPreviewPath.value)
+  } else {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+  }
+
+  const savedTags = localStorage.getItem(`publish_tags_${props.lang}`)
+  if (savedTags) {
+    try {
+      const tags = JSON.parse(savedTags)
+      importTags.value = Array.isArray(tags) ? tags.slice(0, 5) : []
+    } catch {
+      importTags.value = []
+    }
+  } else {
+    importTags.value = []
+  }
+
+  importAuthorName.value = localStorage.getItem('author_name') || ''
+  importAuthorUrl.value = localStorage.getItem('author_url') || ''
+  importProgress.value = 0
+  importError.value = ''
+  importMissingImages.value = 0
+  showImportModal.value = true
+}
+
+const closeImportModal = () => {
+  if (isImporting.value) return
+  showImportModal.value = false
+  importMissingImages.value = 0
+}
+
+const selectAllImport = () => {
+  importSelected.value = importMdFiles.value.map((m: { relPath: string }) => m.relPath)
+}
+
+const clearImportSelection = () => {
+  importSelected.value = []
+}
+
+function isHttpUrl(p: string) {
+  return /^https?:\/\//i.test(p) || p.startsWith('//')
+}
+
+function isDataOrLocalToken(p: string) {
+  return p.startsWith('data:') || p.startsWith('local-image:')
+}
+
+function extractImagePaths(text: string) {
+  const paths: string[] = []
+  for (const match of text.matchAll(/!\[[^\]]*\]\(([^)]+)\)/g)) {
+    paths.push(match[1])
+  }
+  for (const match of text.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)) {
+    paths.push(match[1])
+  }
+  return paths
+}
+
+function safeDecode(value: string) {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+function normalizeImageToken(raw: string) {
+  let cleaned = raw.trim()
+  if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+    cleaned = cleaned.slice(1, -1)
+  }
+  const [pathPart, ...rest] = cleaned.split(/\s+/)
+  return { path: safeDecode(pathPart), tail: rest.join(' ') }
+}
+
+function resolveImagePath(mdRelPath: string, imgPath: string) {
+  if (!imgPath || isHttpUrl(imgPath) || isDataOrLocalToken(imgPath)) return null
+  const decoded = safeDecode(imgPath)
+  if (decoded.startsWith('/')) return null
+  const mdDir = mdRelPath.split('/').slice(0, -1)
+  const parts = decoded.split('/')
+  const stack = [...mdDir]
+  for (const part of parts) {
+    if (!part || part === '.') continue
+    if (part === '..') stack.pop()
+    else stack.push(part)
+  }
+  return normalizePath(stack.join('/'))
+}
+
+// 获取图片路径的所有可能变体（用于匹配）
+function getImagePathVariants(imgPath: string, mdRelPath?: string): string[] {
+  const decoded = safeDecode(imgPath)
+  const encoded = encodeURI(decoded)
+  const basename = getImageBasename(imgPath)
+  const variants = [imgPath, decoded, encoded]
+  if (basename) {
+    variants.push(basename, safeDecode(basename), encodeURI(basename))
+  }
+  // 如果有 md 相对路径，也尝试解析
+  if (mdRelPath) {
+    const resolved = resolveImagePath(mdRelPath, imgPath)
+    if (resolved) {
+      variants.push(resolved, safeDecode(resolved), encodeURI(resolved))
+    }
+  }
+  // 对于 ../xxx 路径，提取去掉 ../ 后的部分
+  const cleanedPath = decoded.replace(/^\.\.\/+/g, '')
+  if (cleanedPath !== decoded) {
+    variants.push(cleanedPath, safeDecode(cleanedPath), encodeURI(cleanedPath))
+    const cleanedBase = getImageBasename(cleanedPath)
+    if (cleanedBase) variants.push(cleanedBase)
+  }
+  return [...new Set(variants)]
+}
+
+function getImageBasename(p: string) {
+  const cleaned = safeDecode(p).split('?')[0].split('#')[0]
+  const parts = cleaned.split('/')
+  return parts[parts.length - 1] || ''
+}
+
+function getCachedImageUrl(key: string, cache: Map<string, string>) {
+  const candidates = [key, safeDecode(key), encodeURI(key)]
+  const base = getImageBasename(key)
+  if (base) candidates.push(base)
+  return candidates.map(k => cache.get(k)).find(Boolean) || null
+}
+
+function setCacheForKey(key: string, url: string, cache: Map<string, string>) {
+  const candidates = [key, safeDecode(key), encodeURI(key)]
+  const base = getImageBasename(key)
+  if (base) candidates.push(base)
+  for (const c of candidates) {
+    cache.set(c, url)
+  }
+}
+
+function getImageKeyCandidates(mdRelPath: string, raw: string) {
+  const { path } = normalizeImageToken(raw)
+  // 使用更全面的变体匹配
+  return getImagePathVariants(path, mdRelPath)
+}
+
+function replaceLocalImages(text: string, mdRelPath: string, urlMap: Map<string, string>) {
+  const replacePath = (raw: string) => {
+    const { path, tail } = normalizeImageToken(raw)
+    // 使用新的全面变体匹配
+    const candidates = getImagePathVariants(path, mdRelPath)
+    const matched = candidates.find(key => urlMap.has(key))
+    if (matched) {
+      const url = urlMap.get(matched) as string
+      return tail ? `${url} ${tail}` : url
+    }
+    return raw
+  }
+
+  let output = text.replace(/!\[[^\]]*\]\(([^)]+)\)/g, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  output = output.replace(/<img[^>]+src=["']([^"']+)["']/gi, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  return output
+}
+
+function replaceImagesByUrlMap(text: string, urlMap: Map<string, string>) {
+  const replacePath = (raw: string) => {
+    const { path, tail } = normalizeImageToken(raw)
+    // 使用全面的变体匹配
+    const candidates = getImagePathVariants(path)
+    const matched = candidates.find(key => urlMap.has(key))
+    if (matched) {
+      const url = urlMap.get(matched) as string
+      return tail ? `${url} ${tail}` : url
+    }
+    return raw
+  }
+
+  let output = text.replace(/!\[[^\]]*\]\(([^)]+)\)/g, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  output = output.replace(/<img[^>]+src=["']([^"']+)["']/gi, (match, p1) => {
+    const next = replacePath(p1)
+    return match.replace(p1, next)
+  })
+  return output
+}
+
+const buildTagsForImport = (text: string, baseTags: string[]) => {
+  const existing = parseMetaComment(text).tags
+  const merged = [...baseTags, ...existing.filter(t => !baseTags.includes(t))]
+  return merged.slice(0, 5)
+}
+
+const publishImportedFiles = async () => {
+  const token = getToken()
+  if (!token) {
+    alert(props.lang === 'zh' ? '请先在设置中配置 GitHub Token' : 'Please configure GitHub Token in Settings')
+    return
+  }
+
+  const rootFolder = getRootFolder()
+  const cleanFolder = targetFolder.value.replace(/^\/+|\/+$/g, '')
+  if (!cleanFolder.startsWith(rootFolder) || cleanFolder.includes('..')) {
+    alert(props.lang === 'zh'
+      ? `发布路径必须在 ${rootFolder} 目录下`
+      : `Publish path must be under ${rootFolder}`)
+    return
+  }
+
+  const selectedItems = importMdFiles.value.filter((m: { relPath: string }) => importSelected.value.includes(m.relPath))
+  if (!selectedItems.length) {
+    alert(props.lang === 'zh' ? '请先选择要上传的文件' : 'Please select files to upload')
+    return
+  }
+
+  localStorage.setItem(`publish_tags_${props.lang}`, JSON.stringify(importTags.value))
+  localStorage.setItem('author_name', importAuthorName.value)
+  localStorage.setItem('author_url', importAuthorUrl.value)
+
+  isImporting.value = true
+  importProgress.value = 0
+  importError.value = ''
+
+  try {
+    const imageFiles = importFiles.value.filter((f: File) => /\.(png|jpe?g|gif|webp|svg)$/i.test(f.name))
+    const imageMap = new Map<string, File>()
+    const imageNameMap = new Map<string, File>()
+    for (const file of imageFiles) {
+      const rel = normalizePath(getFileRelPath(file, importMode.value))
+      imageMap.set(rel, file)
+      imageMap.set(encodeURI(rel), file)
+      imageMap.set(safeDecode(rel), file)
+      imageNameMap.set(file.name, file)
+      imageNameMap.set(encodeURI(file.name), file)
+      imageNameMap.set(safeDecode(file.name), file)
+    }
+
+    const contentMap = new Map<string, string>()
+    const localImageRefs = new Set<string>()
+    const imageRefToFile = new Map<string, File | null>() // 记录原始路径到文件的映射
+
+    for (const item of selectedItems) {
+      const text = await item.file.text()
+      contentMap.set(item.relPath, text)
+      const paths = extractImagePaths(text)
+      for (const raw of paths) {
+        const { path } = normalizeImageToken(raw)
+        if (!path || isDataOrLocalToken(path) || isHttpUrl(path)) continue
+        
+        // 获取所有可能的路径变体
+        const variants = getImagePathVariants(path, item.relPath)
+        let matchedFile: File | null = null
+        
+        for (const variant of variants) {
+          if (imageMap.has(variant)) {
+            matchedFile = imageMap.get(variant)!
+            break
+          }
+          if (imageNameMap.has(variant)) {
+            matchedFile = imageNameMap.get(variant)!
+            break
+          }
+        }
+        
+        // 记录本地图片引用及其对应的文件（可能为 null）
+        localImageRefs.add(path)
+        if (matchedFile) {
+          imageRefToFile.set(path, matchedFile)
+        }
+      }
+    }
+
+    const missingRefs = Array.from(localImageRefs).filter(ref => !imageRefToFile.get(ref))
+    if (missingRefs.length > 0) {
+      importMissingImages.value = missingRefs.length
+      alert(props.lang === 'zh'
+        ? `检测到 ${missingRefs.length} 张本地图片未在导入文件夹内，请补齐后再上传。`
+        : `Found ${missingRefs.length} local images missing from the imported folder. Please include them before uploading.`)
+      return
+    }
+
+    const totalSteps = localImageRefs.size + selectedItems.length
+    let step = 0
+
+    const imageUrlMap = new Map<string, string>()
+    const imageFolder = 'notes/images'
+    for (const imgPath of localImageRefs) {
+      const cached = getCachedImageUrl(imgPath, importImageUrlCache.value)
+      if (cached) {
+        imageUrlMap.set(imgPath, cached)
+        setCacheForKey(imgPath, cached, importImageUrlCache.value)
+        step += 1
+        importProgress.value = Math.round((step / totalSteps) * 100)
+        continue
+      }
+
+      // 优先使用之前匹配到的文件
+      let file = imageRefToFile.get(imgPath)
+      
+      // 如果没有匹配到，再尝试其他方式查找
+      if (!file) {
+        const variants = getImagePathVariants(imgPath)
+        for (const variant of variants) {
+          file = imageMap.get(variant) || imageNameMap.get(variant)
+          if (file) break
+        }
+      }
+      
+      if (!file) {
+        console.warn(`[WriteEditor] Image not found for upload: ${imgPath}`)
+        step += 1
+        importProgress.value = Math.round((step / totalSteps) * 100)
+        continue
+      }
+      const url = await uploadImage(
+        { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+        file,
+        imageFolder
+      )
+      if (url) {
+        imageUrlMap.set(imgPath, url)
+        // 同时设置所有可能的变体
+        const variants = getImagePathVariants(imgPath)
+        for (const v of variants) {
+          imageUrlMap.set(v, url)
+        }
+        setCacheForKey(imgPath, url, importImageUrlCache.value)
+      }
+      step += 1
+      importProgress.value = Math.round((step / totalSteps) * 100)
+    }
+
+    for (const item of selectedItems) {
+      let finalContent = contentMap.get(item.relPath) || ''
+      finalContent = replaceLocalImages(finalContent, item.relPath, imageUrlMap)
+      const tags = buildTagsForImport(finalContent, importTags.value)
+      finalContent = applyMetaComment(finalContent, tags, importAuthorName.value, importAuthorUrl.value)
+
+      const path = `${cleanFolder}/${item.relPath}`
+      await uploadFile(
+        { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+        path,
+        finalContent,
+        `Import article: ${item.relPath}`
+      )
+
+      step += 1
+      importProgress.value = Math.round((step / totalSteps) * 100)
+    }
+
+    alert(props.lang === 'zh' ? '导入完成！' : 'Import completed!')
+    showImportModal.value = false
+  } catch (e: any) {
+    importError.value = e?.message || String(e)
+    alert(`${props.lang === 'zh' ? '导入失败' : 'Import failed'}: ${importError.value}`)
+  } finally {
+    isImporting.value = false
+    importProgress.value = 0
+  }
+}
+
+const uploadMarkdownFiles = async (files: File[], mode: 'file' | 'folder' = 'file') => {
+  const token = getToken()
+  if (!token) {
+    alert(props.lang === 'zh' ? '请先在设置中配置 GitHub Token' : 'Please configure GitHub Token in Settings')
+    return
+  }
+
+  const rootFolder = getRootFolder()
+  const cleanFolder = targetFolder.value.replace(/^\/+|\/+$/g, '')
+  if (!cleanFolder.startsWith(rootFolder) || cleanFolder.includes('..')) {
+    alert(props.lang === 'zh' 
+      ? `发布路径必须在 ${rootFolder} 目录下` 
+      : `Publish path must be under ${rootFolder}`)
+    return
+  }
+
+  const mdFiles = files.filter(f => /\.md|\.markdown$/i.test(f.name))
+  if (!mdFiles.length) {
+    alert(props.lang === 'zh' ? '未检测到 Markdown 文件' : 'No Markdown files found')
+    return
+  }
+
+  isPublishing.value = true
+  publishProgress.value = 10
+
+  try {
+    const total = mdFiles.length
+    for (let i = 0; i < total; i++) {
+      const file = mdFiles[i]
+      const relPath = (mode === 'folder' && (file as any).webkitRelativePath)
+        ? (file as any).webkitRelativePath
+        : file.name
+
+      const normalizedRel = relPath.replace(/^\/+/, '')
+      const contentText = await file.text()
+      const authorName = localStorage.getItem('author_name') || ''
+      const authorUrl = localStorage.getItem('author_url') || ''
+      const relFolder = normalizedRel.split('/').slice(0, -1).join('/')
+      const publishTags = buildTagsForPublish(contentText)
+      const finalContent = applyMetaComment(contentText, publishTags, authorName, authorUrl)
+
+      const path = `${cleanFolder}/${normalizedRel}`
+      await uploadFile(
+        { owner: repoOwner.value, repo: repoName.value, branch: 'main', token },
+        path,
+        finalContent,
+        `Add article: ${file.name}`
+      )
+
+      publishProgress.value = 10 + Math.round(((i + 1) / total) * 90)
+    }
+
+    alert(props.lang === 'zh' ? '批量上传完成' : 'Batch upload completed')
+  } catch (e: any) {
+    alert(`${props.lang === 'zh' ? '上传出错' : 'Upload error'}: ${e.message || e}`)
+  } finally {
+    isPublishing.value = false
+    publishProgress.value = 0
   }
 }
 
@@ -516,9 +1528,60 @@ onMounted(() => {
   loadDraft()
   repoOwner.value = localStorage.getItem('github_repo_owner') || 'soft-zihan'
   repoName.value = localStorage.getItem('github_repo_name') || 'soft-zihan.github.io'
-  authorName.value = localStorage.getItem('author_name') || ''
-  tokenValue.value = getToken() || '' // 初始化 token 状态
-  tokenInput.value = tokenValue.value // 预填充 token 输入框
+
+  const savedTags = localStorage.getItem(`publish_tags_${props.lang}`)
+  if (savedTags) {
+    try {
+      const tags = JSON.parse(savedTags)
+      publishTags.value = Array.isArray(tags) ? tags.slice(0, 5) : []
+    } catch {}
+  }
+  
+  // 加载自定义文件夹
+  (['zh', 'en'] as Array<'zh' | 'en'>).forEach((langKey: 'zh' | 'en') => {
+    const customFolders = localStorage.getItem(`custom_folders_${langKey}`)
+    if (customFolders) {
+      try {
+        const folders = JSON.parse(customFolders)
+        customFoldersByLang.value[langKey] = Array.isArray(folders) ? folders : []
+      } catch {}
+    }
+  })
+
+  const rootFolder = getRootFolder()
+  if (!targetFolder.value.startsWith(rootFolder)) {
+    targetFolder.value = rootFolder
+  }
+  pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
+})
+
+watch(() => props.lang, () => {
+  const rootFolder = getRootFolder()
+  if (!targetFolder.value.startsWith(rootFolder)) {
+    targetFolder.value = rootFolder
+  }
+  pathSuffix.value = targetFolder.value.replace(rootFolder, '').replace(/^\/+/, '')
+
+  const savedTags = localStorage.getItem(`publish_tags_${props.lang}`)
+  if (savedTags) {
+    try {
+      const tags = JSON.parse(savedTags)
+      publishTags.value = Array.isArray(tags) ? tags.slice(0, 5) : []
+    } catch {}
+  } else {
+    publishTags.value = []
+  }
+})
+
+watch(pathSuffix, () => syncTargetFolder())
+
+watch(importPreviewPath, async () => {
+  if (!importPreviewPath.value) {
+    importPreviewContent.value = ''
+    importPreviewStatus.value = ''
+    return
+  }
+  await prepareImportPreview(importPreviewPath.value)
 })
 </script>
 
