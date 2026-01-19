@@ -103,7 +103,7 @@
             v-show="viewMode === 'preview'" 
             ref="sandboxIframe"
             class="w-full h-full border-none bg-white"
-            sandbox="allow-scripts" 
+            sandbox="allow-same-origin" 
          ></iframe>
       </div>
 
@@ -325,5 +325,9 @@ const NodeTree = (props: { node: DomNode }) => {
 
 onMounted(() => {
     parseHtml();
+    // 确保初始渲染
+    nextTick(() => {
+        updateIframe();
+    });
 });
 </script>
