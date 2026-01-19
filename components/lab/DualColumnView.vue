@@ -1,10 +1,21 @@
 <template>
-  <!-- 双栏阅读：占据整个可用空间，不受边栏影响 -->
-  <div class="fixed inset-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md flex flex-col">
+  <!-- 双栏阅读：完全全屏覆盖，z-50确保在所有元素之上 -->
+  <div class="fixed inset-0 z-50 bg-white dark:bg-gray-900 flex flex-col">
     <!-- Top Control Bar with toggle buttons -->
-    <div class="flex items-center justify-between p-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm">
-      <!-- Left Panel Selector (放在左边) -->
-      <div class="flex items-center gap-2">
+    <div class="flex items-center justify-between p-3 bg-white/95 dark:bg-gray-800/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-700 shadow-sm">
+      <!-- Left: Exit Button + Left Panel Selector -->
+      <div class="flex items-center gap-3">
+        <!-- Exit Button -->
+        <button 
+          @click="emit('close')"
+          class="p-2 rounded-lg transition-colors bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30"
+          :title="isZh ? '退出双栏阅读' : 'Exit Dual Column'"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        
         <span class="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">{{ isZh ? '左栏' : 'Left' }}:</span>
         <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
           <button 
@@ -21,13 +32,13 @@
         </div>
       </div>
       
-      <!-- Title -->
+      <!-- Center: Title -->
       <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
         <span>📖</span>
         {{ isZh ? '双栏阅读' : 'Dual Column Reading' }}
       </h3>
       
-      <!-- Right Panel Selector (放在右边) -->
+      <!-- Right: Right Panel Selector -->
       <div class="flex items-center gap-2">
         <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-0.5">
           <button 
@@ -95,6 +106,7 @@ const emit = defineEmits<{
   (e: 'update:right-panel', value: 'notes' | 'lab' | 'source'): void
   (e: 'tab-change', tab: string): void
   (e: 'select-file', file: FileNode): void
+  (e: 'close'): void
 }>()
 
 const isZh = computed(() => props.lang === 'zh')

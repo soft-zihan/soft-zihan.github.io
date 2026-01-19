@@ -2,21 +2,24 @@
   <div class="h-full flex flex-col overflow-hidden">
     <!-- Notes Panel - With collapsible folder tree -->
     <template v-if="type === 'notes'">
-      <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
+      <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center gap-2">
+        <!-- Toggle folder tree button (在左边，和源码查看器一致) -->
+        <button 
+          @click="showFolderTree = !showFolderTree"
+          class="p-1.5 rounded-lg transition-colors flex-shrink-0"
+          :class="showFolderTree 
+            ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-400' 
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'"
+          :title="showFolderTree ? (isZh ? '收起目录' : 'Collapse') : (isZh ? '展开目录' : 'Expand')"
+        >
+          <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': !showFolderTree }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
         <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
           <span>📚</span>
           {{ isZh ? 'VUE学习笔记' : 'VUE Learning Notes' }}
         </h4>
-        <!-- Toggle folder tree button -->
-        <button 
-          @click="showFolderTree = !showFolderTree"
-          class="text-xs px-2 py-1 rounded-lg transition-colors"
-          :class="showFolderTree 
-            ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-400' 
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600'"
-        >
-          {{ showFolderTree ? '📁 ▼' : '📁 ▶' }}
-        </button>
       </div>
       
       <!-- Main content area with optional sidebar -->

@@ -159,6 +159,7 @@
               @update:right-panel="dualColumnRight = $event"
               @tab-change="handleLabTabChange"
               @select-file="openFile"
+              @close="dualColumnMode = false"
             />
           </div>
 

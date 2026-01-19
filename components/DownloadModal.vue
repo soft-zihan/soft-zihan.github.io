@@ -130,7 +130,10 @@
             <span>📚</span>
             {{ lang === 'zh' ? 'VUE笔记' : 'VUE Notes' }}
           </button>
-          
+        </div>
+        
+        <!-- Row 3: Source Code Downloads -->
+        <div class="flex gap-3">
           <button 
             @click="downloadSourceCode"
             :disabled="isDownloading"
@@ -138,7 +141,17 @@
             :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
           >
             <span>💻</span>
-            {{ lang === 'zh' ? '源码(含笔记)' : 'Source+Notes' }}
+            {{ lang === 'zh' ? '纯源码' : 'Source Only' }}
+          </button>
+          
+          <button 
+            @click="downloadSourceCodeWithNotesBtn"
+            :disabled="isDownloading"
+            class="flex-1 py-2.5 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/30"
+            :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
+          >
+            <span>📝</span>
+            {{ lang === 'zh' ? '源码+笔记' : 'Source+Notes' }}
           </button>
         </div>
       </div>
@@ -450,8 +463,14 @@ const sourceCodeFiles = [
   'scripts/generate-music.js', 'scripts/generate-wallpapers.js'
 ]
 
-// Download source code with embedded notes
-const downloadSourceCode = async () => {
+// Convert file path to raw file path format
+// e.g., "components/AppHeader.vue" -> "components_AppHeader.vue.txt"
+const toRawFilePath = (filePath: string): string => {
+  return filePath.replace(/\//g, '_') + '.txt'
+}
+
+// Download source code with optional embedded notes
+const downloadSourceCodeWithNotes = async (withNotes: boolean) => {
   if (isDownloading.value) return
   isDownloading.value = true
   downloadMessage.value = ''
@@ -460,45 +479,51 @@ const downloadSourceCode = async () => {
     const zip = new JSZip()
     let successCount = 0
     
-    // Load preset notes for embedding
+    // Load preset notes for embedding (only if withNotes is true)
     let presetNotes: Record<string, Array<{line: number, content: string}>> = {}
-    try {
-      const baseUrl = (import.meta as any).env?.BASE_URL || './'
-      const notesRes = await fetch(`${baseUrl}source-notes-preset.json`)
-      if (notesRes.ok) {
-        const data = await notesRes.json()
-        presetNotes = data.notes || {}
+    if (withNotes) {
+      try {
+        const baseUrl = (import.meta as any).env?.BASE_URL || './'
+        const notesRes = await fetch(`${baseUrl}source-notes-preset.json`)
+        if (notesRes.ok) {
+          const data = await notesRes.json()
+          presetNotes = data.notes || {}
+        }
+      } catch (e) {
+        console.warn('Failed to load preset notes:', e)
       }
-    } catch (e) {
-      console.warn('Failed to load preset notes:', e)
     }
     
     // Fetch and process source files
     for (const filePath of sourceCodeFiles) {
       try {
         const baseUrl = (import.meta as any).env?.BASE_URL || './'
-        const fetchUrl = `${baseUrl}raw/${filePath}`
+        // Use the correct raw file naming: components/AppHeader.vue -> components_AppHeader.vue.txt
+        const rawFileName = toRawFilePath(filePath)
+        const fetchUrl = `${baseUrl}raw/${rawFileName}`
         
         const res = await fetch(fetchUrl)
         if (res.ok) {
           let content = await res.text()
           
-          // Embed notes as comments if available
-          const fileNotes = presetNotes[filePath]
-          if (fileNotes && fileNotes.length > 0) {
-            const lines = content.split('\n')
-            const ext = filePath.split('.').pop()?.toLowerCase()
-            const commentStyle = getCommentStyle(ext || '')
-            
-            // Insert notes from bottom to top to preserve line numbers
-            const sortedNotes = [...fileNotes].sort((a, b) => b.line - a.line)
-            for (const note of sortedNotes) {
-              if (note.line > 0 && note.line <= lines.length && note.content) {
-                const commentedNote = formatNoteAsComment(note.content, commentStyle)
-                lines.splice(note.line, 0, commentedNote)
+          // Embed notes as comments if available and withNotes is true
+          if (withNotes) {
+            const fileNotes = presetNotes[filePath]
+            if (fileNotes && fileNotes.length > 0) {
+              const lines = content.split('\n')
+              const ext = filePath.split('.').pop()?.toLowerCase()
+              const commentStyle = getCommentStyle(ext || '')
+              
+              // Insert notes from bottom to top to preserve line numbers
+              const sortedNotes = [...fileNotes].sort((a, b) => b.line - a.line)
+              for (const note of sortedNotes) {
+                if (note.line > 0 && note.line <= lines.length && note.content) {
+                  const commentedNote = formatNoteAsComment(note.content, commentStyle)
+                  lines.splice(note.line, 0, commentedNote)
+                }
               }
+              content = lines.join('\n')
             }
-            content = lines.join('\n')
           }
           
           zip.file(filePath, content)
@@ -521,7 +546,8 @@ const downloadSourceCode = async () => {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `sakura-notes-source-${new Date().toISOString().split('T')[0]}.zip`
+    const suffix = withNotes ? '-with-notes' : ''
+    a.download = `sakura-notes-source${suffix}-${new Date().toISOString().split('T')[0]}.zip`
     a.click()
     URL.revokeObjectURL(url)
     
@@ -536,6 +562,10 @@ const downloadSourceCode = async () => {
     setTimeout(() => { downloadMessage.value = '' }, 5000)
   }
 }
+
+// Wrapper functions for download buttons
+const downloadSourceCode = () => downloadSourceCodeWithNotes(false)
+const downloadSourceCodeWithNotesBtn = () => downloadSourceCodeWithNotes(true)
 
 // Get comment style based on file extension
 const getCommentStyle = (ext: string): { start: string, end: string, line: string } => {
