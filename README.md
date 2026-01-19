@@ -132,31 +132,44 @@ Visit [Sakura Notes](https://soft-zihan.github.io/) directly and click the Setti
 sakura-notes/
 ├── 📄 index.html          # HTML entry, includes Tailwind config
 ├── 📄 index.tsx           # Vue app mount entry
-├── 📄 App.vue             # Root component (~1150 lines), core logic
+├── 📄 App.vue             # Root component (~1350 lines), core logic
 ├── 📄 vite.config.ts      # Vite build configuration
 ├── 📄 tsconfig.json       # TypeScript configuration
 ├── 📄 constants.ts        # i18n constants
 ├── 📄 types.ts            # Global type definitions
 │
 ├── 📁 components/         # Vue components
-│   ├── AppHeader.vue      # Top navigation
-│   ├── AppSidebar.vue     # Sidebar file navigation
-│   ├── FileTree.vue       # Recursive file tree component
-│   ├── FolderView.vue     # Folder content view
+│   ├── AppHeader.vue      # Top navigation bar
+│   ├── AppSidebar.vue     # Sidebar navigation with filters
+│   ├── ArticleCard.vue    # Article card component
+│   ├── FileTree.vue       # Recursive file tree
+│   ├── FolderView.vue     # Folder grid view
 │   ├── SettingsModal.vue  # Settings panel
 │   ├── WriteEditor.vue    # Publishing workbench
-│   ├── SearchModal.vue    # Full-text search
-│   ├── MusicPlayer.vue    # Music player
-│   ├── GiscusComments.vue # Giscus comments
-│   ├── PetalBackground.vue# Sakura background system
-│   ├── WallpaperLayer.vue # Wallpaper layer
+│   ├── SearchModal.vue    # Full-text search modal
+│   ├── DownloadModal.vue  # Batch download modal
+│   ├── MusicPlayer.vue    # Music player with lyrics
+│   ├── GlobalAudio.vue    # Global audio controller
+│   ├── GiscusComments.vue # Giscus comments integration
+│   ├── PetalBackground.vue# Sakura petal system
+│   ├── WallpaperLayer.vue # Dynamic wallpaper layer
+│   ├── BannerSettings.vue # Banner mode settings
 │   │
-│   ├── 📁 lab/            # Learning Lab
-│   │   ├── LabDashboard.vue      # Lab main panel
-│   │   ├── SourceCodeViewer.vue  # Source code viewer
-│   │   ├── 📁 stage1-foundation/ # Web Basics
-│   │   ├── 📁 stage2-js-basics/  # JS Basics
-│   │   └── ...                   # (Stages 3-8)
+│   ├── 📁 lab/            # Learning Lab system
+│   │   ├── LabDashboard.vue      # Lab main dashboard
+│   │   ├── SourceCodeViewer.vue  # Source code viewer with notes
+│   │   ├── DualColumnView.vue    # Dual-column reading view
+│   │   ├── PanelContent.vue      # Panel content renderer
+│   │   ├── SourceFileTree.vue    # Source file tree
+│   │   ├── LabProjectTour.vue    # Project tour guide
+│   │   ├── 📁 stage1-foundation/ # Web Basics components
+│   │   ├── 📁 stage2-js-basics/  # JS Basics components
+│   │   ├── 📁 stage3-css/        # CSS components
+│   │   ├── 📁 stage4-js-advanced/# Advanced JS components
+│   │   ├── 📁 stage5-engineering/# Engineering components
+│   │   ├── 📁 stage6-vue-core/   # Vue Core components
+│   │   ├── 📁 stage7-vue-advanced/# Vue Advanced components
+│   │   └── 📁 stage8-challenge/  # Challenge components
 │   │
 │   └── 📁 petal/          # Sakura effect system
 │       └── usePetals.ts   # Petal physics engine
@@ -165,33 +178,47 @@ sakura-notes/
 │   ├── useArticleMeta.ts  # Metadata extraction
 │   ├── useContentRenderer.ts # Markdown rendering
 │   ├── useGitHubPublish.ts# GitHub publishing (Fork+PR)
-│   ├── useBackup.ts       # Backup logic
-│   ├── useTokenSecurity.ts# Token encryption
+│   ├── useBackup.ts       # Backup/restore logic
+│   ├── useTokenSecurity.ts# Token AES encryption
+│   ├── useSearch.ts       # MiniSearch integration
+│   ├── useWallpapers.ts   # Wallpaper management
+│   ├── useLightbox.ts     # Image lightbox
+│   ├── useMarkdown.ts     # Markdown utilities
 │   └── ...
 │
 ├── 📁 stores/             # Pinia state management
-│   ├── appStore.ts        # Global settings
-│   ├── articleStore.ts    # Article interactions
-│   └── ...
+│   ├── appStore.ts        # Global app settings
+│   ├── articleStore.ts    # Article interactions (favorites, likes)
+│   ├── learningStore.ts   # Learning progress tracking
+│   ├── musicStore.ts      # Music player state
+│   └── index.ts           # Store exports
 │
 ├── 📁 notes/              # Markdown content
 │   ├── 📁 zh/             # Chinese notes
 │   ├── 📁 en/             # English notes
-│   └── ...
+│   ├── 📁 VUE学习笔记/     # VUE Learning notes (Chinese)
+│   └── 📁 VUE Learning/   # VUE Learning notes (English)
 │
 ├── 📁 public/             # Static assets
 │   ├── files.json         # File index (Auto-generated)
 │   ├── music.json         # Music list (Auto-generated)
-│   └── 📁 image/          # Images
+│   ├── wallpapers.json    # Wallpaper list (Auto-generated)
+│   ├── source-notes-preset.json # Preset source code notes
+│   ├── 📁 image/          # Images
+│   ├── 📁 music/          # Music files
+│   └── 📁 raw/            # Raw source files for viewer
 │
 └── 📁 scripts/            # Build scripts
     ├── generate-tree.js   # Generates file index
-    └── ...
+    ├── generate-raw.js    # Copies source for viewer
+    ├── generate-music.js  # Scans music folder
+    └── generate-wallpapers.js # Scans wallpaper folder
 ```
 
 ---
 
 ## 🏗️ Technical Architecture
+
 
 ### Core Tech Stack
 

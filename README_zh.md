@@ -132,7 +132,7 @@ npm run build
 sakura-notes/
 ├── 📄 index.html          # HTML 入口，包含 Tailwind 配置
 ├── 📄 index.tsx           # Vue 应用挂载入口
-├── 📄 App.vue             # 根组件 (~1150 行)，应用核心逻辑
+├── 📄 App.vue             # 根组件 (~1350 行)，应用核心逻辑
 ├── 📄 vite.config.ts      # Vite 构建配置
 ├── 📄 tsconfig.json       # TypeScript 配置
 ├── 📄 constants.ts        # i18n 国际化常量
@@ -140,53 +140,58 @@ sakura-notes/
 │
 ├── 📁 components/         # Vue 组件
 │   ├── AppHeader.vue      # 顶部导航栏
-│   ├── AppSidebar.vue     # 侧边栏文件导航
+│   ├── AppSidebar.vue     # 侧边栏（筛选/导航）
+│   ├── ArticleCard.vue    # 文章卡片组件
 │   ├── FileTree.vue       # 递归文件树组件
-│   ├── FolderView.vue     # 文件夹内容视图
+│   ├── FolderView.vue     # 文件夹网格视图
 │   ├── SettingsModal.vue  # 设置面板
 │   ├── WriteEditor.vue    # 发布工作台
-│   ├── SearchModal.vue    # 全文搜索
-│   ├── MusicPlayer.vue    # 音乐播放器
-│   ├── GiscusComments.vue # Giscus 评论
-│   ├── PetalBackground.vue# 樱花背景
-│   ├── WallpaperLayer.vue # 壁纸图层
+│   ├── SearchModal.vue    # 全文搜索模态框
+│   ├── DownloadModal.vue  # 批量下载模态框
+│   ├── MusicPlayer.vue    # 带歌词的音乐播放器
+│   ├── GlobalAudio.vue    # 全局音频控制器
+│   ├── GiscusComments.vue # Giscus 评论集成
+│   ├── PetalBackground.vue# 樱花花瓣系统
+│   ├── WallpaperLayer.vue # 动态壁纸图层
+│   ├── BannerSettings.vue # 横幅模式设置
 │   │
-│   ├── 📁 lab/            # 学习实验室
+│   ├── 📁 lab/            # 学习实验室系统
 │   │   ├── LabDashboard.vue      # 实验室主面板
-│   │   ├── SourceCodeViewer.vue  # 源码查看器
-│   │   ├── 📁 stage1-foundation/ # Web 基础
-│   │   ├── 📁 stage2-js-basics/  # JavaScript 基础
-│   │   ├── 📁 stage3-css/        # CSS 布局
-│   │   ├── 📁 stage4-js-advanced/# JavaScript 进阶
-│   │   ├── 📁 stage5-engineering/# 前端工程化
-│   │   ├── 📁 stage6-vue-core/   # Vue 3 核心
-│   │   ├── 📁 stage7-vue-advanced/# Vue 3 进阶
-│   │   └── 📁 stage8-challenge/  # 挑战关卡
+│   │   ├── SourceCodeViewer.vue  # 带笔记的源码查看器
+│   │   ├── DualColumnView.vue    # 双栏阅读视图
+│   │   ├── PanelContent.vue      # 面板内容渲染器
+│   │   ├── SourceFileTree.vue    # 源码文件树
+│   │   ├── LabProjectTour.vue    # 项目导览
+│   │   ├── 📁 stage1-foundation/ # Web 基础组件
+│   │   ├── 📁 stage2-js-basics/  # JS 基础组件
+│   │   ├── 📁 stage3-css/        # CSS 布局组件
+│   │   ├── 📁 stage4-js-advanced/# JS 进阶组件
+│   │   ├── 📁 stage5-engineering/# 工程化组件
+│   │   ├── 📁 stage6-vue-core/   # Vue 核心组件
+│   │   ├── 📁 stage7-vue-advanced/# Vue 进阶组件
+│   │   └── 📁 stage8-challenge/  # 挑战关卡组件
 │   │
 │   └── 📁 petal/          # 樱花效果系统
 │       └── usePetals.ts   # 花瓣物理引擎
 │
 ├── 📁 composables/        # Vue 3 组合式函数
 │   ├── useArticleMeta.ts  # 文章元数据提取
-│   ├── useCodeModal.ts    # 代码弹窗管理
 │   ├── useContentRenderer.ts # Markdown 渲染
-│   ├── useContentClick.ts # 链接拦截处理
-│   ├── useRawEditor.ts    # 源码编辑器
-│   ├── useSelectionMenu.ts# 文本选中菜单
-│   ├── useLightbox.ts     # 图片灯箱
-│   ├── useSearch.ts       # 全文搜索
-│   ├── useFile.ts         # 文件操作
 │   ├── useGitHubPublish.ts# GitHub 发布 (Fork+PR)
 │   ├── useBackup.ts       # 本地/云端备份
+│   ├── useTokenSecurity.ts# Token AES 加密
+│   ├── useSearch.ts       # MiniSearch 全文搜索
 │   ├── useWallpapers.ts   # 壁纸管理
-│   ├── useTokenSecurity.ts# Token 加密存储
-│   └── useMarkdown.ts     # Markdown 工具
+│   ├── useLightbox.ts     # 图片灯箱
+│   ├── useMarkdown.ts     # Markdown 工具
+│   └── ...
 │
 ├── 📁 stores/             # Pinia 状态管理
-│   ├── appStore.ts        # 全局设置状态
-│   ├── articleStore.ts    # 文章交互状态
+│   ├── appStore.ts        # 全局应用设置
+│   ├── articleStore.ts    # 文章交互（收藏/点赞）
+│   ├── learningStore.ts   # 学习进度追踪
 │   ├── musicStore.ts      # 音乐播放状态
-│   └── learningStore.ts   # 学习进度状态
+│   └── index.ts           # Store 导出
 │
 ├── 📁 notes/              # Markdown 笔记内容
 │   ├── 📁 zh/             # 中文笔记
@@ -198,14 +203,16 @@ sakura-notes/
 │   ├── files.json         # 文件索引（自动生成）
 │   ├── music.json         # 音乐列表（自动生成）
 │   ├── wallpapers.json    # 壁纸配置（自动生成）
+│   ├── source-notes-preset.json # 预置源码笔记
 │   ├── 📁 image/          # 图片资源
-│   └── 📁 music/          # 音乐文件
+│   ├── 📁 music/          # 音乐文件
+│   └── 📁 raw/            # 源码查看器用的原始文件
 │
 └── 📁 scripts/            # 构建脚本
     ├── generate-tree.js   # 生成文件索引
-    ├── generate-raw.js    # 生成源码文件
-    ├── generate-music.js  # 生成音乐列表
-    └── generate-wallpapers.js # 生成壁纸配置
+    ├── generate-raw.js    # 复制源码供查看器使用
+    ├── generate-music.js  # 扫描音乐文件夹
+    └── generate-wallpapers.js # 扫描壁纸文件夹
 ```
 
 ---

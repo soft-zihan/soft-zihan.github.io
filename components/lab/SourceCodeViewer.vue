@@ -1,13 +1,26 @@
 <template>
   <div class="flex h-full min-h-[600px] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl">
-    <!-- Left: File Tree -->
-    <div class="w-64 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50">
-      <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-        <h3 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-          <span>📁</span> {{ isZh ? '项目结构' : 'Project Structure' }}
+    <!-- Left: File Tree (collapsible in compact mode) -->
+    <div 
+      class="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50 transition-all duration-300"
+      :class="fileTreeVisible ? 'w-64' : (compact ? 'w-10' : 'w-64')"
+    >
+      <div class="p-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-between">
+        <h3 v-if="fileTreeVisible" class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+          <span>📁</span> {{ isZh ? '项目结构' : 'Project' }}
         </h3>
+        <button 
+          v-if="compact"
+          @click="fileTreeVisible = !fileTreeVisible"
+          class="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          :title="fileTreeVisible ? (isZh ? '收起' : 'Collapse') : (isZh ? '展开' : 'Expand')"
+        >
+          <svg class="w-4 h-4 text-gray-500 transition-transform" :class="{ 'rotate-180': !fileTreeVisible }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
       </div>
-      <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
+      <div v-if="fileTreeVisible" class="flex-1 overflow-y-auto custom-scrollbar p-2">
         <SourceFileTree 
           :nodes="projectTree" 
           :selected-path="selectedFile?.path"
@@ -35,7 +48,7 @@
             :class="showPresetNotes ? 'bg-cyan-500 text-white' : (isDark ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300')"
           >
             <span>💡</span>
-            {{ isZh ? '预置' : 'Preset' }}
+            {{ isZh ? '预置笔记' : 'Preset Notes' }}
           </button>
           <button 
             @click="showNotes = !showNotes"
@@ -43,7 +56,7 @@
             :class="showNotes ? 'bg-sakura-500 text-white' : (isDark ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300')"
           >
             <span>📝</span>
-            {{ isZh ? '笔记' : 'Notes' }}
+            {{ isZh ? '用户笔记' : 'User Notes' }}
           </button>
           <!-- Submit Notes to GitHub -->
           <button 
@@ -170,9 +183,9 @@
           </div>
         </div>
 
-        <!-- Right: Minimap -->
+        <!-- Right: Minimap (hidden in compact mode) -->
         <div 
-          v-if="selectedFile && fileContent && fileLines.length > 20"
+          v-if="!compact && selectedFile && fileContent && fileLines.length > 20"
           class="w-24 flex-shrink-0 bg-[#1e1e1e] border-l border-gray-700 overflow-hidden relative cursor-pointer"
           ref="minimapContainer"
           @click="handleMinimapClick"
@@ -296,9 +309,11 @@ interface FoldedState {
 
 const props = defineProps<{
   lang: 'en' | 'zh'
+  compact?: boolean // Compact mode for dual-column view: hide minimap, collapse file tree by default
 }>()
 
 const isZh = computed(() => props.lang === 'zh')
+const compact = computed(() => props.compact || false)
 
 // App Store for theme
 const appStore = useAppStore()
@@ -416,8 +431,17 @@ const projectTree = ref<SourceFile[]>([
 const selectedFile = ref<SourceFile | null>(null)
 const fileContent = ref<string>('')
 const showNotes = ref(true)
+// File tree visibility - controlled by compact prop, can be toggled in compact mode
+const fileTreeVisible = ref(true)
 const codeContainer = ref<HTMLElement | null>(null)
 const minimapContainer = ref<HTMLElement | null>(null)
+
+// Initialize fileTreeVisible based on compact mode
+watch(() => props.compact, (isCompact) => {
+  if (isCompact) {
+    fileTreeVisible.value = false
+  }
+}, { immediate: true })
 
 // Drag state
 const draggingNoteLine = ref<number | null>(null)

@@ -1,34 +1,22 @@
 <template>
   <div class="h-full flex flex-col overflow-hidden">
-    <!-- Notes Panel -->
+    <!-- Notes Panel - Simplified without left sidebar -->
     <template v-if="type === 'notes'">
       <div class="p-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex items-center justify-between">
         <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
           <span>📚</span>
           {{ isZh ? 'VUE学习笔记' : 'VUE Learning Notes' }}
         </h4>
+        <span class="text-xs text-gray-400 dark:text-gray-500">
+          {{ selectedNote ? selectedNote.name.replace('.md', '') : (isZh ? '请从边栏选择' : 'Select from sidebar') }}
+        </span>
       </div>
-      <div class="flex flex-1 overflow-hidden">
-        <!-- Note List -->
-        <div class="w-48 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 overflow-y-auto custom-scrollbar bg-gray-50 dark:bg-gray-800/50">
-          <div 
-            v-for="note in notesList" 
-            :key="note.path"
-            @click="emit('select-note', note)"
-            class="p-2 cursor-pointer border-b border-gray-100 dark:border-gray-700 transition-colors"
-            :class="selectedNote?.path === note.path 
-              ? 'bg-sakura-100 dark:bg-sakura-900/30 text-sakura-700 dark:text-sakura-300' 
-              : 'hover:bg-gray-100 dark:hover:bg-gray-700'"
-          >
-            <div class="text-xs font-medium truncate">{{ note.name.replace('.md', '') }}</div>
-          </div>
-        </div>
-        <!-- Note Content -->
-        <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
-          <div v-if="selectedNote && noteContent" v-html="renderedContent" class="markdown-body dark:text-gray-300 prose prose-sm max-w-none"></div>
-          <div v-else class="flex items-center justify-center h-full text-gray-400 text-sm">
-            {{ isZh ? '选择左侧笔记查看' : 'Select a note to view' }}
-          </div>
+      <!-- Note Content Only - No left sidebar, no right TOC -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar p-4">
+        <div v-if="selectedNote && noteContent" v-html="renderedContent" class="markdown-body dark:text-gray-300 prose prose-sm max-w-none"></div>
+        <div v-else class="flex items-center justify-center h-full text-gray-400 text-sm flex-col gap-4">
+          <span class="text-4xl">📚</span>
+          <span>{{ isZh ? '请从左侧边栏选择 VUE 学习笔记' : 'Select VUE note from sidebar' }}</span>
         </div>
       </div>
     </template>
@@ -47,7 +35,7 @@
     <!-- Source Code Panel -->
     <template v-else-if="type === 'source'">
       <div class="h-full">
-        <SourceCodeViewer :lang="lang" />
+        <SourceCodeViewer :lang="lang" :compact="true" />
       </div>
     </template>
   </div>

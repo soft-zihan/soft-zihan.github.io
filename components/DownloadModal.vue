@@ -91,33 +91,48 @@
       </div>
       
       <!-- Download Actions -->
-      <div class="flex gap-3">
-        <button 
-          @click="downloadNotes"
-          :disabled="isDownloading || filteredFiles.length === 0"
-          class="flex-1 py-3 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
-          :class="isDownloading || filteredFiles.length === 0 
-            ? 'border-gray-300 bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
-            : 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30'"
-        >
-          <span v-if="isDownloading" class="animate-spin">⏳</span>
-          <span v-else>📦</span>
-          {{ isDownloading 
-            ? (lang === 'zh' ? '打包中...' : 'Packaging...') 
-            : (lang === 'zh' ? `下载 ${filteredFiles.length} 个文件` : `Download ${filteredFiles.length} files`) 
-          }}
-        </button>
+      <div class="flex flex-col gap-3">
+        <!-- Row 1: Notes Download -->
+        <div class="flex gap-3">
+          <button 
+            @click="downloadNotes"
+            :disabled="isDownloading || filteredFiles.length === 0"
+            class="flex-1 py-3 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2"
+            :class="isDownloading || filteredFiles.length === 0 
+              ? 'border-gray-300 bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed' 
+              : 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30'"
+          >
+            <span v-if="isDownloading" class="animate-spin">⏳</span>
+            <span v-else>📦</span>
+            {{ isDownloading 
+              ? (lang === 'zh' ? '打包中...' : 'Packaging...') 
+              : (lang === 'zh' ? `下载 ${filteredFiles.length} 个文件` : `Download ${filteredFiles.length} files`) 
+            }}
+          </button>
+        </div>
         
-        <button 
-          @click="downloadVueNotes"
-          :disabled="isDownloading"
-          class="py-3 px-4 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30"
-          :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
-        >
-          <span v-if="isDownloading" class="animate-spin">⏳</span>
-          <span v-else>📚</span>
-          VUE
-        </button>
+        <!-- Row 2: Special Downloads -->
+        <div class="flex gap-3">
+          <button 
+            @click="downloadVueNotes"
+            :disabled="isDownloading"
+            class="flex-1 py-2.5 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+            :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
+          >
+            <span>📚</span>
+            {{ lang === 'zh' ? 'VUE笔记' : 'VUE Notes' }}
+          </button>
+          
+          <button 
+            @click="downloadSourceCode"
+            :disabled="isDownloading"
+            class="flex-1 py-2.5 border rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 border-cyan-500 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-100 dark:hover:bg-cyan-900/30"
+            :class="{ 'opacity-50 cursor-not-allowed': isDownloading }"
+          >
+            <span>💻</span>
+            {{ lang === 'zh' ? '源码(含笔记)' : 'Source+Notes' }}
+          </button>
+        </div>
       </div>
       
       <!-- Status Message -->
@@ -436,5 +451,148 @@ const downloadVueNotes = async () => {
     isDownloading.value = false
     setTimeout(() => { downloadMessage.value = '' }, 5000)
   }
+}
+
+// Source code file list (same as SourceCodeViewer)
+const sourceCodeFiles = [
+  'index.html', 'index.tsx', 'App.vue', 'constants.ts', 'types.ts', 
+  'vite.config.ts', 'package.json', 'tsconfig.json',
+  'components/AppHeader.vue', 'components/AppSidebar.vue', 'components/ArticleCard.vue',
+  'components/FileTree.vue', 'components/FolderView.vue', 'components/SearchModal.vue',
+  'components/SettingsModal.vue', 'components/WriteEditor.vue', 'components/MusicPlayer.vue',
+  'components/GiscusComments.vue', 'components/PetalBackground.vue', 'components/WallpaperLayer.vue',
+  'components/DownloadModal.vue', 'components/DownloadTreeNode.vue',
+  'components/lab/index.ts', 'components/lab/LabDashboard.vue', 
+  'components/lab/LabProjectTour.vue', 'components/lab/SourceCodeViewer.vue',
+  'components/lab/DualColumnView.vue', 'components/lab/PanelContent.vue',
+  'components/lab/SourceFileTree.vue',
+  'components/petal/usePetals.ts',
+  'composables/index.ts', 'composables/useArticleMeta.ts', 'composables/useBackup.ts',
+  'composables/useCodeModal.ts', 'composables/useContentClick.ts', 'composables/useContentRenderer.ts',
+  'composables/useFile.ts', 'composables/useGitHubPublish.ts', 'composables/useLightbox.ts',
+  'composables/useMarkdown.ts', 'composables/useRawEditor.ts', 'composables/useSearch.ts',
+  'composables/useSelectionMenu.ts', 'composables/useWallpapers.ts', 'composables/useTokenSecurity.ts',
+  'stores/index.ts', 'stores/appStore.ts', 'stores/articleStore.ts', 
+  'stores/learningStore.ts', 'stores/musicStore.ts',
+  'scripts/generate-tree.js', 'scripts/generate-raw.js', 
+  'scripts/generate-music.js', 'scripts/generate-wallpapers.js'
+]
+
+// Download source code with embedded notes
+const downloadSourceCode = async () => {
+  if (isDownloading.value) return
+  isDownloading.value = true
+  downloadMessage.value = ''
+  
+  try {
+    const zip = new JSZip()
+    let successCount = 0
+    
+    // Load preset notes for embedding
+    let presetNotes: Record<string, Array<{line: number, content: string}>> = {}
+    try {
+      const baseUrl = (import.meta as any).env?.BASE_URL || './'
+      const notesRes = await fetch(`${baseUrl}source-notes-preset.json`)
+      if (notesRes.ok) {
+        const data = await notesRes.json()
+        presetNotes = data.notes || {}
+      }
+    } catch (e) {
+      console.warn('Failed to load preset notes:', e)
+    }
+    
+    // Fetch and process source files
+    for (const filePath of sourceCodeFiles) {
+      try {
+        const baseUrl = (import.meta as any).env?.BASE_URL || './'
+        const fetchUrl = `${baseUrl}raw/${filePath}`
+        
+        const res = await fetch(fetchUrl)
+        if (res.ok) {
+          let content = await res.text()
+          
+          // Embed notes as comments if available
+          const fileNotes = presetNotes[filePath]
+          if (fileNotes && fileNotes.length > 0) {
+            const lines = content.split('\n')
+            const ext = filePath.split('.').pop()?.toLowerCase()
+            const commentStyle = getCommentStyle(ext || '')
+            
+            // Insert notes from bottom to top to preserve line numbers
+            const sortedNotes = [...fileNotes].sort((a, b) => b.line - a.line)
+            for (const note of sortedNotes) {
+              if (note.line > 0 && note.line <= lines.length && note.content) {
+                const commentedNote = formatNoteAsComment(note.content, commentStyle)
+                lines.splice(note.line, 0, commentedNote)
+              }
+            }
+            content = lines.join('\n')
+          }
+          
+          zip.file(filePath, content)
+          successCount++
+        } else {
+          console.warn('Failed to fetch source:', fetchUrl, res.status)
+        }
+      } catch (e) {
+        console.error('Failed to fetch source:', filePath, e)
+      }
+    }
+    
+    if (successCount === 0) {
+      downloadMessage.value = props.lang === 'zh' ? '没有成功获取任何文件' : 'Failed to fetch any files'
+      downloadSuccess.value = false
+      return
+    }
+    
+    const blob = await zip.generateAsync({ type: 'blob' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `sakura-notes-source-${new Date().toISOString().split('T')[0]}.zip`
+    a.click()
+    URL.revokeObjectURL(url)
+    
+    downloadMessage.value = `${props.lang === 'zh' ? '源码下载成功' : 'Source download success'}: ${successCount} ${props.lang === 'zh' ? '个文件' : 'files'}`
+    downloadSuccess.value = true
+  } catch (e) {
+    console.error('Download error:', e)
+    downloadMessage.value = props.lang === 'zh' ? '下载失败' : 'Download failed'
+    downloadSuccess.value = false
+  } finally {
+    isDownloading.value = false
+    setTimeout(() => { downloadMessage.value = '' }, 5000)
+  }
+}
+
+// Get comment style based on file extension
+const getCommentStyle = (ext: string): { start: string, end: string, line: string } => {
+  switch (ext) {
+    case 'html':
+    case 'vue':
+      return { start: '<!-- ', end: ' -->', line: '// ' }
+    case 'css':
+      return { start: '/* ', end: ' */', line: '// ' }
+    case 'ts':
+    case 'tsx':
+    case 'js':
+    case 'jsx':
+    case 'json':
+      return { start: '/* ', end: ' */', line: '// ' }
+    default:
+      return { start: '# ', end: '', line: '# ' }
+  }
+}
+
+// Format note content as comment
+const formatNoteAsComment = (content: string, style: { start: string, end: string, line: string }): string => {
+  const lines = content.split('\n')
+  if (lines.length === 1) {
+    return `${style.line}📝 [Note] ${content}`
+  }
+  return lines.map((line, i) => {
+    if (i === 0) return `${style.line}📝 [Note] ${line}`
+    return `${style.line}    ${line}`
+  }).join('\n')
 }
 </script>
