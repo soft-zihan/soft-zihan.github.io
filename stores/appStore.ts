@@ -34,7 +34,8 @@ export const useAppStore = defineStore('app', () => {
     fontFamily: 'sans' as 'sans' | 'serif',
     petalSpeed: 'slow' as 'off' | 'slow' | 'fast',
     bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide',
-    petalLayer: 'back' as 'front' | 'back'  // 樱花在文章前还是后，默认在后
+    petalLayer: 'back' as 'front' | 'back',
+    themeColor: 'sakura' as 'sakura' | 'violet' | 'cyan' | 'amber'
   })
   
   // UI State
@@ -102,6 +103,76 @@ export const useAppStore = defineStore('app', () => {
     currentWallpaperFilename.value = filename
   }
   
+  function applyThemeColor(color: 'sakura' | 'violet' | 'cyan' | 'amber') {
+    const palettes: Record<string, Record<string, string>> = {
+      sakura: {
+        50: '#fff0f5',
+        100: '#ffe4e9',
+        300: '#fda4b8',
+        400: '#fc7096',
+        500: '#f43f72',
+        600: '#e11d59',
+        700: '#be1245',
+        900: '#88133b'
+      },
+      violet: {
+        50: '#f5f3ff',
+        100: '#ede9fe',
+        300: '#c4b5fd',
+        400: '#a78bfa',
+        500: '#8b5cf6',
+        600: '#7c3aed',
+        700: '#6d28d9',
+        900: '#4c1d95'
+      },
+      cyan: {
+        50: '#ecfeff',
+        100: '#cffafe',
+        300: '#67e8f9',
+        400: '#22d3ee',
+        500: '#06b6d4',
+        600: '#0891b2',
+        700: '#0e7490',
+        900: '#164e63'
+      },
+      amber: {
+        50: '#fffbeb',
+        100: '#fef3c7',
+        300: '#fcd34d',
+        400: '#fbbf24',
+        500: '#f59e0b',
+        600: '#d97706',
+        700: '#b45309',
+        900: '#78350f'
+      }
+    }
+    const p = palettes[color]
+    const root = document.documentElement
+    root.style.setProperty('--primary-50', p[50])
+    root.style.setProperty('--primary-100', p[100])
+    root.style.setProperty('--primary-300', p[300])
+    root.style.setProperty('--primary-400', p[400])
+    root.style.setProperty('--primary-500', p[500])
+    root.style.setProperty('--primary-600', p[600])
+    root.style.setProperty('--primary-700', p[700])
+    root.style.setProperty('--primary-900', p[900])
+    const hexToRgba = (hex: string, alpha: number) => {
+      const h = hex.replace('#', '')
+      const r = parseInt(h.substring(0, 2), 16)
+      const g = parseInt(h.substring(2, 4), 16)
+      const b = parseInt(h.substring(4, 6), 16)
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`
+    }
+    root.style.setProperty('--primary-900-30', hexToRgba(p[900], 0.3))
+    root.style.setProperty('--primary-100-50', hexToRgba(p[100], 0.5))
+    root.setAttribute('data-theme-color', color)
+  }
+  
+  function setThemeColor(color: 'sakura' | 'violet' | 'cyan' | 'amber') {
+    userSettings.value.themeColor = color
+    applyThemeColor(color)
+  }
+  
   // Computed
   const fontSizeClass = computed(() => {
     switch (userSettings.value.fontSize) {
@@ -137,6 +208,8 @@ export const useAppStore = defineStore('app', () => {
     toggleSidebar,
     toggleReadingMode,
     setReadingMode,
+    applyThemeColor,
+    setThemeColor,
     // Computed
     fontSizeClass
   }

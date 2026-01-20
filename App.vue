@@ -5,7 +5,7 @@
   <!-- Global Audio Player -->
   <GlobalAudio />
 
-  <div class="flex flex-col md:flex-row w-full h-full max-w-[2560px] mx-auto overflow-hidden bg-white/30 dark:bg-gray-900/60 backdrop-blur-[2px] font-sans transition-colors duration-500 relative" :class="[appStore.userSettings.fontFamily === 'serif' ? 'font-serif' : 'font-sans', appStore.isDark ? 'dark' : '', readingMode ? 'reading-mode' : '']">
+  <div class="flex flex-col md:flex-row w-full h-full max-w-[2560px] mx-auto overflow-hidden bg-white/30 dark:bg-gray-900/60 backdrop-blur-[2px] font-sans transition-colors duration-500 relative" :class="[appStore.userSettings.fontFamily === 'serif' ? 'font-serif' : 'font-sans', appStore.isDark ? 'dark' : '']">
     
     <!-- Mobile Menu Button (repositioned to avoid overlap) -->
     <button 
@@ -49,6 +49,8 @@
       :current-tool="currentTool"
       :lab-tabs="labTabs"
       :active-lab-tab="labDashboardTab"
+      :get-article-views="getArticleViews"
+      :comment-counts="commentCounts"
       @toggle-lang="toggleLang"
       @reset="resetToHome"
       @select-tool="selectTool"
@@ -151,7 +153,6 @@
           v-if="currentFile || (viewMode === 'lab' && currentTool) || currentFolder" 
           id="scroll-container" 
           class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-4 md:p-6 lg:p-8 w-full"
-          :class="readingMode ? 'reading-scroll' : ''"
         >
           
           <!-- Lab Tool View (Unified Dashboard) -->
@@ -184,13 +185,14 @@
 
           <!-- Note Content View -->
           <div v-else-if="currentFile" 
-             class="w-full max-w-4xl xl:max-w-5xl mx-auto bg-white/80 dark:bg-gray-900/80 p-8 md:p-12 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-sakura-200/50 dark:border-gray-700 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
-             :class="[fontSizeClass, readingMode ? 'reading-article' : '']"
+             class="w-full max-w-4xl xl:max-w-5xl mx-auto bg-white/80 dark:bg-gray-900/80 p-8 md:p-12 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.12)] border min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
+             :class="fontSizeClass"
+             :style="articleContainerStyle"
           >
              <div v-if="contentLoading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-20 rounded-[2rem] backdrop-blur-sm">
                <div class="flex flex-col items-center gap-4">
                   <div class="animate-spin text-4xl">🌸</div>
-                  <div class="text-sm font-bold text-sakura-500 animate-pulse">Fetching Content...</div>
+                  <div class="text-sm font-bold animate-pulse" :style="loadingTextStyle">Fetching Content...</div>
                </div>
              </div>
 
@@ -200,12 +202,13 @@
                    <div class="flex flex-wrap items-center gap-3 flex-1">
                      <span v-if="currentAuthorName || currentAuthorUrl" class="text-sm text-gray-400 flex items-center gap-1">
                        <span>👤</span>
-                       <a
+                        <a
                          v-if="currentAuthorUrl"
                          :href="currentAuthorUrl"
                          target="_blank"
                          rel="noopener"
-                         class="text-sakura-600 dark:text-sakura-300 hover:underline"
+                         class="hover:underline"
+                         :style="authorLinkStyle"
                        >
                          {{ currentAuthorName || currentAuthorUrl }}
                        </a>
@@ -247,11 +250,12 @@
                    <span v-if="currentTags.length" class="text-xs text-gray-400 flex items-center gap-1">
                      🏷️
                      <span class="flex flex-wrap gap-1.5">
-                       <span
-                         v-for="tag in currentTags"
-                         :key="tag"
-                         class="text-[10px] px-2 py-0.5 rounded-full bg-sakura-100 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300"
-                       >
+                      <span
+                        v-for="tag in currentTags"
+                        :key="tag"
+                        class="text-[10px] px-2 py-0.5 rounded-full"
+                        :style="tagBadgeStyle"
+                      >
                          {{ tag }}
                        </span>
                      </span>
@@ -264,7 +268,7 @@
               v-if="!currentFile.isSource && !isRawMode"
               id="markdown-viewer"
               v-html="renderedHtml" 
-              class="markdown-body dark:text-gray-300 selection:bg-sakura-200 dark:selection:bg-sakura-900"
+              class="markdown-body dark:text-gray-300"
               @click="handleContentClickEvent"
               @mousedown="selectionMenuComposable.lockSelectionMenu()"
               @mouseup="handleSelectionEvent"
@@ -350,7 +354,7 @@
             </div>
 
             <!-- Contributors Section -->
-            <div v-if="currentContributors.length > 0" class="mt-8 pt-6 border-t border-sakura-100 dark:border-gray-700">
+            <div v-if="currentContributors.length > 0" class="mt-8 pt-6 border-t" :style="articleDividerStyle">
               <h3 class="text-sm font-bold text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-2">
                 <span>👥</span> {{ lang === 'zh' ? '贡献者' : 'Contributors' }}
               </h3>
@@ -361,7 +365,8 @@
                     :href="contributor.url"
                     target="_blank"
                     rel="noopener"
-                    class="text-sm px-3 py-1 rounded-full bg-sakura-50 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300 hover:bg-sakura-100 dark:hover:bg-sakura-900/50 transition-colors"
+                    class="text-sm px-3 py-1 rounded-full transition-colors hover:opacity-90"
+                    :style="contributorBadgeStyle"
                   >
                     {{ contributor.name }}
                   </a>
@@ -375,7 +380,7 @@
               </div>
             </div>
             
-            <div class="mt-12 pt-8 border-t border-sakura-100 dark:border-gray-700 flex justify-center text-xs text-sakura-300 dark:text-gray-500">
+            <div class="mt-12 pt-8 border-t flex justify-center text-xs" :style="articleFooterStyle">
               <span class="italic">Sakura Notes</span>
             </div>
 
@@ -408,14 +413,18 @@
           
           <!-- Table of Contents -->
           <div v-if="toc.length > 0">
-            <h3 class="text-xs font-bold text-sakura-600 dark:text-sakura-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <h3 class="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" :style="tocTitleStyle">
               <span>📑</span> {{ t.on_this_page }}
             </h3>
-            <nav class="space-y-1 relative border-l-2 border-sakura-100 dark:border-gray-700 pl-4">
+            <nav class="space-y-1 relative border-l-2 pl-4" :style="tocBorderStyle">
                <!-- Active Indicator -->
               <div 
-                class="absolute left-[-2px] w-[2px] bg-sakura-500 transition-all duration-300 shadow-[0_0_8px_rgba(244,63,114,0.6)]"
-                :style="{ top: activeIndicatorTop + 'px', height: '24px' }"
+                class="absolute left-[-2px] w-[2px] transition-all duration-300"
+                :style="{
+                  top: activeIndicatorTop + 'px',
+                  height: '24px',
+                  ...tocIndicatorStyle
+                }"
                 v-if="activeHeaderId"
               ></div>
               <a 
@@ -424,10 +433,11 @@
                 :href="`#${item.id}`"
                 class="block text-sm py-1.5 transition-all duration-200 leading-tight pr-2"
                 :class="[
-                  item.level === 1 ? 'font-bold mb-2 mt-4 text-sakura-800 dark:text-sakura-200' : 'font-normal',
+                  item.level === 1 ? 'font-bold mb-2 mt-4' : 'font-normal',
                   item.level > 1 ? `ml-${(item.level-1)*3} text-xs` : '',
-                  activeHeaderId === item.id ? 'text-sakura-600 dark:text-sakura-300 translate-x-1 font-medium scale-105 origin-left' : 'text-gray-500 dark:text-gray-500 hover:text-sakura-400'
+                  activeHeaderId === item.id ? 'translate-x-1 font-medium scale-105 origin-left' : ''
                 ]"
+                :style="getTocItemStyle(item)"
                 @click.prevent="scrollToHeader(item.id)"
               >
                 {{ item.text }}
@@ -437,7 +447,7 @@
 
           <!-- Decorative / Meta Info -->
           <div class="mt-auto bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-white/60 dark:border-gray-700 shadow-sm backdrop-blur-sm">
-             <div class="text-[10px] uppercase font-bold text-sakura-400 dark:text-gray-500 mb-2">{{ t.note_details }}</div>
+             <div class="text-[10px] uppercase font-bold mb-2" :style="tocMetaTitleStyle">{{ t.note_details }}</div>
              <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
                <div class="flex justify-between"><span>{{ t.words }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentWordCount }}</span></div>
                <div class="flex justify-between"><span>{{ t.lines }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentLineCount }}</span></div>
@@ -696,6 +706,64 @@ const fontSizeClass = computed(() => {
     default: return 'text-base lg:text-lg leading-loose';
   }
 });
+
+const articleContainerStyle = computed(() => ({
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
+}));
+
+const loadingTextStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-500)'
+}));
+
+const authorLinkStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)'
+}));
+
+const tagBadgeStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-100)',
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)'
+}));
+
+const articleDividerStyle = computed(() => ({
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
+}));
+
+const contributorBadgeStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)',
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)'
+}));
+
+const articleFooterStyle = computed(() => ({
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)',
+  color: appStore.isDark ? 'rgba(255,255,255,0.45)' : 'var(--primary-300)'
+}));
+
+const tocTitleStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)'
+}));
+
+const tocBorderStyle = computed(() => ({
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.1)' : 'var(--primary-100)'
+}));
+
+const tocIndicatorStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'var(--primary-400)' : 'var(--primary-500)',
+  boxShadow: `0 0 8px ${appStore.isDark ? 'var(--primary-400)' : 'var(--primary-500)'}`
+}));
+
+const tocMetaTitleStyle = computed(() => ({
+  color: appStore.isDark ? 'rgba(255,255,255,0.4)' : 'var(--primary-400)'
+}));
+
+const getTocItemStyle = (item: { id: string; level: number }) => {
+  if (activeHeaderId.value === item.id) {
+    return { color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)' };
+  }
+  if (item.level === 1) {
+    return { color: appStore.isDark ? 'var(--primary-200)' : 'var(--primary-700)' };
+  }
+  return { color: appStore.isDark ? 'rgba(255,255,255,0.55)' : 'var(--primary-400)' };
+};
 
 const computeWordCount = (content?: string | null) => {
   if (!content) return 0;
@@ -1387,6 +1455,14 @@ body {
 #markdown-viewer,
 #markdown-viewer * {
   user-select: text;
+}
+
+#markdown-viewer ::selection {
+  background: var(--primary-100);
+}
+
+.dark #markdown-viewer ::selection {
+  background: var(--primary-900-30);
 }
 
 input,

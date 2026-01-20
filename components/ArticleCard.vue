@@ -1,17 +1,18 @@
 <template>
   <div 
-    class="article-card group p-4 bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700 rounded-2xl hover:bg-white dark:hover:bg-gray-800 hover:shadow-lg hover:shadow-sakura-100/20 dark:hover:shadow-black/20 cursor-pointer transition-all duration-300 animate-fade-in relative overflow-hidden backdrop-blur-sm"
-    :class="{ 'ring-2 ring-sakura-300 dark:ring-sakura-600 bg-white dark:bg-gray-800 shadow-md': isActive }"
+    class="article-card group p-4 bg-white/40 dark:bg-gray-800/40 border border-white/60 dark:border-gray-700 rounded-2xl hover:bg-white dark:hover:bg-gray-800 hover:shadow-lg dark:hover:shadow-black/20 cursor-pointer transition-all duration-300 animate-fade-in relative overflow-hidden backdrop-blur-sm"
+    :class="{ 'ring-2 bg-white dark:bg-gray-800 shadow-md': isActive }"
+    :style="isActive ? activeRingStyle : undefined"
     @click="emit('click')"
   >
     <!-- Decorative Gradient -->
-    <div class="absolute -right-4 -top-4 w-20 h-20 bg-gradient-to-br from-sakura-50 to-transparent dark:from-sakura-900/20 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500"></div>
+    <div class="absolute -right-4 -top-4 w-20 h-20 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500" :style="decorativeStyle"></div>
     
     <!-- Header: Title & Icon -->
     <div class="flex justify-between items-start relative z-10 mb-3">
       <div class="flex items-center gap-2 flex-1 min-w-0">
         <span class="text-xl shrink-0">{{ getFileIcon(file) }}</span>
-        <span class="font-bold text-gray-700 dark:text-gray-200 group-hover:text-sakura-600 dark:group-hover:text-sakura-400 truncate text-sm">
+        <span class="font-bold truncate text-sm" :style="titleStyle">
           {{ getDisplayName(file.name) }}
         </span>
       </div>
@@ -20,7 +21,7 @@
     <!-- Meta Info Row -->
     <div class="flex flex-wrap items-center gap-2 relative z-10">
       <!-- Date -->
-      <span class="text-[10px] bg-sakura-50 dark:bg-sakura-900/30 text-sakura-600 dark:text-sakura-300 px-2 py-0.5 rounded-md whitespace-nowrap font-medium">
+      <span class="text-[10px] px-2 py-0.5 rounded-md whitespace-nowrap font-medium" :style="dateBadgeStyle">
         {{ formatDate(file.lastModified) }}
       </span>
       
@@ -38,6 +39,14 @@
           <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
         </svg>
         {{ likeCount }}
+      </span>
+
+      <span v-if="typeof viewCount === 'number'" class="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+        📖 {{ formatNumber(viewCount) }}
+      </span>
+
+      <span v-if="typeof commentCount === 'number'" class="text-[10px] bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+        💬 {{ formatNumber(commentCount) }}
       </span>
       
       <!-- Parent Path -->
@@ -62,12 +71,15 @@
 import { computed } from 'vue'
 import type { FileNode } from '../types'
 import { useArticleStore } from '../stores/articleStore'
+import { useAppStore } from '../stores/appStore'
 
 const props = defineProps<{
   file: FileNode
   isActive?: boolean
   showPath?: boolean
   lang?: 'en' | 'zh'
+  viewCount?: number
+  commentCount?: number
 }>()
 
 const emit = defineEmits<{
@@ -75,10 +87,28 @@ const emit = defineEmits<{
 }>()
 
 const articleStore = useArticleStore()
+const appStore = useAppStore()
 
 const isLiked = computed(() => articleStore.isLiked(props.file.path))
 const isFavorite = computed(() => articleStore.isFavorite(props.file.path))
 const likeCount = computed(() => articleStore.getLikes(props.file.path))
+
+const activeRingStyle = computed(() => ({
+  '--tw-ring-color': appStore.isDark ? 'var(--primary-700)' : 'var(--primary-300)'
+}))
+
+const decorativeStyle = computed(() => ({
+  backgroundImage: `linear-gradient(135deg, ${appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)'}, transparent)`
+}))
+
+const titleStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-700)'
+}))
+
+const dateBadgeStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)',
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)'
+}))
 
 // Calculate word count from content
 const wordCount = computed(() => {

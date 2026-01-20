@@ -2,18 +2,18 @@
 <template>
   <aside class="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-white/60 dark:border-gray-700/50 h-full z-30 transition-all duration-300">
     <!-- Profile Header -->
-    <div class="p-8 pb-4 flex flex-col items-center border-b border-sakura-100/50 dark:border-gray-700/50 flex-shrink-0 relative overflow-hidden">
-      <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-sakura-50/50 to-transparent dark:from-sakura-900/20 pointer-events-none"></div>
+    <div class="p-8 pb-4 flex flex-col items-center border-b flex-shrink-0 relative overflow-hidden" :style="softBorderStyle">
+      <div class="absolute top-0 left-0 w-full h-24 pointer-events-none" :style="headerGlowStyle"></div>
       
       <!-- Language Switcher - 移动端放右上角避免与菜单按钮冲突 -->
       <div class="absolute top-4 left-4 z-20">
-          <button @click="$emit('toggle-lang')" class="text-xs font-bold px-2 py-1 rounded bg-sakura-50 dark:bg-gray-800 text-sakura-600 dark:text-sakura-400 hover:bg-sakura-100 transition-colors shadow-sm border border-sakura-100 dark:border-gray-700">
+          <button @click="$emit('toggle-lang')" class="text-xs font-bold px-2 py-1 rounded transition-colors shadow-sm border dark:border-gray-700" :style="languageButtonStyle">
             {{ lang === 'en' ? 'EN / 中' : '中 / EN' }}
           </button>
       </div>
 
       <div class="relative group cursor-pointer z-10" @click="$emit('reset')">
-        <div class="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-sakura-300 to-sakura-100 dark:from-sakura-700 dark:to-sakura-900 shadow-xl mb-4 group-hover:scale-105 transition-transform duration-300">
+        <div class="w-24 h-24 rounded-full p-1 shadow-xl mb-4 group-hover:scale-105 transition-transform duration-300" :style="avatarRingStyle">
           <img 
             :src="avatarSrc" 
             @error="handleAvatarError"
@@ -21,24 +21,25 @@
             alt="Avatar"
           />
         </div>
-        <div class="absolute bottom-4 right-0 bg-white dark:bg-gray-800 rounded-full p-1 shadow-md border border-sakura-100 dark:border-gray-700 text-xs">🌸</div>
+        <div class="absolute bottom-4 right-0 bg-white dark:bg-gray-800 rounded-full p-1 shadow-md border text-xs" :style="softBorderStyle">🌸</div>
       </div>
       
-      <h1 class="text-xl font-bold text-sakura-800 dark:text-sakura-300 tracking-tight z-10 hover:text-sakura-600 transition-colors" @click="$emit('reset')">Sakura Notes</h1>
-      <p class="text-xs text-sakura-500 dark:text-sakura-400 mt-1 font-medium bg-sakura-50 dark:bg-gray-800 px-3 py-1 rounded-full z-10">{{ t.subtitle }}</p>
+      <h1 class="text-xl font-bold tracking-tight z-10 transition-colors" :style="titleStyle" @click="$emit('reset')">Sakura Notes</h1>
+      <p class="text-xs mt-1 font-medium px-3 py-1 rounded-full z-10" :style="subtitleStyle">{{ t.subtitle }}</p>
     </div>
 
     <!-- View Toggles -->
     <div class="px-6 py-4 flex-shrink-0">
-      <div class="flex p-1.5 bg-sakura-50/80 dark:bg-gray-800/50 rounded-2xl border border-sakura-100 dark:border-gray-700 relative">
+      <div class="flex p-1.5 rounded-2xl border border-gray-200 dark:border-gray-700 relative" :style="tabContainerStyle">
         <button 
           v-for="mode in ['latest', 'files', 'lab']"
           :key="mode"
           @click="$emit('update:viewMode', mode)"
           class="flex-1 py-2 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-1 z-10"
           :class="viewMode === mode 
-            ? (mode === 'lab' ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-300 shadow-sm ring-1 ring-purple-100 dark:ring-purple-900' : 'bg-white dark:bg-gray-700 text-sakura-600 dark:text-sakura-300 shadow-sm ring-1 ring-sakura-100 dark:ring-gray-600') 
-            : 'text-sakura-400 dark:text-gray-500 hover:text-sakura-600 hover:bg-white/50 dark:hover:bg-gray-700/50'"
+            ? (mode === 'lab' ? 'bg-white dark:bg-gray-700 text-purple-600 dark:text-purple-300 shadow-sm ring-1 ring-purple-100 dark:ring-purple-900' : 'shadow-sm ring-1') 
+            : 'text-gray-500 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-700/50'"
+          :style="getViewModeStyle(mode)"
         >
           {{ mode === 'latest' ? '⏰ ' + t.tab_latest : (mode === 'files' ? '📁 ' + t.tab_files : '🧪 ' + t.tab_lab) }}
         </button>
@@ -134,18 +135,7 @@
       <!-- Filter Section (for Latest and Files views) -->
       <div v-if="viewMode === 'latest' || viewMode === 'files'" class="px-2 mb-4">
         <div class="mb-3">
-          <div class="flex items-center gap-2 mb-2">
-            <label class="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase cursor-pointer">
-              <input
-                type="checkbox"
-                class="h-3.5 w-3.5 rounded border-gray-300 text-sakura-500 focus:ring-sakura-400"
-                :checked="allTagsSelected"
-                @change="toggleAllTags"
-              />
-              <span>{{ lang === 'zh' ? '标签筛选' : 'Tags' }}</span>
-            </label>
-          </div>
-          <div class="flex flex-wrap gap-1.5">
+          <div class="flex flex-wrap gap-1.5 items-center">
             <button
               @click="articleStore.toggleShowFavoritesOnly()"
               class="px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1.5"
@@ -158,23 +148,32 @@
                 {{ articleStore.favoritesCount }}
               </span>
             </button>
-            <button
-              v-for="tag in articleStore.availableTags"
-              :key="tag"
-              @click="articleStore.toggleTag(tag)"
-              class="px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1.5"
-              :class="articleStore.isTagSelected(tag)
-                ? 'bg-sakura-500 text-white shadow-sm'
-                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-sakura-100 dark:hover:bg-sakura-900/30'"
-            >
-              <span>{{ tag === 'notag' ? (lang === 'zh' ? '无标签' : 'No Tag') : tag }}</span>
-              <span
-                class="text-[10px] px-1.5 py-0.5 rounded-full"
-                :class="articleStore.isTagSelected(tag) ? 'bg-white/20 text-white' : 'bg-white/70 dark:bg-gray-800/60 text-gray-500 dark:text-gray-300'"
+            <template v-for="tag in articleStore.availableTags" :key="tag">
+              <label v-if="tag === 'notag'" class="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="h-3.5 w-3.5 rounded border-gray-300"
+                  :checked="allTagsSelected"
+                  @change="toggleAllTags"
+                />
+              </label>
+              <button
+                @click="articleStore.toggleTag(tag)"
+                class="px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1.5"
+                :class="articleStore.isTagSelected(tag)
+                  ? 'text-white shadow-sm'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-sakura-100 dark:hover:bg-sakura-900/30'"
+                :style="articleStore.isTagSelected(tag) ? { backgroundColor: 'var(--primary-500)' } : {}"
               >
-                {{ tagCounts[tag] || 0 }}
-              </span>
-            </button>
+                <span>{{ tag === 'notag' ? (lang === 'zh' ? '无标签' : 'No Tag') : tag }}</span>
+                <span
+                  class="text-[10px] px-1.5 py-0.5 rounded-full"
+                  :class="articleStore.isTagSelected(tag) ? 'bg-white/20 text-white' : 'bg-white/70 dark:bg-gray-800/60 text-gray-500 dark:text-gray-300'"
+                >
+                  {{ tagCounts[tag] || 0 }}
+                </span>
+              </button>
+            </template>
           </div>
         </div>
       </div>
@@ -191,6 +190,8 @@
           :isActive="currentFile?.path === file.path"
           :showPath="true"
           :lang="lang as 'en' | 'zh'"
+          :viewCount="getArticleViews(file.path)"
+          :commentCount="commentCounts[file.path] || 0"
           @click="$emit('select-file', file)"
         />
       </div>
@@ -209,7 +210,7 @@
     </div>
     
     <!-- Footer Info -->
-    <div class="p-4 border-t border-sakura-100/50 dark:border-gray-700/50 flex justify-between items-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-md">
+    <div class="p-4 border-t flex justify-between items-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-md" :style="softBorderStyle">
         <a href="https://github.com/soft-zihan/soft-zihan.github.io" target="_blank" class="text-xs text-sakura-400 hover:text-sakura-600 dark:text-gray-500 dark:hover:text-sakura-400 flex items-center gap-2 transition-colors group">
           <svg class="w-4 h-4 opacity-70 group-hover:opacity-100" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           <span>Code</span>
@@ -226,9 +227,11 @@ import ArticleCard from './ArticleCard.vue';
 import type { FileNode } from '../types';
 import { NodeType } from '../types';
 import { useArticleStore } from '../stores/articleStore';
+import { useAppStore } from '../stores/appStore';
 import { extractTagsFromFile } from '../composables/useArticleMeta';
 
 const articleStore = useArticleStore();
+const appStore = useAppStore();
 
 const props = defineProps<{
   lang: string;
@@ -246,6 +249,8 @@ const props = defineProps<{
   currentTool: string | null;
   labTabs?: any[]; // Lab dashboard tabs from parent
   activeLabTab?: string; // Current active lab tab
+  getArticleViews: (path: string) => number;
+  commentCounts: Record<string, number>;
 }>();
 
 // Compute files in labFolder (VUE学习笔记 or VUE Learning)
@@ -273,6 +278,51 @@ const handleLabTabClick = (tabId: string) => {
   emit('select-tool', 'dashboard');
   emit('update:activeLabTab', tabId);
 };
+
+const headerGlowStyle = computed(() => ({
+  backgroundImage: `linear-gradient(to bottom, ${appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-100-50)'}, transparent)`
+}))
+
+const softBorderStyle = computed(() => ({
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
+}))
+
+const languageButtonStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)',
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)',
+  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
+}))
+
+const avatarRingStyle = computed(() => ({
+  backgroundImage: `linear-gradient(135deg, ${appStore.isDark ? 'var(--primary-700)' : 'var(--primary-300)'}, ${appStore.isDark ? 'var(--primary-900)' : 'var(--primary-100)'})`
+}))
+
+const titleStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-700)'
+}))
+
+const subtitleStyle = computed(() => ({
+  color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)',
+  backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)'
+}))
+
+const tabContainerStyle = computed(() => ({
+  backgroundColor: appStore.isDark ? 'rgba(255,255,255,0.04)' : 'var(--primary-50)'
+}))
+
+const getViewModeStyle = (mode: string) => {
+  if (mode === 'lab') return {}
+  if (props.viewMode === mode) {
+    return {
+      color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-600)',
+      backgroundColor: appStore.isDark ? 'var(--primary-900-30)' : 'var(--primary-50)',
+      '--tw-ring-color': appStore.isDark ? 'var(--primary-700)' : 'var(--primary-100)'
+    }
+  }
+  return {
+    color: appStore.isDark ? 'rgba(255,255,255,0.6)' : 'var(--primary-400)'
+  }
+}
 
 // Avatar Logic: Prefer external, fallback to local
 const avatarSrc = ref('https://picx.zhimg.com/80/v2-1e3a27439c019dff7f9f7a679005c950_720w.webp?source=1def8aca');
