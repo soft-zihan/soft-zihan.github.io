@@ -133,51 +133,47 @@
 
       <!-- Filter Section (for Latest and Files views) -->
       <div v-if="viewMode === 'latest' || viewMode === 'files'" class="px-2 mb-4">
-        <!-- Favorites Filter -->
         <div class="mb-3">
-          <button 
-            @click="articleStore.toggleShowFavoritesOnly()"
-            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
-            :class="articleStore.showFavoritesOnly 
-              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800' 
-              : 'bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
-          >
-            <span>{{ articleStore.showFavoritesOnly ? '⭐' : '☆' }}</span>
-            <span class="font-medium">{{ lang === 'zh' ? '仅显示收藏' : 'Favorites Only' }}</span>
-            <span class="ml-auto text-xs opacity-70">({{ articleStore.favoritesCount }})</span>
-          </button>
-        </div>
-        
-        <!-- Tags Filter -->
-        <div class="mb-3">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase">{{ lang === 'zh' ? '标签筛选' : 'Tags' }}</span>
-            <div class="flex gap-1">
-              <button 
-                @click="articleStore.selectAllTags()"
-                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-sakura-100 hover:text-sakura-600"
-              >
-                {{ lang === 'zh' ? '全选' : 'All' }}
-              </button>
-              <button 
-                @click="articleStore.deselectAllTags()"
-                class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-sakura-100 hover:text-sakura-600"
-              >
-                {{ lang === 'zh' ? '清空' : 'None' }}
-              </button>
-            </div>
+          <div class="flex items-center gap-2 mb-2">
+            <label class="flex items-center gap-2 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase cursor-pointer">
+              <input
+                type="checkbox"
+                class="h-3.5 w-3.5 rounded border-gray-300 text-sakura-500 focus:ring-sakura-400"
+                :checked="allTagsSelected"
+                @change="toggleAllTags"
+              />
+              <span>{{ lang === 'zh' ? '标签筛选' : 'Tags' }}</span>
+            </label>
           </div>
           <div class="flex flex-wrap gap-1.5">
-            <button 
+            <button
+              @click="articleStore.toggleShowFavoritesOnly()"
+              class="px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1.5"
+              :class="articleStore.showFavoritesOnly
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800'
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-amber-50 dark:hover:bg-amber-900/30'"
+            >
+              <span>{{ articleStore.showFavoritesOnly ? '★' : '☆' }}</span>
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full bg-white/80 dark:bg-gray-800/60 text-amber-600 dark:text-amber-300">
+                {{ articleStore.favoritesCount }}
+              </span>
+            </button>
+            <button
               v-for="tag in articleStore.availableTags"
               :key="tag"
               @click="articleStore.toggleTag(tag)"
-              class="px-2 py-1 text-xs rounded-full transition-all"
+              class="px-2 py-1 text-xs rounded-full transition-all flex items-center gap-1.5"
               :class="articleStore.isTagSelected(tag)
                 ? 'bg-sakura-500 text-white shadow-sm'
                 : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-sakura-100 dark:hover:bg-sakura-900/30'"
             >
-              {{ tag === 'notag' ? (lang === 'zh' ? '无标签' : 'No Tag') : tag }}
+              <span>{{ tag === 'notag' ? (lang === 'zh' ? '无标签' : 'No Tag') : tag }}</span>
+              <span
+                class="text-[10px] px-1.5 py-0.5 rounded-full"
+                :class="articleStore.isTagSelected(tag) ? 'bg-white/20 text-white' : 'bg-white/70 dark:bg-gray-800/60 text-gray-500 dark:text-gray-300'"
+              >
+                {{ tagCounts[tag] || 0 }}
+              </span>
             </button>
           </div>
         </div>
@@ -230,6 +226,7 @@ import ArticleCard from './ArticleCard.vue';
 import type { FileNode } from '../types';
 import { NodeType } from '../types';
 import { useArticleStore } from '../stores/articleStore';
+import { extractTagsFromFile } from '../composables/useArticleMeta';
 
 const articleStore = useArticleStore();
 
@@ -295,4 +292,40 @@ const getCleanParentPath = (path: string) => {
 };
 
 const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
+
+const allTagsSelected = computed(() => {
+  const total = articleStore.availableTags.length
+  return total > 0 && articleStore.selectedTags.length === total
+})
+
+const toggleAllTags = () => {
+  if (allTagsSelected.value) {
+    articleStore.deselectAllTags()
+  } else {
+    articleStore.selectAllTags()
+  }
+}
+
+const tagCounts = computed(() => {
+  const counts: Record<string, number> = {}
+  const langRoot = props.fileSystem?.find(node => node.name === props.lang)
+  const walk = (nodes: FileNode[]) => {
+    for (const node of nodes) {
+      if (node.type === NodeType.FILE) {
+        const tags = extractTagsFromFile(node)
+        if (tags.length === 0) {
+          counts.notag = (counts.notag || 0) + 1
+        } else {
+          for (const tag of tags) {
+            counts[tag] = (counts[tag] || 0) + 1
+          }
+        }
+      } else if (node.children) {
+        walk(node.children)
+      }
+    }
+  }
+  if (langRoot?.children) walk(langRoot.children)
+  return counts
+})
 </script>

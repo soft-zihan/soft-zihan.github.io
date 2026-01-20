@@ -30,6 +30,7 @@ export const useMusicStore = defineStore('music', () => {
   const lyrics = ref<LyricLine[]>([])
   const currentLyricIndex = ref(-1)
   const seekRequestTime = ref<number | null>(null) // 用于通知 GlobalAudio 同步进度
+  const customTracks = ref<MusicTrack[]>([])
   
   // Computed
   const currentTrack = computed(() => playlist.value[currentIndex.value] || null)
@@ -54,6 +55,21 @@ export const useMusicStore = defineStore('music', () => {
     if (!playlist.value.find(t => t.id === track.id)) {
       playlist.value.push(track)
     }
+  }
+  
+  function addCustomTrack(track: MusicTrack) {
+    if (!customTracks.value.find(t => t.id === track.id)) {
+      customTracks.value.push(track)
+    }
+    addToPlaylist(track)
+  }
+  
+  function removeCustomTrack(trackId: string) {
+    const index = customTracks.value.findIndex(t => t.id === trackId)
+    if (index > -1) {
+      customTracks.value.splice(index, 1)
+    }
+    removeFromPlaylist(trackId)
   }
   
   function removeFromPlaylist(trackId: string) {
@@ -204,7 +220,9 @@ export const useMusicStore = defineStore('music', () => {
       const res = await fetch('./music.json')
       if (res.ok) {
         const data = await res.json()
-        setPlaylist(data.tracks || [])
+        const baseTracks = data.tracks || []
+        const mergedTracks = [...baseTracks, ...customTracks.value.filter(track => !baseTracks.find((t: MusicTrack) => t.id === track.id))]
+        setPlaylist(mergedTracks)
         
         // Restore persisted track by filename
         const persisted = localStorage.getItem('music_currentTrackFilename')
@@ -253,6 +271,7 @@ export const useMusicStore = defineStore('music', () => {
     lyrics,
     currentLyricIndex,
     seekRequestTime,
+    customTracks,
     // Computed
     currentTrack,
     progress,
@@ -261,7 +280,9 @@ export const useMusicStore = defineStore('music', () => {
     // Actions
     setPlaylist,
     addToPlaylist,
+    addCustomTrack,
     removeFromPlaylist,
+    removeCustomTrack,
     play,
     pause,
     togglePlay,
@@ -282,6 +303,6 @@ export const useMusicStore = defineStore('music', () => {
   }
 }, {
   persist: {
-    pick: ['volume', 'playMode']
+    pick: ['volume', 'playMode', 'customTracks']
   }
 })

@@ -28,7 +28,7 @@ Here is the English translation of the README file. I have maintained the origin
 - [🏗️ Technical Architecture](#️-technical-architecture)
 - [🔧 Configuration Guide](#-configuration-guide)
 - [📝 Content Management](#-content-management)
-- [🔐 Security & Data](#-security--data)
+- [🔐 Security &amp; Data](#-security--data)
 - [🤝 Contribution Guide](#-contribution-guide)
 - [📜 Changelog](#-changelog)
 
@@ -38,48 +38,48 @@ Here is the English translation of the README file. I have maintained the origin
 
 ### 🎨 UI & Interaction
 
-| Feature | Description |
-| :--- | :--- |
-| **Dual Theme Modes** | "Day Sakura" (Light) + "Night Sakura" (Dark) themes, with wallpapers that switch accordingly. |
-| **Dynamic Sakura Background** | Draggable petal system with physics effects, grid stacking, and mobile touch optimization. |
-| **Responsive Design** | Perfectly adapted for both desktop and mobile devices. |
-| **Multilingual Support** | Built-in Chinese/English (i18n) switching; preserves current tab and Lab position when toggling. |
-| **Backend-less Personalization** | Uses `localStorage` to save preferences like fonts, font size, themes, and petal speed. |
+| Feature                                | Description                                                                                      |
+| :------------------------------------- | :----------------------------------------------------------------------------------------------- |
+| **Dual Theme Modes**             | "Day Sakura" (Light) + "Night Sakura" (Dark) themes, with wallpapers that switch accordingly.    |
+| **Dynamic Sakura Background**    | Draggable petal system with physics effects, grid stacking, and mobile touch optimization.       |
+| **Responsive Design**            | Perfectly adapted for both desktop and mobile devices.                                           |
+| **Multilingual Support**         | Built-in Chinese/English (i18n) switching; preserves current tab and Lab position when toggling. |
+| **Backend-less Personalization** | Uses `localStorage` to save preferences like fonts, font size, themes, and petal speed.        |
 
 ### 📚 Content System
 
-| Feature | Description |
-| :--- | :--- |
+| Feature                      | Description                                                                                   |
+| :--------------------------- | :-------------------------------------------------------------------------------------------- |
 | **Markdown Rendering** | Full Markdown support, automatic Table of Contents (ToC) generation, and syntax highlighting. |
-| **Full-text Search** | Fast search based on MiniSearch with hit highlighting. |
-| **Article Management** | Favorites, Likes, Tag filtering, and Reading History. |
-| **Comment System** | Powered by [Giscus](https://github.com/giscus/giscus) via GitHub Discussions. |
-| **Music Player** | Built-in player with synchronized lyric display. |
+| **Full-text Search**   | Fast search based on MiniSearch with hit highlighting.                                        |
+| **Article Management** | Favorites, Likes, Tag filtering, and Reading History.                                         |
+| **Comment System**     | Powered by[Giscus](https://github.com/giscus/giscus) via GitHub Discussions.                     |
+| **Music Player**       | Built-in player with synchronized lyric display.                                              |
 
 ### 🛠️ Publishing Features
 
-| Feature | Description |
-| :--- | :--- |
-| **Publishing Workbench** | File import preview, renaming, folder selection, and tag/author metadata injection. |
-| **Real-time Preview** | Live Markdown preview while editing. |
-| **Auto Image Upload** | Local images in Markdown are automatically uploaded to GitHub. |
-| **Smart Fork + PR** | Users without write access can automatically Fork and submit PRs; auto-syncs with latest code. |
+| Feature                        | Description                                                                                    |
+| :----------------------------- | :--------------------------------------------------------------------------------------------- |
+| **Publishing Workbench** | File import preview, renaming, folder selection, and tag/author metadata injection.            |
+| **Real-time Preview**    | Live Markdown preview while editing.                                                           |
+| **Auto Image Upload**    | Local images in Markdown are automatically uploaded to GitHub.                                 |
+| **Smart Fork + PR**      | Users without write access can automatically Fork and submit PRs; auto-syncs with latest code. |
 
 ### 🧪 Learning Lab
 
-| Feature | Description |
-| :--- | :--- |
-| **7-Stage Path** | A complete learning roadmap from Web basics to advanced Vue 3. |
-| **Interactive Components** | Visual teaching components with real-time code demonstrations. |
-| **Source Viewer** | View the source code of the site's own components to learn by example. |
+| Feature                          | Description                                                            |
+| :------------------------------- | :--------------------------------------------------------------------- |
+| **7-Stage Path**           | A complete learning roadmap from Web basics to advanced Vue 3.         |
+| **Interactive Components** | Visual teaching components with real-time code demonstrations.         |
+| **Source Viewer**          | View the source code of the site's own components to learn by example. |
 
 ### 🔐 Security Features
 
-| Feature | Description |
-| :--- | :--- |
-| **Encrypted Token Storage** | AES-256-GCM encryption with keys derived from browser fingerprints. |
-| **Local/Cloud Backup** | Supports local backups (browser) and cloud backups (GitHub) with import/export. |
-| **Privacy Protection** | All data is stored locally; no data is uploaded to third-party servers. |
+| Feature                           | Description                                                                     |
+| :-------------------------------- | :------------------------------------------------------------------------------ |
+| **Encrypted Token Storage** | AES-256-GCM encryption with keys derived from browser fingerprints.             |
+| **Local/Cloud Backup**      | Supports local backups (browser) and cloud backups (GitHub) with import/export. |
+| **Privacy Protection**      | All data is stored locally; no data is uploaded to third-party servers.         |
 
 ---
 
@@ -226,19 +226,18 @@ sakura-notes/
 
 ## 🏗️ Technical Architecture
 
-
 ### Core Tech Stack
 
-| Tech | Version | Purpose |
-| :--- | :--- | :--- |
-| **Vue 3** | 3.5 | Frontend framework (Composition API) |
-| **TypeScript** | 5.4 | Type safety |
-| **Vite** | 4.4 | Build tool |
-| **Pinia** | 3.0 | State management |
-| **Tailwind CSS** | 3.x | Utility-first CSS |
-| **Shiki** | 1.22 | Code syntax highlighting |
-| **MiniSearch** | 7.1 | Full-text search engine |
-| **Marked** | 12.0 | Markdown parsing |
+| Tech                   | Version | Purpose                              |
+| :--------------------- | :------ | :----------------------------------- |
+| **Vue 3**        | 3.5     | Frontend framework (Composition API) |
+| **TypeScript**   | 5.4     | Type safety                          |
+| **Vite**         | 4.4     | Build tool                           |
+| **Pinia**        | 3.0     | State management                     |
+| **Tailwind CSS** | 3.x     | Utility-first CSS                    |
+| **Shiki**        | 1.22    | Code syntax highlighting             |
+| **MiniSearch**   | 7.1     | Full-text search engine              |
+| **Marked**       | 12.0    | Markdown parsing                     |
 
 ### Build Workflow
 
@@ -258,12 +257,15 @@ npm run build
 ### GitHub Token Configuration
 
 The publishing feature requires a Personal Access Token:
+
 1. Go to [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens).
 2. Create a token with the `repo` scope.
 3. Enter the token in the site's Settings panel.
+
 > ⚠️ The token is stored using AES-256-GCM encryption with a key derived from your browser fingerprint.
 
 ### Giscus Comments
+
 1. Enable [GitHub Discussions](https://docs.github.com/en/discussions) in your repo.
 2. Install the [Giscus App](https://github.com/apps/giscus).
 3. Get your configuration parameters from [giscus.app](https://giscus.app/).
@@ -274,18 +276,20 @@ The publishing feature requires a Personal Access Token:
 ## 🔐 Security & Data
 
 ### Token Security Strategy
+
 - **AES-256-GCM**: Industry-standard symmetric encryption.
 - **Fingerprint Key**: The key is derived from `userAgent` + screen resolution + timezone + language, making it device-specific.
 - **Backup Exclusion**: Tokens are strictly excluded from all backup operations.
 - **Direct API Use**: Tokens are only sent to the GitHub API, never to any third-party servers.
 
 ### localStorage Content
-| Data Type | Key Prefix | Description |
-| :--- | :--- | :--- |
-| Preferences | `app-store` | Themes, fonts, wallpaper settings |
-| Interactions | `article-store` | Favorites, likes |
-| Repo Config | `github_*` | Repository info, author name |
-| Token | `encrypted_github_token` | Encrypted token |
+
+| Data Type    | Key Prefix                 | Description                       |
+| :----------- | :------------------------- | :-------------------------------- |
+| Preferences  | `app-store`              | Themes, fonts, wallpaper settings |
+| Interactions | `article-store`          | Favorites, likes                  |
+| Repo Config  | `github_*`               | Repository info, author name      |
+| Token        | `encrypted_github_token` | Encrypted token                   |
 
 > ⚠️ **Warning**: Clearing browser data will delete these settings. Please use the backup feature regularly!
 
@@ -294,17 +298,21 @@ The publishing feature requires a Personal Access Token:
 ## 🤝 Contribution Guide
 
 ### Contributing Content (Notes/Articles)
+
 **Method 1: Web Interface**
+
 1. Visit the live site and configure your Token.
 2. Use the Workbench to write and publish.
 3. The system will create a PR for you automatically.
 
 **Method 2: Direct PR**
+
 1. Fork the repo.
 2. Add `.md` files to the `notes/` directory.
 3. Submit a PR to the `main` branch.
 
 ### Commit Conventions
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation update
@@ -316,6 +324,7 @@ The publishing feature requires a Personal Access Token:
 ## 📜 Changelog
 
 ### v1.1
+
 - 🐛 Fixed 404 error for non-owner submissions.
 - 🔧 Optimized permission checks (Smart Fork + PR logic).
 - 🔐 Added AES-256-GCM encryption for Tokens.
@@ -325,7 +334,8 @@ The publishing feature requires a Personal Access Token:
 - 🌸 Added draggable Sakura petal system.
 - 🔍 Integrated full-text search.
 
-### v1.0.0
+### v1.0
+
 - 🎉 Initial release.
 - 📝 Basic Markdown note system.
 - 🌐 Multi-language support.

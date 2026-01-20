@@ -46,6 +46,9 @@
             <span class="text-sm">DL</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
           </button>
+          <button @click="$emit('toggle-reading-mode')" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="lang === 'zh' ? '阅读模式' : 'Reading Mode'">
+            <span class="text-lg">📖</span>
+          </button>
           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
         </template>
 
@@ -98,36 +101,194 @@
           <span class="text-lg">✏️</span>
         </button>
 
-        <!-- Theme Toggle -->
-        <button 
-          @click="$emit('toggle-theme')" 
-          class="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
-          :title="isDark ? t.theme_light : t.theme_dark"
+        <button
+          @click="cyclePetalSpeed"
+          class="px-3 py-1.5 rounded-lg transition-colors text-xs border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600 hover:bg-sakura-50 dark:hover:bg-sakura-900/30"
+          :class="{ 'opacity-50': petalSpeed === 'off' }"
+          :title="petalSpeedTitle"
         >
-          <span class="text-lg transition-transform duration-300" :class="isDark ? 'rotate-0' : 'rotate-180'">{{ isDark ? '🌙' : '🌞' }}</span>
+          {{ petalSpeedTitle }}
         </button>
 
-        <!-- Petal Speed Toggle -->
-        <div class="relative group/petal">
-          <button 
-            @click="cyclePetalSpeed" 
+        <div class="relative">
+          <button
+            ref="themeButtonRef"
+            @click="themeOpen = !themeOpen"
             class="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
-            :title="petalSpeedTitle"
+            :title="lang === 'zh' ? '主题' : 'Theme'"
           >
-            <span 
-              class="text-lg transition-all duration-300" 
-              :class="{
-                'opacity-40 grayscale': petalSpeed === 'off',
-                'animate-spin-slow': petalSpeed === 'slow',
-                'animate-spin-fast': petalSpeed === 'fast'
-              }"
-            >🌸</span>
+            <span class="text-lg">🎨</span>
           </button>
-          <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/petal:opacity-100 transition-opacity pointer-events-none">
-            {{ petalSpeedTitle }}
+          <div
+            v-if="themeOpen"
+            ref="themePanelRef"
+            class="absolute right-0 top-full mt-3 w-[420px] max-h-[70vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl backdrop-blur-xl p-4 z-50"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <div class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ lang === 'zh' ? '主题' : 'Theme' }}</div>
+              <button @click="themeOpen = false" class="text-gray-400 hover:text-sakura-500">✕</button>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '主题模式' : 'Mode' }}</div>
+              <div class="flex gap-2">
+                <button @click="$emit('toggle-theme')" class="flex-1 py-2 border rounded-xl text-sm transition-colors" :class="isDark ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '切换亮/暗' : 'Toggle Light/Dark' }}</button>
+                <button @click="appStore.userSettings.bannerMode = 'hide'" class="flex-1 py-2 border rounded-xl text-sm transition-colors" :class="appStore.userSettings.bannerMode === 'hide' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '不显示壁纸' : 'No Wallpaper' }}</button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '字体' : 'Typography' }}</div>
+              <div class="flex gap-2 mb-2">
+                <button @click="appStore.userSettings.fontFamily = 'sans'" class="flex-1 py-2 border rounded-xl text-sm transition-colors" :class="appStore.userSettings.fontFamily === 'sans' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">Sans</button>
+                <button @click="appStore.userSettings.fontFamily = 'serif'" class="flex-1 py-2 border rounded-xl text-sm font-serif transition-colors" :class="appStore.userSettings.fontFamily === 'serif' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">Serif</button>
+              </div>
+              <div class="flex gap-2">
+                <button @click="appStore.userSettings.fontSize = 'small'" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="appStore.userSettings.fontSize === 'small' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A</button>
+                <button @click="appStore.userSettings.fontSize = 'normal'" class="flex-1 py-2 border rounded-xl text-sm transition-colors" :class="appStore.userSettings.fontSize === 'normal' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A+</button>
+                <button @click="appStore.userSettings.fontSize = 'large'" class="flex-1 py-2 border rounded-xl text-lg transition-colors" :class="appStore.userSettings.fontSize === 'large' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A++</button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '樱花速度' : 'Petal Speed' }}</div>
+              <div class="flex gap-2">
+                <button @click="emit('update:petal-speed', 'off')" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="petalSpeed === 'off' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '关闭' : 'Off' }}</button>
+                <button @click="emit('update:petal-speed', 'slow')" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="petalSpeed === 'slow' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '秒速五厘米' : '5cm/s' }}</button>
+                <button @click="emit('update:petal-speed', 'fast')" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="petalSpeed === 'fast' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '秒速十厘米' : '10cm/s' }}</button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '樱花层级' : 'Petal Layer' }}</div>
+              <div class="flex gap-2">
+                <button @click="appStore.userSettings.petalLayer = 'back'" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="appStore.userSettings.petalLayer === 'back' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '文章后' : 'Behind' }}</button>
+                <button @click="appStore.userSettings.petalLayer = 'front'" class="flex-1 py-2 border rounded-xl text-xs transition-colors" :class="appStore.userSettings.petalLayer === 'front' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">{{ lang === 'zh' ? '文章前' : 'Front' }}</button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '壁纸' : 'Wallpapers' }}</div>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  @click="appStore.userSettings.bannerMode = 'hide'"
+                  class="relative rounded-xl overflow-hidden border transition-all h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-800"
+                  :class="appStore.userSettings.bannerMode === 'hide' ? 'border-sakura-500 ring-2 ring-sakura-300' : 'border-gray-200 dark:border-gray-700'"
+                >
+                  <span class="text-2xl text-gray-400">❌</span>
+                </button>
+                <button
+                  v-for="wp in currentThemeWallpapers"
+                  :key="wp.filename"
+                  @click="setWallpaperWithMode(wp.filename)"
+                  class="relative rounded-xl overflow-hidden border transition-all"
+                  :class="wp.filename === appStore.currentWallpaperFilename && appStore.userSettings.bannerMode !== 'hide' ? 'border-sakura-500 ring-2 ring-sakura-300' : 'border-gray-200 dark:border-gray-700'"
+                >
+                  <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
+                  <div class="absolute inset-0 bg-black/10"></div>
+                </button>
+              </div>
+              <div class="mt-3 flex gap-2">
+                <input v-model="customWallpaperUrl" type="text" :placeholder="lang === 'zh' ? '壁纸链接' : 'Wallpaper URL'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+                <select v-model="customWallpaperTheme" class="px-2 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">
+                  <option value="auto">{{ lang === 'zh' ? '自适应' : 'Auto' }}</option>
+                  <option value="light">{{ lang === 'zh' ? '亮色' : 'Light' }}</option>
+                  <option value="dark">{{ lang === 'zh' ? '暗色' : 'Dark' }}</option>
+                </select>
+                <button @click="addWallpaperFromUrl" class="px-3 py-2 text-xs rounded-xl border border-sakura-400 text-sakura-600 dark:text-sakura-400 hover:bg-sakura-50 dark:hover:bg-sakura-900/20">+</button>
+              </div>
+              <div class="mt-2 flex gap-2">
+                <button @click="triggerWallpaperUpload" class="flex-1 py-2 border rounded-xl text-xs transition-colors border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '本地上传' : 'Local Upload' }}</button>
+                <button @click="clearCustomWallpapers" class="flex-1 py-2 border rounded-xl text-xs transition-colors border-gray-200 dark:border-gray-700 text-gray-500 hover:text-red-500">{{ lang === 'zh' ? '清空自定义' : 'Clear Custom' }}</button>
+              </div>
+              <input ref="wallpaperFileInput" type="file" accept="image/*" class="hidden" @change="handleWallpaperFile" />
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Bing</div>
+              <div class="flex items-center gap-2 mb-2">
+                <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                  <input type="checkbox" v-model="appStore.wallpaperApiSettings.bingEnabled" @change="handleBingToggle" />
+                  {{ lang === 'zh' ? '每日自动更换' : 'Daily Auto' }}
+                </label>
+                <select v-model="appStore.wallpaperApiSettings.bingCountry" @change="refreshBing" class="ml-auto px-2 py-1 text-xs border rounded-lg bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">
+                  <option value="cn">CN</option>
+                  <option value="jp">JP</option>
+                  <option value="us">US</option>
+                  <option value="gb">GB</option>
+                  <option value="fr">FR</option>
+                  <option value="de">DE</option>
+                  <option value="au">AU</option>
+                  <option value="br">BR</option>
+                  <option value="ca">CA</option>
+                  <option value="it">IT</option>
+                  <option value="es">ES</option>
+                  <option value="in">IN</option>
+                </select>
+                <button @click="refreshBing" class="px-2 py-1 text-xs border rounded-lg border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '刷新' : 'Refresh' }}</button>
+              </div>
+              <div class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="wp in bingWallpapers"
+                  :key="wp.filename"
+                  @click="setWallpaperWithMode(wp.filename)"
+                  class="relative rounded-xl overflow-hidden border transition-all"
+                >
+                  <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
+                  <div class="absolute inset-0 bg-black/10"></div>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">UPX8</div>
+              <div class="flex gap-2 mb-2">
+                <input v-model="appStore.wallpaperApiSettings.upx8Keyword" type="text" :placeholder="lang === 'zh' ? '关键词（可为空）' : 'Keyword (optional)'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+                <button @click="searchUpx8" class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '搜索' : 'Search' }}</button>
+              </div>
+              <div v-if="upx8Wallpapers.length" class="grid grid-cols-3 gap-2">
+                <button
+                  v-for="wp in upx8Wallpapers"
+                  :key="wp.filename"
+                  @click="setWallpaperWithMode(wp.filename)"
+                  class="relative rounded-xl overflow-hidden border transition-all"
+                >
+                  <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
+                  <div class="absolute inset-0 bg-black/10"></div>
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '自定义音乐' : 'Custom Music' }}</div>
+              <div class="flex gap-2 mb-2">
+                <input v-model="customMusicTitle" type="text" :placeholder="lang === 'zh' ? '歌名' : 'Title'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+                <input v-model="customMusicArtist" type="text" :placeholder="lang === 'zh' ? '歌手' : 'Artist'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+              </div>
+              <div class="flex gap-2 mb-2">
+                <input v-model="customMusicUrl" type="text" :placeholder="lang === 'zh' ? '音乐链接' : 'Music URL'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+                <button @click="triggerMusicUpload" class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '本地音频' : 'Local Audio' }}</button>
+              </div>
+              <div class="flex gap-2 mb-2">
+                <input v-model="customMusicCover" type="text" :placeholder="lang === 'zh' ? '封面链接（可选）' : 'Cover URL (optional)'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
+                <button @click="triggerCoverUpload" class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '本地封面' : 'Local Cover' }}</button>
+              </div>
+              <div class="flex gap-2">
+                <button @click="addCustomMusic" class="flex-1 py-2 border rounded-xl text-xs transition-colors border-sakura-400 text-sakura-600 dark:text-sakura-400 hover:bg-sakura-50 dark:hover:bg-sakura-900/20">{{ lang === 'zh' ? '添加音乐' : 'Add Track' }}</button>
+                <button @click="clearCustomMusic" class="flex-1 py-2 border rounded-xl text-xs transition-colors border-gray-200 dark:border-gray-700 text-gray-500 hover:text-red-500">{{ lang === 'zh' ? '清空自定义' : 'Clear Custom' }}</button>
+              </div>
+              <input ref="musicFileInput" type="file" accept="audio/*" class="hidden" @change="handleMusicFile" />
+              <input ref="coverFileInput" type="file" accept="image/*" class="hidden" @change="handleCoverFile" />
+              <div v-if="musicStore.customTracks.length" class="mt-3 space-y-2">
+                <div v-for="track in musicStore.customTracks" :key="track.id" class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1">
+                  <span class="truncate flex-1">{{ track.title || track.url }}</span>
+                  <button @click="musicStore.removeCustomTrack(track.id)" class="text-red-400 hover:text-red-500">✕</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-         
+
         <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
 
         <!-- Batch Download Button -->
@@ -194,7 +355,7 @@
             <span v-if="musicStore.isPlaying" class="absolute top-0 right-0 w-1.5 h-1.5 bg-green-500 rounded-full"></span>
           </button>
           <button @click="$emit('toggle-theme')" class="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">{{ isDark ? '🌙' : '🌞' }}</button>
-          <button @click="cyclePetalSpeed" class="p-1.5 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm" :class="{ 'opacity-40': petalSpeed === 'off' }">🌸</button>
+          <button @click="cyclePetalSpeed" class="px-2 py-1.5 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-[10px]" :class="{ 'opacity-50': petalSpeed === 'off' }">{{ petalSpeedTitle }}</button>
           <button @click="$emit('open-settings')" class="p-1.5 text-gray-400 hover:text-sakura-600 rounded transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </button>
@@ -209,9 +370,20 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import type { BreadcrumbItem, FileNode } from '../types';
 import { useMusicStore } from '../stores/musicStore';
 import { useAppStore } from '../stores/appStore';
+import { useWallpapers } from '../composables/useWallpapers';
 
 const musicStore = useMusicStore();
 const appStore = useAppStore();
+const {
+  currentThemeWallpapers,
+  bingWallpapers,
+  upx8Wallpapers,
+  addCustomWallpaper,
+  fetchBingWallpapers,
+  fetchUpx8Wallpaper,
+  updateBingDaily,
+  setWallpaper
+} = useWallpapers();
 
 const props = defineProps<{
   lang: string;
@@ -241,7 +413,8 @@ const emit = defineEmits([
   'open-write',
   'open-download',
   'toggle-theme',
-  'update:petalSpeed',
+  'toggle-reading-mode',
+  'update:petal-speed',
   'toggle-dual-column'
 ]);
 
@@ -254,13 +427,159 @@ const checkMobile = () => {
 
 const isPdf = computed(() => !!props.currentFile?.path && props.currentFile.path.toLowerCase().endsWith('.pdf'))
 
+const themeOpen = ref(false);
+const themeButtonRef = ref<HTMLElement | null>(null);
+const themePanelRef = ref<HTMLElement | null>(null);
+
+const handleDocumentClick = (e: MouseEvent) => {
+  const target = e.target as Node | null;
+  const btn = themeButtonRef.value;
+  const panel = themePanelRef.value;
+  if (!btn || !panel) return;
+  if (target && (btn.contains(target) || panel.contains(target))) return;
+  themeOpen.value = false;
+};
+
+const customWallpaperUrl = ref('');
+const customWallpaperTheme = ref<'auto' | 'light' | 'dark'>('auto');
+const wallpaperFileInput = ref<HTMLInputElement | null>(null);
+
+const addWallpaperFromUrl = () => {
+  const url = customWallpaperUrl.value.trim();
+  if (!url) return;
+  addCustomWallpaper({
+    name: 'Custom',
+    url,
+    theme: customWallpaperTheme.value,
+    source: 'url'
+  });
+  customWallpaperUrl.value = '';
+};
+
+const triggerWallpaperUpload = () => {
+  wallpaperFileInput.value?.click();
+};
+
+const handleWallpaperFile = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const url = typeof reader.result === 'string' ? reader.result : '';
+    if (!url) return;
+    addCustomWallpaper({
+      name: file.name,
+      url,
+      theme: customWallpaperTheme.value,
+      source: 'local'
+    });
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+};
+
+const clearCustomWallpapers = () => {
+  appStore.customWallpapers.splice(0, appStore.customWallpapers.length);
+};
+
+const setWallpaperWithMode = (filename: string) => {
+  if (appStore.userSettings.bannerMode === 'hide') {
+    appStore.updateSettings('bannerMode', 'normal');
+  }
+  setWallpaper(filename);
+};
+
+const handleBingToggle = () => {
+  updateBingDaily();
+};
+
+const refreshBing = () => {
+  fetchBingWallpapers(appStore.wallpaperApiSettings.bingCountry, appStore.wallpaperApiSettings.bingCount);
+};
+
+const searchUpx8 = () => {
+  const kw = appStore.wallpaperApiSettings.upx8Keyword || undefined;
+  fetchUpx8Wallpaper(kw);
+};
+
+const customMusicTitle = ref('');
+const customMusicArtist = ref('');
+const customMusicUrl = ref('');
+const customMusicCover = ref('');
+const musicFileInput = ref<HTMLInputElement | null>(null);
+const coverFileInput = ref<HTMLInputElement | null>(null);
+
+const triggerMusicUpload = () => {
+  musicFileInput.value?.click();
+};
+
+const handleMusicFile = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const url = typeof reader.result === 'string' ? reader.result : '';
+    if (!url) return;
+    customMusicUrl.value = url;
+    if (!customMusicTitle.value) customMusicTitle.value = file.name;
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+};
+
+const triggerCoverUpload = () => {
+  coverFileInput.value?.click();
+};
+
+const handleCoverFile = (e: Event) => {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const url = typeof reader.result === 'string' ? reader.result : '';
+    if (!url) return;
+    customMusicCover.value = url;
+    input.value = '';
+  };
+  reader.readAsDataURL(file);
+};
+
+const addCustomMusic = () => {
+  const url = customMusicUrl.value.trim();
+  if (!url) return;
+  const id = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  musicStore.addCustomTrack({
+    id,
+    title: customMusicTitle.value || 'Custom',
+    artist: customMusicArtist.value || '',
+    cover: customMusicCover.value || undefined,
+    url
+  });
+  customMusicTitle.value = '';
+  customMusicArtist.value = '';
+  customMusicUrl.value = '';
+  customMusicCover.value = '';
+};
+
+const clearCustomMusic = () => {
+  const ids = musicStore.customTracks.map(t => t.id);
+  ids.forEach(id => musicStore.removeCustomTrack(id));
+};
+
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
+  document.addEventListener('click', handleDocumentClick);
+  refreshBing();
+  searchUpx8();
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', checkMobile);
+  document.removeEventListener('click', handleDocumentClick);
 });
 
 // Petal speed tooltip text
@@ -278,7 +597,7 @@ const cyclePetalSpeed = () => {
   const speeds: Array<'off' | 'slow' | 'fast'> = ['off', 'slow', 'fast'];
   const currentIndex = speeds.indexOf(props.petalSpeed);
   const nextIndex = (currentIndex + 1) % speeds.length;
-  emit('update:petalSpeed', speeds[nextIndex]);
+  emit('update:petal-speed', speeds[nextIndex]);
 };
 </script>
 

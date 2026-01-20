@@ -146,7 +146,24 @@
       .markdown-body h3 { font-size: 1.3em; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.6em; color: #be1245; }
       .dark .markdown-body h3 { color: #fc7096; }
 
+      .markdown-body h4 { font-size: 1.1em; font-weight: 600; margin-top: 1.4em; margin-bottom: 0.5em; color: #9f123f; }
+      .dark .markdown-body h4 { color: #f9a8d4; }
+      .markdown-body h5 { font-size: 1em; font-weight: 600; margin-top: 1.2em; margin-bottom: 0.4em; color: #831843; }
+      .dark .markdown-body h5 { color: #fbcfe8; }
+      .markdown-body h6 { font-size: 0.95em; font-weight: 600; margin-top: 1em; margin-bottom: 0.4em; color: #6b1236; text-transform: uppercase; letter-spacing: 0.04em; }
+      .dark .markdown-body h6 { color: #fce7f3; }
+
       .markdown-body p { margin-bottom: 1.5em; leading-loose; }
+      .markdown-body p strong { color: #9f123f; font-weight: 700; }
+      .dark .markdown-body p strong { color: #fda4b8; }
+      .markdown-body p em { color: #be185d; }
+      .dark .markdown-body p em { color: #f9a8d4; }
+      .markdown-body mark { background: rgba(253, 164, 184, 0.35); color: #9f123f; padding: 0 0.25em; border-radius: 4px; }
+      .dark .markdown-body mark { background: rgba(244, 63, 114, 0.35); color: #fde2e8; }
+      .markdown-body kbd { background: #fff0f5; border: 1px solid #fecdd7; border-bottom-width: 2px; padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.85em; color: #9f123f; }
+      .dark .markdown-body kbd { background: #111827; border-color: #374151; color: #fbcfe8; }
+      .markdown-body del { color: #9ca3af; }
+      .dark .markdown-body del { color: #6b7280; }
       .markdown-body ul { list-style-type: none; padding-left: 1.2em; margin-bottom: 1.5em; }
       .markdown-body ul li { position: relative; margin-bottom: 0.6em; padding-left: 1em; }
       .markdown-body ul li::before { content: '•'; color: #fc7096; font-size: 1.5em; position: absolute; left: -0.5em; top: -0.1em; line-height: 1; }
@@ -173,6 +190,20 @@
       .hljs-number, .hljs-built_in { color: #fbbf24; }
       .hljs-title, .hljs-function { color: #93c5fd; }
       .markdown-body img { max-width: 100%; border-radius: 12px; box-shadow: 0 10px 30px -10px rgba(244, 63, 114, 0.2); margin: 2em auto; display: block; }
+
+      .markdown-body hr { border: none; height: 1px; margin: 2.5em 0; background: linear-gradient(to right, transparent, rgba(244, 63, 114, 0.5), transparent); }
+      .dark .markdown-body hr { background: linear-gradient(to right, transparent, rgba(253, 164, 184, 0.5), transparent); }
+
+      .markdown-body table { width: 100%; border-collapse: collapse; margin: 2em 0; overflow: hidden; border-radius: 12px; box-shadow: 0 12px 30px -20px rgba(244, 63, 114, 0.4); }
+      .markdown-body thead { background: linear-gradient(to right, rgba(253, 164, 184, 0.4), rgba(255, 240, 245, 0.9)); color: #9f123f; }
+      .dark .markdown-body thead { background: linear-gradient(to right, rgba(244, 63, 114, 0.4), rgba(17, 24, 39, 0.9)); color: #fbcfe8; }
+      .markdown-body th, .markdown-body td { padding: 0.8em 1em; border-bottom: 1px solid rgba(244, 63, 114, 0.15); text-align: left; }
+      .dark .markdown-body th, .dark .markdown-body td { border-bottom-color: rgba(148, 163, 184, 0.2); }
+      .markdown-body tbody tr:nth-child(2n) { background: rgba(255, 240, 245, 0.6); }
+      .dark .markdown-body tbody tr:nth-child(2n) { background: rgba(17, 24, 39, 0.5); }
+
+      .markdown-body input[type="checkbox"] { margin-right: 0.5em; accent-color: #f472b6; }
+      .dark .markdown-body input[type="checkbox"] { accent-color: #fb7185; }
 
       .markdown-body .pdf-embed-wrapper { margin: 2em 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(244, 63, 114, 0.2); background: #fff7f9; box-shadow: 0 12px 30px -18px rgba(244, 63, 114, 0.4); }
       .dark .markdown-body .pdf-embed-wrapper { background: #111827; border-color: rgba(244, 63, 114, 0.35); }

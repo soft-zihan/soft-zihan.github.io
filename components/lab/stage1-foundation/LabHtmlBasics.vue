@@ -249,24 +249,7 @@
       </section>
     </div>
 
-    <!-- 下一步 -->
-    <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-      <div class="flex justify-between items-center">
-        <div>
-          <p class="text-sm text-gray-500 dark:text-gray-400">上一节</p>
-          <p class="text-gray-700 dark:text-gray-300 font-medium">（无）</p>
-        </div>
-        <div class="text-right">
-          <p class="text-sm text-gray-500 dark:text-gray-400">下一节</p>
-          <button 
-            class="text-sakura-600 dark:text-sakura-400 font-bold hover:underline"
-            @click="$emit('next-lesson', 'css-basics')"
-          >
-            CSS基础 - 网页衣服 →
-          </button>
-        </div>
-      </div>
-    </div>
+    
   </div>
 </template>
 

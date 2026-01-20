@@ -3,65 +3,6 @@
     <div class="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-2xl max-w-lg w-full animate-fade-in border border-white/50 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
       <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6">{{ t.settings_title }}</h3>
 
-      <!-- Wallpaper Switcher (with no-wallpaper option at first) -->
-      <div class="mb-6">
-        <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.banner_background || 'Wallpaper' }}</label>
-        <div class="grid grid-cols-3 gap-2">
-          <!-- No Wallpaper Option -->
-          <button
-            @click="setNoWallpaper"
-            class="relative rounded-xl overflow-hidden border transition-all h-16 flex items-center justify-center bg-gray-100 dark:bg-gray-800"
-            :class="settings.bannerMode === 'hide' ? 'border-sakura-500 ring-2 ring-sakura-300' : 'border-gray-200 dark:border-gray-700'"
-          >
-            <span class="text-2xl text-gray-400">❌</span>
-          </button>
-          <!-- Wallpaper Options -->
-          <button
-            v-for="wp in currentThemeWallpapers"
-            :key="wp.filename"
-            @click="setWallpaperWithMode(wp.filename)"
-            class="relative rounded-xl overflow-hidden border transition-all"
-            :class="wp.filename === appStore.currentWallpaperFilename && settings.bannerMode !== 'hide' ? 'border-sakura-500 ring-2 ring-sakura-300' : 'border-gray-200 dark:border-gray-700'"
-          >
-            <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
-            <div class="absolute inset-0 bg-black/10"></div>
-          </button>
-        </div>
-      </div>
-
-      <!-- Font Family -->
-      <div class="mb-6">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.font_style }}</label>
-          <div class="flex gap-2">
-            <button @click="settings.fontFamily = 'sans'" class="flex-1 py-3 border rounded-xl transition-colors" :class="settings.fontFamily === 'sans' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">Sans</button>
-            <button @click="settings.fontFamily = 'serif'" class="flex-1 py-3 border rounded-xl font-serif transition-colors" :class="settings.fontFamily === 'serif' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">Serif</button>
-          </div>
-      </div>
-
-      <!-- Font Size -->
-      <div class="mb-6">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.font_size }}</label>
-          <div class="flex gap-2">
-            <button @click="settings.fontSize = 'small'" class="flex-1 py-3 border rounded-xl text-xs transition-colors" :class="settings.fontSize === 'small' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A</button>
-            <button @click="settings.fontSize = 'normal'" class="flex-1 py-3 border rounded-xl text-base transition-colors" :class="settings.fontSize === 'normal' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A+</button>
-            <button @click="settings.fontSize = 'large'" class="flex-1 py-3 border rounded-xl text-xl transition-colors" :class="settings.fontSize === 'large' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">A++</button>
-          </div>
-      </div>
-
-      <!-- Petal Layer -->
-      <div class="mb-6">
-          <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ t.petal_layer || '🌸 樱花层级' }}</label>
-          <div class="flex gap-2">
-            <button @click="settings.petalLayer = 'back'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.petalLayer === 'back' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
-              <span>📄</span> {{ t.petal_back || '文章后' }}
-            </button>
-            <button @click="settings.petalLayer = 'front'" class="flex-1 py-2 border rounded-xl text-sm transition-colors flex items-center justify-center gap-2" :class="settings.petalLayer === 'front' ? 'border-sakura-500 bg-sakura-50 dark:bg-sakura-900/20 text-sakura-600 dark:text-sakura-400' : 'border-gray-200 dark:border-gray-700 text-gray-500'">
-              <span>🌸</span> {{ t.petal_front || '文章前' }}
-            </button>
-          </div>
-          <p class="text-[10px] text-gray-400 mt-1.5">{{ t.petal_layer_hint || '设置樱花显示在文章内容的前面还是后面' }}</p>
-      </div>
-
       <!-- GitHub Configuration -->
       <div class="mb-6 border-t border-gray-200 dark:border-gray-700 pt-6">
         <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">GitHub {{ t.connection || '连接' }}</label>
@@ -297,22 +238,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useWallpapers } from '../composables/useWallpapers'
 import { useBackup, type BackupFile } from '../composables/useBackup'
-import { useAppStore } from '../stores/appStore'
 import { useArticleStore } from '../stores/articleStore'
 import { useTokenSecurity } from '../composables/useTokenSecurity'
 
 const props = defineProps<{
   t: any;
   isDark: boolean;
-  settings: {
-    fontSize: string;
-    fontFamily: string;
-    petalSpeed: string;
-    bannerMode?: string;
-    petalLayer?: string;
-  };
   lang?: 'zh' | 'en';
   fileSystem?: any[];
   labFolder?: any;
@@ -322,9 +254,7 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const appStore = useAppStore()
 const articleStore = useArticleStore()
-const { currentThemeWallpapers, setWallpaper } = useWallpapers()
 const { saveToken, hasToken: checkHasToken, getToken } = useTokenSecurity()
 
 // GitHub Configuration
@@ -343,19 +273,6 @@ const hasToken = ref(false)
 // 初始化检查 token 状态
 const updateTokenStatus = () => {
   hasToken.value = checkHasToken()
-}
-
-// 设置无壁纸
-const setNoWallpaper = () => {
-  props.settings.bannerMode = 'hide'
-}
-
-// 设置壁纸并恢复正常模式
-const setWallpaperWithMode = (filename: string) => {
-  setWallpaper(filename)
-  if (props.settings.bannerMode === 'hide') {
-    props.settings.bannerMode = 'normal'
-  }
 }
 
 const saveGitHubConfig = async () => {

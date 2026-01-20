@@ -10,8 +10,23 @@ export const useAppStore = defineStore('app', () => {
   // Theme
   const isDark = ref(false)
   
-  // Wallpaper - persist filename only
+  // Wallpaper - persist filename or url
   const currentWallpaperFilename = ref('')
+  const customWallpapers = ref<Array<{
+    id: string
+    name: string
+    url: string
+    theme: 'light' | 'dark' | 'auto'
+    source: 'url' | 'local' | 'api'
+  }>>([])
+  const wallpaperApiSettings = ref({
+    bingEnabled: false,
+    bingCountry: 'cn',
+    bingCount: 8,
+    bingLastDate: '',
+    bingLastUrl: '',
+    upx8Keyword: ''
+  })
   
   // User Settings
   const userSettings = ref({
@@ -93,6 +108,8 @@ export const useAppStore = defineStore('app', () => {
     t,
     isDark,
     currentWallpaperFilename,
+    customWallpapers,
+    wallpaperApiSettings,
     userSettings,
     showParticles,
     showSettings,
@@ -113,6 +130,6 @@ export const useAppStore = defineStore('app', () => {
   }
 }, {
   persist: {
-    pick: ['lang', 'isDark', 'currentWallpaperFilename', 'userSettings', 'showParticles']
+    pick: ['lang', 'isDark', 'currentWallpaperFilename', 'customWallpapers', 'wallpaperApiSettings', 'userSettings', 'showParticles']
   }
 })

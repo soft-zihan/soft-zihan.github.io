@@ -15,6 +15,9 @@ export interface WallpapersData {
 // 缓存壁纸数据（模块级别，跨组件共享）
 const wallpapersData = ref<WallpapersData | null>(null)
 const isLoading = ref(false)
+const bingWallpapers = ref<WallpaperItem[]>([])
+const upx8Wallpapers = ref<WallpaperItem[]>([])
+const isApiLoading = ref(false)
 
 export function useWallpapers() {
   const appStore = useAppStore()
@@ -47,16 +50,37 @@ export function useWallpapers() {
     }
   }
   
+  const customThemeWallpapers = computed(() => {
+    const theme = appStore.isDark ? 'dark' : 'light'
+    return appStore.customWallpapers.filter(item => item.theme === theme || item.theme === 'auto')
+      .map(item => ({
+        filename: item.url,
+        path: item.url,
+        name: item.name
+      }))
+  })
+
+  const normalizePath = (path: string) => {
+    if (path.startsWith('http') || path.startsWith('data:') || path.startsWith('blob:')) return path
+    if (path.startsWith('/')) return '.' + path
+    return path
+  }
+
   // 当前主题的壁纸列表
   const currentThemeWallpapers = computed(() => {
     if (!wallpapersData.value) return []
-    return appStore.isDark ? wallpapersData.value.dark : wallpapersData.value.light
+    const base = appStore.isDark ? wallpapersData.value.dark : wallpapersData.value.light
+    return [...base, ...customThemeWallpapers.value]
   })
   
   // 当前选中的壁纸路径
   const currentWallpaper = computed(() => {
     const filename = appStore.currentWallpaperFilename
     const wallpapers = currentThemeWallpapers.value
+    
+    if (filename && (filename.startsWith('http') || filename.startsWith('data:') || filename.startsWith('blob:'))) {
+      return filename
+    }
     
     if (!wallpapers.length) return ''
     
@@ -65,10 +89,7 @@ export function useWallpapers() {
     let path = found ? found.path : (wallpapers[0]?.path || '')
     
     // 确保路径是相对路径（手机端兼容）
-    if (path.startsWith('/')) {
-      path = '.' + path
-    }
-    return path
+    return normalizePath(path)
   })
   
   // 设置壁纸
@@ -84,21 +105,112 @@ export function useWallpapers() {
     return allWallpapers.find(w => w.filename === filename)
   }
   
+  const addCustomWallpaper = (payload: { name: string; url: string; theme: 'light' | 'dark' | 'auto'; source: 'url' | 'local' | 'api' }) => {
+    const id = `${payload.source}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    appStore.customWallpapers.push({ id, ...payload })
+    appStore.setWallpaper(payload.url)
+  }
+  
+  const removeCustomWallpaper = (url: string) => {
+    const index = appStore.customWallpapers.findIndex(item => item.url === url)
+    if (index > -1) {
+      appStore.customWallpapers.splice(index, 1)
+    }
+  }
+
+  const fetchBingWallpapers = async (country: string, count: number) => {
+    if (isApiLoading.value) return
+    isApiLoading.value = true
+    try {
+      const response = await fetch(`https://peapix.com/bing/feed?country=${country}`)
+      if (response.ok) {
+        const data = await response.json()
+        const items = (Array.isArray(data) ? data : []).slice(0, count).map((item, idx) => ({
+          filename: item.fullUrl,
+          path: item.fullUrl,
+          name: item.title || `Bing ${idx + 1}`
+        }))
+        bingWallpapers.value = items
+      }
+    } catch (e) {
+      console.warn('Failed to load Bing wallpapers:', e)
+    } finally {
+      isApiLoading.value = false
+    }
+  }
+  
+  const updateBingDaily = async () => {
+    const today = new Date().toISOString().slice(0, 10)
+    if (!appStore.wallpaperApiSettings.bingEnabled) return
+    if (appStore.wallpaperApiSettings.bingLastDate === today && appStore.wallpaperApiSettings.bingLastUrl) {
+      appStore.setWallpaper(appStore.wallpaperApiSettings.bingLastUrl)
+      return
+    }
+    try {
+      const response = await fetch(`https://peapix.com/bing/feed?country=${appStore.wallpaperApiSettings.bingCountry}`)
+      if (response.ok) {
+        const data = await response.json()
+        const first = Array.isArray(data) ? data[0] : null
+        if (first?.fullUrl) {
+          appStore.wallpaperApiSettings.bingLastDate = today
+          appStore.wallpaperApiSettings.bingLastUrl = first.fullUrl
+          appStore.setWallpaper(first.fullUrl)
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to update Bing daily wallpaper:', e)
+    }
+  }
+
+  const fetchUpx8Wallpaper = async (keyword?: string) => {
+    if (isApiLoading.value) return
+    isApiLoading.value = true
+    try {
+      const url = keyword ? `https://wp.upx8.com/api.php?content=${encodeURIComponent(keyword)}` : 'https://wp.upx8.com/api.php'
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        const itemUrl = data?.data?.url
+        if (itemUrl) {
+          upx8Wallpapers.value = [{
+            filename: itemUrl,
+            path: itemUrl,
+            name: keyword ? `UPX8: ${keyword}` : 'UPX8 Random'
+          }]
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load UpX8 wallpaper:', e)
+    } finally {
+      isApiLoading.value = false
+    }
+  }
+  
   // 初始化时加载壁纸
   loadWallpapers().then(() => {
     const wallpapers = currentThemeWallpapers.value
     if (wallpapers.length && !appStore.currentWallpaperFilename) {
       appStore.setWallpaper(wallpapers[0].filename)
     }
+    updateBingDaily()
   })
   
   return {
     wallpapersData,
     isLoading,
     currentThemeWallpapers,
+    customThemeWallpapers,
+    bingWallpapers,
+    upx8Wallpapers,
+    isApiLoading,
     currentWallpaper,
     loadWallpapers,
     setWallpaper,
-    getWallpaperInfo
+    getWallpaperInfo,
+    addCustomWallpaper,
+    removeCustomWallpaper,
+    fetchBingWallpapers,
+    fetchUpx8Wallpaper,
+    updateBingDaily
   }
 }

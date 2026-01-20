@@ -31,6 +31,7 @@
 
     <!-- Left Sidebar: Navigation -->
     <AppSidebar 
+      v-if="!readingMode"
       :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0']"
       class="fixed md:relative z-40 transition-transform duration-300 ease-out"
       :lang="lang"
@@ -61,13 +62,13 @@
     <!-- Main Content Wrapper -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
       <!-- Wallpaper Layer (behind decorations, excluding sidebar) -->
-      <WallpaperLayer :is-dark="appStore.isDark" :light-url="wallpaperLightUrl" :dark-url="wallpaperDarkUrl" :bannerMode="appStore.userSettings.bannerMode" />
+      <WallpaperLayer v-if="!readingMode" :is-dark="appStore.isDark" :light-url="wallpaperLightUrl" :dark-url="wallpaperDarkUrl" :bannerMode="appStore.userSettings.bannerMode" />
 
       <!-- Dynamic Petals Container (Back layer - inside main for proper z-index with isolate) -->
-      <PetalBackground v-if="appStore.showParticles && appStore.userSettings.petalLayer === 'back'" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" layer="back" />
+      <PetalBackground v-if="!readingMode && appStore.showParticles && appStore.userSettings.petalLayer === 'back'" :speed="appStore.userSettings.petalSpeed" :isDark="appStore.isDark" layer="back" />
 
       <!-- Decorative Background Elements -->
-      <div class="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
+      <div v-if="!readingMode" class="absolute inset-0 z-[-1] overflow-hidden pointer-events-none">
         <div class="absolute -top-[20%] -right-[10%] w-[800px] h-[800px] rounded-full bg-gradient-to-br from-sakura-100/40 to-purple-100/30 dark:from-sakura-900/10 dark:to-purple-900/10 blur-3xl animate-float opacity-60"></div>
         <div class="absolute top-[30%] -left-[10%] w-[600px] h-[600px] rounded-full bg-gradient-to-tr from-sakura-200/30 to-sakura-50/20 dark:from-sakura-800/10 dark:to-sakura-900/5 blur-3xl animate-pulse-fast opacity-50" style="animation-duration: 8s;"></div>
         <div class="absolute inset-0 opacity-[0.03] dark:opacity-[0.05]" style="background-image: radial-gradient(#9f123f 1px, transparent 1px); background-size: 32px 32px;"></div>
@@ -84,6 +85,7 @@
         :show-particles="appStore.showParticles"
         :is-dark="appStore.isDark"
         :petal-speed="appStore.userSettings.petalSpeed"
+        :reading-mode="readingMode"
         :header-hidden="headerHidden"
         :dual-column-mode="dualColumnMode"
         v-model:isRawMode="isRawMode"
@@ -98,6 +100,7 @@
         @open-download="showDownloadModal = true"
         @toggle-theme="toggleTheme(!appStore.isDark)"
         @update:petal-speed="handlePetalSpeedChange"
+        @toggle-reading-mode="readingMode = !readingMode"
         @toggle-dual-column="dualColumnMode = !dualColumnMode; if(dualColumnMode && !currentTool) currentTool = 'dashboard'"
       />
 
@@ -231,6 +234,9 @@
                    <span class="text-xs text-gray-400 flex items-center gap-1">
                      📖 {{ getArticleViews(currentFile.path) }} {{ lang === 'zh' ? '人阅读' : 'views' }}
                    </span>
+                  <span class="text-xs text-gray-400 flex items-center gap-1">
+                    💬 {{ getArticleComments(currentFile.path) }} {{ lang === 'zh' ? '条评论' : 'comments' }}
+                  </span>
                    <span class="text-xs text-gray-400">
                     📝 {{ currentWordCount }} {{ t.words }}
                    </span>
@@ -509,7 +515,6 @@
       @close="showSettings = false"
       :t="t"
       :is-dark="appStore.isDark"
-      :settings="appStore.userSettings"
       :lang="lang"
       :file-system="fileSystem"
       :lab-folder="labFolder"
@@ -623,6 +628,7 @@ const loading = ref(true);
 const contentLoading = ref(false);
 const currentTool = ref<'dashboard' | 'event-handling' | 'slot' | 'source-code' | null>(null);
 const isRawMode = ref(false);
+const readingMode = ref(false);
 
 // Modal States
 const showSettings = ref(false);
@@ -1180,7 +1186,18 @@ const downloadSource = () => {
   }
 };
 
-const formatDate = (dateStr?: string) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleString(lang.value === 'zh' ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
 
 const handleSearchSelect = (result: any) => {
   showSearch.value = false;
@@ -1205,6 +1222,17 @@ const getArticleViews = (path: string): number => {
   const baseViews = likes * (5 + Math.random() * 5);
   return Math.max(1, Math.round(baseViews));
 };
+
+const getArticleComments = (path: string): number => {
+  let hash = 0
+  for (let i = 0; i < path.length; i++) {
+    hash = ((hash << 5) - hash) + path.charCodeAt(i)
+    hash |= 0
+  }
+  const likes = articleStore.getLikes(path)
+  const base = Math.abs(hash) % 18
+  return Math.max(0, base + likes)
+}
 
 // =====================
 // Keyboard Shortcuts
