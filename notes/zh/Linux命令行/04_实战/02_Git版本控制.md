@@ -1,7 +1,4 @@
-
----
-
-# 🐙 Git 全方位生存指南 (Git Survival Guide: From Zero to Hero)
+# 🐙 Git 全方位生存指南
 
 ## 0. 核心心法：本地分支 vs 远程分支 (解开混乱之源)
 
