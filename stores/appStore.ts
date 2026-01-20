@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { I18N } from '../constants'
+import { I18N, THEME_COLORS } from '../constants'
+import type { ThemeColorId } from '../constants'
 
 export const useAppStore = defineStore('app', () => {
   // Language
@@ -35,7 +36,7 @@ export const useAppStore = defineStore('app', () => {
     petalSpeed: 'slow' as 'off' | 'slow' | 'fast',
     bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide',
     petalLayer: 'back' as 'front' | 'back',
-    themeColor: 'sakura' as 'sakura' | 'violet' | 'cyan' | 'amber'
+    themeColor: 'sakura' as ThemeColorId
   })
   
   // UI State
@@ -103,50 +104,8 @@ export const useAppStore = defineStore('app', () => {
     currentWallpaperFilename.value = filename
   }
   
-  function applyThemeColor(color: 'sakura' | 'violet' | 'cyan' | 'amber') {
-    const palettes: Record<string, Record<string, string>> = {
-      sakura: {
-        50: '#fff0f5',
-        100: '#ffe4e9',
-        300: '#fda4b8',
-        400: '#fc7096',
-        500: '#f43f72',
-        600: '#e11d59',
-        700: '#be1245',
-        900: '#88133b'
-      },
-      violet: {
-        50: '#f5f3ff',
-        100: '#ede9fe',
-        300: '#c4b5fd',
-        400: '#a78bfa',
-        500: '#8b5cf6',
-        600: '#7c3aed',
-        700: '#6d28d9',
-        900: '#4c1d95'
-      },
-      cyan: {
-        50: '#ecfeff',
-        100: '#cffafe',
-        300: '#67e8f9',
-        400: '#22d3ee',
-        500: '#06b6d4',
-        600: '#0891b2',
-        700: '#0e7490',
-        900: '#164e63'
-      },
-      amber: {
-        50: '#fffbeb',
-        100: '#fef3c7',
-        300: '#fcd34d',
-        400: '#fbbf24',
-        500: '#f59e0b',
-        600: '#d97706',
-        700: '#b45309',
-        900: '#78350f'
-      }
-    }
-    const p = palettes[color]
+  function applyThemeColor(color: ThemeColorId) {
+    const p = THEME_COLORS[color].palette
     const root = document.documentElement
     root.style.setProperty('--primary-50', p[50])
     root.style.setProperty('--primary-100', p[100])
@@ -168,7 +127,7 @@ export const useAppStore = defineStore('app', () => {
     root.setAttribute('data-theme-color', color)
   }
   
-  function setThemeColor(color: 'sakura' | 'violet' | 'cyan' | 'amber') {
+  function setThemeColor(color: ThemeColorId) {
     userSettings.value.themeColor = color
     applyThemeColor(color)
   }

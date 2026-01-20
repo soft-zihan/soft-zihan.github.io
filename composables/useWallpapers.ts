@@ -17,6 +17,8 @@ const wallpapersData = ref<WallpapersData | null>(null)
 const isLoading = ref(false)
 const bingWallpapers = ref<WallpaperItem[]>([])
 const upx8Wallpapers = ref<WallpaperItem[]>([])
+const beautyWallpapers = ref<WallpaperItem[]>([])
+const animeWallpapers = ref<WallpaperItem[]>([])
 const isApiLoading = ref(false)
 
 export function useWallpapers() {
@@ -122,7 +124,7 @@ export function useWallpapers() {
     if (isApiLoading.value) return
     isApiLoading.value = true
     try {
-      const response = await fetch(`https://peapix.com/bing/feed?country=${country}`)
+      const response = await fetch(`https://peapix.com/bing/feed?country=${country}&n=${count}`)
       if (response.ok) {
         const data = await response.json()
         const items = (Array.isArray(data) ? data : []).slice(0, count).map((item, idx) => ({
@@ -147,7 +149,7 @@ export function useWallpapers() {
       return
     }
     try {
-      const response = await fetch(`https://peapix.com/bing/feed?country=${appStore.wallpaperApiSettings.bingCountry}`)
+      const response = await fetch(`https://peapix.com/bing/feed?country=${appStore.wallpaperApiSettings.bingCountry}&n=1`)
       if (response.ok) {
         const data = await response.json()
         const first = Array.isArray(data) ? data[0] : null
@@ -162,25 +164,55 @@ export function useWallpapers() {
     }
   }
 
+  const withQueryParam = (url: string, key: string, value: string | number) => {
+    return url.includes('?') ? `${url}&${key}=${value}` : `${url}?${key}=${value}`
+  }
+
+  const buildRandomItems = (baseUrl: string, count: number, label: string) => {
+    const stamp = Date.now()
+    return Array.from({ length: count }).map((_, idx) => {
+      const url = withQueryParam(baseUrl, 't', `${stamp}-${idx}`)
+      return {
+        filename: url,
+        path: url,
+        name: `${label} ${idx + 1}`
+      }
+    })
+  }
+
   const fetchUpx8Wallpaper = async (keyword?: string) => {
     if (isApiLoading.value) return
     isApiLoading.value = true
     try {
-      const url = keyword ? `https://wp.upx8.com/api.php?content=${encodeURIComponent(keyword)}` : 'https://wp.upx8.com/api.php'
-      const response = await fetch(url)
-      if (response.ok) {
-        const data = await response.json()
-        const itemUrl = data?.data?.url
-        if (itemUrl) {
-          upx8Wallpapers.value = [{
-            filename: itemUrl,
-            path: itemUrl,
-            name: keyword ? `UPX8: ${keyword}` : 'UPX8 Random'
-          }]
-        }
-      }
+      const tag = keyword?.trim() || 'wallpaper'
+      const baseUrl = `https://source.unsplash.com/1600x900/?${encodeURIComponent(tag)}`
+      upx8Wallpapers.value = buildRandomItems(baseUrl, 6, 'Search')
     } catch (e) {
       console.warn('Failed to load UpX8 wallpaper:', e)
+    } finally {
+      isApiLoading.value = false
+    }
+  }
+
+  const fetchBeautyWallpapers = async (count: number) => {
+    if (isApiLoading.value) return
+    isApiLoading.value = true
+    try {
+      beautyWallpapers.value = buildRandomItems('https://api.btstu.cn/sjbz/?lx=meizi', count, 'Beauty')
+    } catch (e) {
+      console.warn('Failed to load beauty wallpapers:', e)
+    } finally {
+      isApiLoading.value = false
+    }
+  }
+
+  const fetchAnimeWallpapers = async (count: number) => {
+    if (isApiLoading.value) return
+    isApiLoading.value = true
+    try {
+      animeWallpapers.value = buildRandomItems('https://api.btstu.cn/sjbz/?lx=dongman', count, 'Anime')
+    } catch (e) {
+      console.warn('Failed to load anime wallpapers:', e)
     } finally {
       isApiLoading.value = false
     }
@@ -202,6 +234,8 @@ export function useWallpapers() {
     customThemeWallpapers,
     bingWallpapers,
     upx8Wallpapers,
+    beautyWallpapers,
+    animeWallpapers,
     isApiLoading,
     currentWallpaper,
     loadWallpapers,
@@ -211,6 +245,8 @@ export function useWallpapers() {
     removeCustomWallpaper,
     fetchBingWallpapers,
     fetchUpx8Wallpaper,
+    fetchBeautyWallpapers,
+    fetchAnimeWallpapers,
     updateBingDaily
   }
 }

@@ -14,6 +14,68 @@ export const UMAMI_CONFIG = {
   scriptUrl: 'https://cloud.umami.is/script.js'
 }
 
+export const THEME_COLORS = {
+  sakura: {
+    id: 'sakura',
+    preview: '#f43f72',
+    palette: {
+      50: '#fff0f5',
+      100: '#ffe4e9',
+      300: '#fda4b8',
+      400: '#fc7096',
+      500: '#f43f72',
+      600: '#e11d59',
+      700: '#be1245',
+      900: '#88133b'
+    }
+  },
+  violet: {
+    id: 'violet',
+    preview: '#8b5cf6',
+    palette: {
+      50: '#f5f3ff',
+      100: '#ede9fe',
+      300: '#c4b5fd',
+      400: '#a78bfa',
+      500: '#8b5cf6',
+      600: '#7c3aed',
+      700: '#6d28d9',
+      900: '#4c1d95'
+    }
+  },
+  cyan: {
+    id: 'cyan',
+    preview: '#06b6d4',
+    palette: {
+      50: '#ecfeff',
+      100: '#cffafe',
+      300: '#67e8f9',
+      400: '#22d3ee',
+      500: '#06b6d4',
+      600: '#0891b2',
+      700: '#0e7490',
+      900: '#164e63'
+    }
+  },
+  amber: {
+    id: 'amber',
+    preview: '#f59e0b',
+    palette: {
+      50: '#fffbeb',
+      100: '#fef3c7',
+      300: '#fcd34d',
+      400: '#fbbf24',
+      500: '#f59e0b',
+      600: '#d97706',
+      700: '#b45309',
+      900: '#78350f'
+    }
+  }
+} as const
+
+export type ThemeColorId = keyof typeof THEME_COLORS
+export const THEME_COLOR_LIST = Object.values(THEME_COLORS)
+
 export const I18N = {
   en: {
     loading: "Loading Sakura Notes...",

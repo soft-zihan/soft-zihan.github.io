@@ -16,6 +16,7 @@ export interface ArticleMeta {
   tags: string[]
   author: string
   authorUrl: string
+  backgroundColor?: string
 }
 
 /**
@@ -40,6 +41,8 @@ export function extractMetaFromContent(content: string): ArticleMeta {
     if (authorMatch) meta.author = authorMatch[1].trim()
     const authorUrlMatch = block.match(/authorUrl\s*:\s*([^\n]+)/i)
     if (authorUrlMatch) meta.authorUrl = authorUrlMatch[1].trim()
+    const bgMatch = block.match(/(?:bg|background|bgColor|backgroundColor)\s*:\s*([^\n]+)/i)
+    if (bgMatch) meta.backgroundColor = bgMatch[1].trim().replace(/['"]/g, '')
   }
 
   // 兼容旧 frontmatter
@@ -62,6 +65,8 @@ export function extractMetaFromContent(content: string): ArticleMeta {
     if (authorMatch && !meta.author) meta.author = authorMatch[1].trim()
     const authorUrlMatch = frontmatter.match(/authorUrl:\s*(\S+)/)
     if (authorUrlMatch && !meta.authorUrl) meta.authorUrl = authorUrlMatch[1].trim()
+    const bgMatch = frontmatter.match(/(?:bg|background|bgColor|backgroundColor):\s*([^\n]+)/i)
+    if (bgMatch && !meta.backgroundColor) meta.backgroundColor = bgMatch[1].trim().replace(/['"]/g, '')
   }
 
   return meta

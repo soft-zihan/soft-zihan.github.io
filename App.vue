@@ -53,6 +53,7 @@
       :comment-counts="commentCounts"
       @toggle-lang="toggleLang"
       @reset="resetToHome"
+      @logo-click="showToast(t.welcome_title)"
       @select-tool="selectTool"
       @toggle-folder="toggleFolder"
       @select-file="handleSidebarFileSelect"
@@ -87,9 +88,9 @@
         :show-particles="appStore.showParticles"
         :is-dark="appStore.isDark"
         :petal-speed="appStore.userSettings.petalSpeed"
-        :reading-mode="readingMode"
         :header-hidden="headerHidden"
         :dual-column-mode="dualColumnMode"
+        :get-article-views="getArticleViews"
         v-model:isRawMode="isRawMode"
         @reset="resetToHome"
         @navigate="navigateToBreadcrumb"
@@ -102,7 +103,6 @@
         @open-download="showDownloadModal = true; if (isMobile) sidebarOpen = false"
         @toggle-theme="toggleTheme(!appStore.isDark)"
         @update:petal-speed="handlePetalSpeedChange"
-        @toggle-reading-mode="readingMode = !readingMode"
         @toggle-dual-column="dualColumnMode = !dualColumnMode; if(dualColumnMode && !currentTool) currentTool = 'dashboard'"
       />
 
@@ -236,10 +236,7 @@
                      <span>{{ t.favorite }}</span>
                    </button>
                   <span class="text-xs text-gray-400 flex items-center gap-1">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
+                    <span class="text-sm">🧑‍🎓</span>
                     {{ getArticleViews(currentFile.path) }} {{ lang === 'zh' ? '人阅读' : 'views' }}
                   </span>
                  <span class="text-xs text-gray-400 flex items-center gap-1">
@@ -275,7 +272,7 @@
               v-if="!currentFile.isSource && !isRawMode"
               id="markdown-viewer"
               v-html="renderedHtml" 
-              class="markdown-body dark:text-gray-300"
+              class="markdown-body"
               @click="handleContentClickEvent"
               @mousedown="selectionMenuComposable.lockSelectionMenu()"
               @mouseup="handleSelectionEvent"
@@ -413,6 +410,44 @@
               {{ t.welcome_desc }}<br>
               <span class="text-sm opacity-70 bg-white/50 dark:bg-gray-800 px-4 py-1 rounded-full mt-2 inline-block border border-white/50 dark:border-gray-700">{{ t.welcome_tags }}</span>
             </p>
+            <div class="mt-8 w-full max-w-2xl">
+              <div class="bg-white/70 dark:bg-gray-900/60 border border-white/60 dark:border-gray-700 rounded-2xl px-6 py-4 text-left shadow-lg backdrop-blur">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+                    <span class="text-base">📜</span>
+                    <span class="font-semibold text-sakura-600 dark:text-sakura-400">{{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}</span>
+                    <span v-if="welcomePoemAuthor">· {{ welcomePoemAuthor }}</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button
+                      class="px-3 py-1 text-xs rounded-full border border-sakura-200 dark:border-gray-700 text-sakura-600 dark:text-sakura-300 hover:bg-sakura-50 dark:hover:bg-gray-800 transition-colors"
+                      :disabled="welcomePoemLoading"
+                      @click="loadRandomPoem"
+                    >
+                      {{ lang === 'zh' ? '换一首' : 'New' }}
+                    </button>
+                    <button
+                      v-if="welcomePoemHasMore"
+                      class="px-3 py-1 text-xs rounded-full border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:text-sakura-600 dark:hover:text-sakura-300 transition-colors"
+                      @click="toggleWelcomePoemExpand"
+                    >
+                      {{ welcomePoemExpanded ? (lang === 'zh' ? '收起' : 'Collapse') : (lang === 'zh' ? '了解诗文' : 'Learn More') }}
+                    </button>
+                  </div>
+                </div>
+                <div v-if="welcomePoemLoading" class="mt-3 text-sm text-gray-400">{{ lang === 'zh' ? '加载中...' : 'Loading...' }}</div>
+                <div v-else-if="welcomePoemError" class="mt-3 text-sm text-amber-500">{{ welcomePoemError }}</div>
+                <div v-else-if="welcomePoemDisplay" class="mt-3 text-sm leading-relaxed text-sakura-600 dark:text-sakura-200 whitespace-pre-line">
+                  {{ welcomePoemDisplay }}
+                </div>
+                <div v-if="welcomePoemExpanded && welcomePoemDetails.length" class="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+                  <div v-for="detail in welcomePoemDetails" :key="detail.label" class="bg-white/70 dark:bg-gray-900/50 rounded-xl border border-white/60 dark:border-gray-700 px-4 py-3 shadow-sm">
+                    <div class="text-xs font-semibold text-sakura-500 dark:text-sakura-300 mb-1">{{ detail.label }}</div>
+                    <div class="whitespace-pre-line leading-relaxed">{{ detail.value }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
         </div>
 
         <!-- Right Sidebar (TOC) -->
@@ -522,9 +557,9 @@
     </div>
 
     <!-- Toast Notification -->
-    <div v-if="appStore.toastMessage" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-fade-in">
-       <div class="bg-gray-800/90 dark:bg-white/90 text-white dark:text-gray-900 px-6 py-3 rounded-full shadow-2xl backdrop-blur font-medium text-sm flex items-center gap-2">
-         <span>✅</span> {{ appStore.toastMessage }}
+    <div v-if="appStore.toastMessage" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[200] animate-fade-in">
+       <div class="bg-sakura-500/90 dark:bg-sakura-400/90 text-white dark:text-gray-900 px-6 py-3 rounded-full shadow-2xl backdrop-blur font-medium text-sm flex items-center gap-2 border border-sakura-200/60 dark:border-sakura-300/40">
+         <span>🌸</span> {{ appStore.toastMessage }}
        </div>
     </div>
 
@@ -673,6 +708,60 @@ const isMobile = ref(false);
 // Wallpaper URLs
 const wallpaperLightUrl = '/image/wallpaper-light.jpg';
 const wallpaperDarkUrl = '/image/wallpaper-dark.jpg';
+type GuwenItem = {
+  title?: string;
+  dynasty?: string;
+  writer?: string;
+  type?: string[] | string;
+  content?: string;
+  remark?: string;
+  translation?: string;
+  shangxi?: string;
+};
+const welcomePoem = ref<GuwenItem | null>(null);
+const welcomePoemLoading = ref(false);
+const welcomePoemError = ref('');
+const welcomePoemExpanded = ref(false);
+const guwenUrls = Object.values(import.meta.glob('./gushiwen/guwen/*.json', { as: 'url', eager: true })) as string[];
+
+const parseGuwenItems = (raw: string) => {
+  const items: GuwenItem[] = [];
+  const lines = raw.split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    try {
+      const item = JSON.parse(trimmed) as GuwenItem;
+      if (item?.content) items.push(item);
+    } catch {
+      continue;
+    }
+  }
+  return items;
+};
+
+const loadRandomPoem = async () => {
+  if (!guwenUrls.length) {
+    welcomePoemError.value = lang.value === 'zh' ? '未找到古诗文资源' : 'Poetry source missing';
+    return;
+  }
+  welcomePoemLoading.value = true;
+  welcomePoemError.value = '';
+  try {
+    const url = guwenUrls[Math.floor(Math.random() * guwenUrls.length)];
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+    const raw = await res.text();
+    const items = parseGuwenItems(raw);
+    if (!items.length) throw new Error('Empty data');
+    welcomePoem.value = items[Math.floor(Math.random() * items.length)];
+    welcomePoemExpanded.value = false;
+  } catch (e) {
+    welcomePoemError.value = lang.value === 'zh' ? '诗文加载失败' : 'Failed to load poem';
+  } finally {
+    welcomePoemLoading.value = false;
+  }
+};
 
 // =====================
 // Composables 初始化
@@ -714,9 +803,15 @@ const fontSizeClass = computed(() => {
   }
 });
 
-const articleContainerStyle = computed(() => ({
-  borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
-}));
+const articleContainerStyle = computed(() => {
+  const style: Record<string, string> = {
+    borderColor: appStore.isDark ? 'rgba(255,255,255,0.08)' : 'var(--primary-100)'
+  };
+  if (currentMeta.value.backgroundColor) {
+    style.backgroundColor = currentMeta.value.backgroundColor;
+  }
+  return style;
+});
 
 const loadingTextStyle = computed(() => ({
   color: appStore.isDark ? 'var(--primary-300)' : 'var(--primary-500)'
@@ -790,6 +885,55 @@ const currentLineCount = computed(() => {
   if (typeof currentFile.value.lineCount === 'number') return currentFile.value.lineCount;
   return currentFile.value.content ? currentFile.value.content.split(/\r?\n/).length : 0;
 });
+
+const welcomePoemLines = computed(() => {
+  const content = welcomePoem.value?.content?.trim();
+  if (!content) return [];
+  return content.split(/\n+/).map(line => line.trim()).filter(Boolean);
+});
+
+const welcomePoemAuthor = computed(() => {
+  return welcomePoem.value?.writer || (lang.value === 'zh' ? '佚名' : 'Unknown');
+});
+
+const welcomePoemDetails = computed(() => {
+  const items: Array<{ label: string; value: string }> = [];
+  const dynasty = welcomePoem.value?.dynasty;
+  const type = welcomePoem.value?.type;
+  const remark = welcomePoem.value?.remark;
+  const translation = welcomePoem.value?.translation;
+  const shangxi = welcomePoem.value?.shangxi;
+  if (dynasty) items.push({ label: lang.value === 'zh' ? '朝代' : 'Dynasty', value: dynasty });
+  if (type) {
+    const value = Array.isArray(type) ? type.join('、') : type;
+    items.push({ label: lang.value === 'zh' ? '题材' : 'Tags', value });
+  }
+  if (remark) items.push({ label: lang.value === 'zh' ? '注释' : 'Notes', value: remark });
+  if (translation) items.push({ label: lang.value === 'zh' ? '译文' : 'Translation', value: translation });
+  if (shangxi) items.push({ label: lang.value === 'zh' ? '赏析' : 'Appreciation', value: shangxi });
+  return items;
+});
+
+const welcomePoemDisplay = computed(() => {
+  const lines = welcomePoemLines.value;
+  if (!lines.length) return '';
+  const slice = welcomePoemExpanded.value ? lines : lines.slice(0, 4);
+  return slice.join('\n');
+});
+
+const welcomePoemHasMore = computed(() => welcomePoemLines.value.length > 4 || welcomePoemDetails.value.length > 0);
+
+const toggleWelcomePoemExpand = async () => {
+  const next = !welcomePoemExpanded.value;
+  welcomePoemExpanded.value = next;
+  if (next) {
+    await nextTick();
+    const scrollEl = document.getElementById('scroll-container');
+    if (scrollEl) {
+      scrollEl.scrollTo({ top: scrollEl.scrollTop + 140, behavior: 'smooth' });
+    }
+  }
+};
 
 const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '');
 
@@ -1074,6 +1218,7 @@ const resetToHome = () => {
   viewMode.value = 'latest';
   hideSelectionMenu();
   updateUrl(null);
+  loadRandomPoem();
 };
 
 // =====================
@@ -1380,6 +1525,7 @@ onMounted(async () => {
 
   // Setup marked renderer
   setupMarkedRenderer();
+  loadRandomPoem();
 
   // Initialize music store
   musicStore.loadPlaylist();

@@ -46,9 +46,10 @@
             <span class="text-sm">DL</span>
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
           </button>
-          <button @click="$emit('toggle-reading-mode')" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="lang === 'zh' ? '阅读模式' : 'Reading Mode'">
-            <span class="text-lg">📖</span>
-          </button>
+          <div class="flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs">
+            <span class="text-sm">📘</span>
+            <span class="font-semibold">{{ getArticleViews(currentFile.path) }}</span>
+          </div>
           <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
         </template>
 
@@ -66,18 +67,15 @@
             <rect x="3" y="3" width="7" height="18" rx="1"/>
             <rect x="14" y="3" width="7" height="18" rx="1"/>
           </svg>
-          <span>{{ lang === 'zh' ? '双栏' : 'Dual' }}</span>
         </button>
 
         <!-- Search Button -->
         <button 
           @click="$emit('open-search')" 
-          class="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-sakura-50 dark:hover:bg-sakura-900/30 hover:text-sakura-600 transition-all text-sm"
+          class="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-sakura-50 dark:hover:bg-sakura-900/30 hover:text-sakura-600 transition-all text-sm"
           title="Search (⌘K)"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-          <span>{{ t.search_placeholder }}</span>
-          <kbd class="px-1.5 py-0.5 bg-white dark:bg-gray-700 rounded text-xs font-mono">⌘K</kbd>
         </button>
 
         <div class="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
@@ -165,6 +163,10 @@
               {{ isRawMode ? '👁️' : '🖊️' }}
             </button>
             <button @click="$emit('copy-link')" class="p-1.5 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">🔗</button>
+            <div class="flex items-center gap-1 px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-[10px]">
+              <span class="text-xs">📘</span>
+              <span class="font-semibold">{{ getArticleViews(currentFile.path) }}</span>
+            </div>
           </template>
         </div>
 
@@ -196,44 +198,6 @@
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ lang === 'zh' ? '主题' : 'Theme' }}</div>
           <button @click="themeOpen = false" class="text-gray-400 hover:text-sakura-500">✕</button>
-        </div>
-
-        <div class="mb-4">
-          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '主题模式' : 'Mode' }}</div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button
-              @click="$emit('toggle-theme')"
-              class="w-9 h-9 rounded-full border flex items-center justify-center text-sm transition-colors"
-              :class="isDark ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
-              :style="isDark ? primaryButtonStyle : undefined"
-            >
-              {{ isDark ? '🌙' : '🌞' }}
-            </button>
-            <button
-              @click="handlePetalToggle"
-              class="w-9 h-9 rounded-full border flex items-center justify-center text-sm transition-colors"
-              :class="petalSpeed === 'off' ? 'border-gray-200 dark:border-gray-700 text-gray-400 bg-gray-50 dark:bg-gray-800' : ''"
-              :style="petalSpeed === 'off' ? undefined : primaryButtonStyle"
-            >
-              <span
-                class="text-base"
-                :class="petalSpeed === 'fast' ? 'animate-spin-fast' : petalSpeed === 'slow' ? 'animate-spin-slow' : ''"
-              >
-                🌸
-              </span>
-            </button>
-            <button
-              v-for="color in themeColors"
-              :key="color.id"
-              @click="setThemeColor(color.id)"
-              class="w-8 h-8 rounded-full border transition-all"
-              :class="appStore.userSettings.themeColor === color.id ? 'ring-2' : 'border-gray-200 dark:border-gray-700'"
-              :style="[
-                { backgroundColor: color.preview },
-                appStore.userSettings.themeColor === color.id ? primaryRingStyle : null
-              ]"
-            ></button>
-          </div>
         </div>
 
         <div class="mb-4">
@@ -271,6 +235,44 @@
               :class="appStore.userSettings.fontSize === 'large' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
               :style="appStore.userSettings.fontSize === 'large' ? primaryButtonStyle : undefined"
             >A++</button>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '主题模式' : 'Mode' }}</div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <button
+              @click="$emit('toggle-theme')"
+              class="w-9 h-9 rounded-full border flex items-center justify-center text-sm transition-colors"
+              :class="isDark ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
+              :style="isDark ? primaryButtonStyle : undefined"
+            >
+              {{ isDark ? '🌙' : '🌞' }}
+            </button>
+            <button
+              @click="handlePetalToggle"
+              class="w-9 h-9 rounded-full border flex items-center justify-center text-sm transition-colors"
+              :class="petalSpeed === 'off' ? 'border-gray-200 dark:border-gray-700 text-gray-400 bg-gray-50 dark:bg-gray-800' : ''"
+              :style="petalSpeed === 'off' ? undefined : primaryButtonStyle"
+            >
+              <span
+                class="text-base"
+                :class="petalSpeed === 'fast' ? 'animate-spin-fast' : petalSpeed === 'slow' ? 'animate-spin-slow' : ''"
+              >
+                🌸
+              </span>
+            </button>
+            <button
+              v-for="color in themeColors"
+              :key="color.id"
+              @click="setThemeColor(color.id)"
+              class="w-8 h-8 rounded-full border transition-all"
+              :class="appStore.userSettings.themeColor === color.id ? 'ring-2' : 'border-gray-200 dark:border-gray-700'"
+              :style="[
+                { backgroundColor: color.preview },
+                appStore.userSettings.themeColor === color.id ? primaryRingStyle : null
+              ]"
+            ></button>
           </div>
         </div>
 
@@ -397,6 +399,48 @@
           <div v-else class="text-xs text-gray-400">{{ lang === 'zh' ? '暂无结果' : 'No results' }}</div>
         </div>
 
+        <div class="mb-4">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '美女' : 'Beauty' }}</div>
+          <div class="flex items-center gap-2 mb-2">
+            <button @click="refreshBeauty" :disabled="isApiLoading" class="px-2 py-1 text-xs border rounded-lg border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ isApiLoading ? (lang === 'zh' ? '加载中' : 'Loading') : (lang === 'zh' ? '刷新' : 'Refresh') }}
+            </button>
+          </div>
+          <div v-if="beautyWallpapers.length" class="grid grid-cols-3 gap-2">
+            <button
+              v-for="wp in beautyWallpapers"
+              :key="wp.filename"
+              @click="setWallpaperWithMode(wp.filename)"
+              class="relative rounded-xl overflow-hidden border transition-all"
+            >
+              <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
+              <div class="absolute inset-0 bg-black/10"></div>
+            </button>
+          </div>
+          <div v-else class="text-xs text-gray-400">{{ lang === 'zh' ? '暂无结果' : 'No results' }}</div>
+        </div>
+
+        <div class="mb-4">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '动漫' : 'Anime' }}</div>
+          <div class="flex items-center gap-2 mb-2">
+            <button @click="refreshAnime" :disabled="isApiLoading" class="px-2 py-1 text-xs border rounded-lg border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ isApiLoading ? (lang === 'zh' ? '加载中' : 'Loading') : (lang === 'zh' ? '刷新' : 'Refresh') }}
+            </button>
+          </div>
+          <div v-if="animeWallpapers.length" class="grid grid-cols-3 gap-2">
+            <button
+              v-for="wp in animeWallpapers"
+              :key="wp.filename"
+              @click="setWallpaperWithMode(wp.filename)"
+              class="relative rounded-xl overflow-hidden border transition-all"
+            >
+              <img :src="wp.path" :alt="wp.name" class="w-full h-16 object-cover" />
+              <div class="absolute inset-0 bg-black/10"></div>
+            </button>
+          </div>
+          <div v-else class="text-xs text-gray-400">{{ lang === 'zh' ? '暂无结果' : 'No results' }}</div>
+        </div>
+
         <div class="mb-2">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '自定义音乐' : 'Custom Music' }}</div>
           <div class="flex gap-2 mb-2">
@@ -432,6 +476,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { THEME_COLOR_LIST } from '../constants';
+import type { ThemeColorId } from '../constants';
 import type { BreadcrumbItem, FileNode } from '../types';
 import { useMusicStore } from '../stores/musicStore';
 import { useAppStore } from '../stores/appStore';
@@ -443,10 +489,14 @@ const {
   currentThemeWallpapers,
   bingWallpapers,
   upx8Wallpapers,
+  beautyWallpapers,
+  animeWallpapers,
   isApiLoading,
   addCustomWallpaper,
   fetchBingWallpapers,
   fetchUpx8Wallpaper,
+  fetchBeautyWallpapers,
+  fetchAnimeWallpapers,
   updateBingDaily,
   setWallpaper
 } = useWallpapers();
@@ -458,6 +508,7 @@ const props = defineProps<{
   viewMode: string;
   currentTool: string | null;
   currentFile: FileNode | null;
+  getArticleViews: (path: string) => number;
   showParticles: boolean;
   isRawMode: boolean;
   isDark: boolean;
@@ -479,7 +530,6 @@ const emit = defineEmits([
   'open-write',
   'open-download',
   'toggle-theme',
-  'toggle-reading-mode',
   'update:petal-speed',
   'toggle-dual-column'
 ]);
@@ -497,14 +547,7 @@ const themeOpen = ref(false);
 const themeButtonRef = ref<HTMLElement | null>(null);
 const themePanelRef = ref<HTMLElement | null>(null);
 
-const themeColors = [
-  { id: 'sakura', preview: '#f43f72' },
-  { id: 'violet', preview: '#8b5cf6' },
-  { id: 'cyan', preview: '#06b6d4' },
-  { id: 'amber', preview: '#f59e0b' }
-] as const
-
-type ThemeColorId = typeof themeColors[number]['id']
+const themeColors = THEME_COLOR_LIST
 
 const setThemeColor = (id: ThemeColorId) => {
   appStore.setThemeColor(id)
@@ -591,6 +634,14 @@ const refreshBing = () => {
 const searchUpx8 = () => {
   const kw = appStore.wallpaperApiSettings.upx8Keyword || undefined;
   fetchUpx8Wallpaper(kw);
+};
+
+const refreshBeauty = () => {
+  fetchBeautyWallpapers(6);
+};
+
+const refreshAnime = () => {
+  fetchAnimeWallpapers(6);
 };
 
 const customMusicTitle = ref('');

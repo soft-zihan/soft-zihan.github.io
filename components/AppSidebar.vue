@@ -12,7 +12,7 @@
           </button>
       </div>
 
-      <div class="relative group cursor-pointer z-10" @click="$emit('reset')">
+      <div class="relative group cursor-pointer z-10" @click="handleLogoClick">
         <div class="w-24 h-24 rounded-full p-1 shadow-xl mb-4 group-hover:scale-105 transition-transform duration-300" :style="avatarRingStyle">
           <img 
             :src="avatarSrc" 
@@ -24,7 +24,7 @@
         <div class="absolute bottom-4 right-0 bg-white dark:bg-gray-800 rounded-full p-1 shadow-md border text-xs" :style="softBorderStyle">🌸</div>
       </div>
       
-      <h1 class="text-xl font-bold tracking-tight z-10 transition-colors" :style="titleStyle" @click="$emit('reset')">Sakura Notes</h1>
+      <h1 class="text-xl font-bold tracking-tight z-10 transition-colors" :style="titleStyle" @click="handleLogoClick">Sakura Notes</h1>
       <p class="text-xs mt-1 font-medium px-3 py-1 rounded-full z-10" :style="subtitleStyle">{{ t.subtitle }}</p>
     </div>
 
@@ -264,6 +264,7 @@ const labFolderFiles = computed(() => {
 const emit = defineEmits([
   'toggle-lang',
   'reset',
+  'logo-click',
   'update:viewMode',
   'select-tool',
   'toggle-folder',
@@ -272,6 +273,11 @@ const emit = defineEmits([
   'open-search',
   'update:activeLabTab' // For lab tab switching
 ]);
+
+const handleLogoClick = () => {
+  emit('reset');
+  emit('logo-click');
+};
 
 // Handle lab tab click - select dashboard tool and switch tab
 const handleLabTabClick = (tabId: string) => {
