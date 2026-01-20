@@ -95,11 +95,11 @@
         @navigate="navigateToBreadcrumb"
         @copy-link="copyLink"
         @download="downloadSource"
-        @open-settings="showSettings = true"
-        @open-search="showSearch = true"
-        @open-music="musicStore.showMusicPlayer = true"
-        @open-write="showWriteEditor = true"
-        @open-download="showDownloadModal = true"
+        @open-settings="showSettings = true; if (isMobile) sidebarOpen = false"
+        @open-search="showSearch = true; if (isMobile) sidebarOpen = false"
+        @open-music="musicStore.showMusicPlayer = true; if (isMobile) sidebarOpen = false"
+        @open-write="showWriteEditor = true; if (isMobile) sidebarOpen = false"
+        @open-download="showDownloadModal = true; if (isMobile) sidebarOpen = false"
         @toggle-theme="toggleTheme(!appStore.isDark)"
         @update:petal-speed="handlePetalSpeedChange"
         @toggle-reading-mode="readingMode = !readingMode"
@@ -235,12 +235,19 @@
                      <span>{{ articleStore.isFavorite(currentFile.path) ? '⭐' : '☆' }}</span>
                      <span>{{ t.favorite }}</span>
                    </button>
-                   <span class="text-xs text-gray-400 flex items-center gap-1">
-                     📖 {{ getArticleViews(currentFile.path) }} {{ lang === 'zh' ? '人阅读' : 'views' }}
-                   </span>
                   <span class="text-xs text-gray-400 flex items-center gap-1">
-                    💬 {{ getArticleComments(currentFile.path) }} {{ lang === 'zh' ? '条评论' : 'comments' }}
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    {{ getArticleViews(currentFile.path) }} {{ lang === 'zh' ? '人阅读' : 'views' }}
                   </span>
+                 <span class="text-xs text-gray-400 flex items-center gap-1">
+                   <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m-6 8l-4-4V4a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H7z"/>
+                   </svg>
+                   {{ getArticleComments(currentFile.path) }} {{ lang === 'zh' ? '条评论' : 'comments' }}
+                 </span>
                    <span class="text-xs text-gray-400">
                     📝 {{ currentWordCount }} {{ t.words }}
                    </span>

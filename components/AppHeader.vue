@@ -104,6 +104,7 @@
         <div class="relative">
           <button
             @click="themeOpen = !themeOpen"
+            ref="themeButtonRef"
             class="p-2 hover:bg-white dark:hover:bg-gray-700 rounded-lg transition-colors"
             :title="lang === 'zh' ? '主题' : 'Theme'"
           >
@@ -185,10 +186,11 @@
     <Teleport to="body">
       <div
         v-if="themeOpen"
-        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm"
+        class="fixed inset-0 z-[120] flex items-center justify-center bg-black/20 backdrop-blur-sm"
         @click.self="themeOpen = false"
       >
         <div
+          ref="themePanelRef"
           class="w-[420px] max-w-[90vw] max-h-[70vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl backdrop-blur-xl p-4"
         >
         <div class="flex items-center justify-between mb-3">
@@ -336,7 +338,7 @@
               <input type="checkbox" v-model="appStore.wallpaperApiSettings.bingEnabled" @change="handleBingToggle" />
               {{ lang === 'zh' ? '每日自动更换' : 'Daily Auto' }}
             </label>
-            <select v-model="appStore.wallpaperApiSettings.bingCountry" @change="refreshBing" class="ml-auto px-2 py-1 text-xs border rounded-lg bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">
+            <select v-model="appStore.wallpaperApiSettings.bingCountry" @change="refreshBing" :disabled="isApiLoading" class="ml-auto px-2 py-1 text-xs border rounded-lg bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
               <option value="cn">CN</option>
               <option value="jp">JP</option>
               <option value="us">US</option>
@@ -350,9 +352,16 @@
               <option value="es">ES</option>
               <option value="in">IN</option>
             </select>
-            <button @click="refreshBing" class="px-2 py-1 text-xs border rounded-lg border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '刷新' : 'Refresh' }}</button>
+            <select v-model.number="appStore.wallpaperApiSettings.bingCount" @change="refreshBing" :disabled="isApiLoading" class="px-2 py-1 text-xs border rounded-lg bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed">
+              <option :value="4">4</option>
+              <option :value="8">8</option>
+              <option :value="12">12</option>
+            </select>
+            <button @click="refreshBing" :disabled="isApiLoading" class="px-2 py-1 text-xs border rounded-lg border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ isApiLoading ? (lang === 'zh' ? '加载中' : 'Loading') : (lang === 'zh' ? '刷新' : 'Refresh') }}
+            </button>
           </div>
-          <div class="grid grid-cols-3 gap-2">
+          <div v-if="bingWallpapers.length" class="grid grid-cols-3 gap-2">
             <button
               v-for="wp in bingWallpapers"
               :key="wp.filename"
@@ -363,13 +372,16 @@
               <div class="absolute inset-0 bg-black/10"></div>
             </button>
           </div>
+          <div v-else class="text-xs text-gray-400">{{ lang === 'zh' ? '暂无壁纸' : 'No wallpapers' }}</div>
         </div>
 
         <div class="mb-4">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">UPX8</div>
           <div class="flex gap-2 mb-2">
             <input v-model="appStore.wallpaperApiSettings.upx8Keyword" type="text" :placeholder="lang === 'zh' ? '关键词（可为空）' : 'Keyword (optional)'" class="flex-1 px-3 py-2 text-xs border rounded-xl bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 placeholder-gray-400" />
-            <button @click="searchUpx8" class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600">{{ lang === 'zh' ? '搜索' : 'Search' }}</button>
+            <button @click="searchUpx8" :disabled="isApiLoading" class="px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-gray-700 text-gray-500 hover:text-sakura-600 disabled:opacity-50 disabled:cursor-not-allowed">
+              {{ isApiLoading ? (lang === 'zh' ? '搜索中' : 'Searching') : (lang === 'zh' ? '搜索' : 'Search') }}
+            </button>
           </div>
           <div v-if="upx8Wallpapers.length" class="grid grid-cols-3 gap-2">
             <button
@@ -382,6 +394,7 @@
               <div class="absolute inset-0 bg-black/10"></div>
             </button>
           </div>
+          <div v-else class="text-xs text-gray-400">{{ lang === 'zh' ? '暂无结果' : 'No results' }}</div>
         </div>
 
         <div class="mb-2">
@@ -430,6 +443,7 @@ const {
   currentThemeWallpapers,
   bingWallpapers,
   upx8Wallpapers,
+  isApiLoading,
   addCustomWallpaper,
   fetchBingWallpapers,
   fetchUpx8Wallpaper,
