@@ -182,14 +182,15 @@
       </div>
     </div>
 
-    <div
-      v-if="themeOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm"
-      @click.self="themeOpen = false"
-    >
+    <Teleport to="body">
       <div
-        class="w-[420px] max-w-[90vw] max-h-[70vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl backdrop-blur-xl p-4"
+        v-if="themeOpen"
+        class="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-sm"
+        @click.self="themeOpen = false"
       >
+        <div
+          class="w-[420px] max-w-[90vw] max-h-[70vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl backdrop-blur-xl p-4"
+        >
         <div class="flex items-center justify-between mb-3">
           <div class="text-sm font-bold text-gray-700 dark:text-gray-200">{{ lang === 'zh' ? '主题' : 'Theme' }}</div>
           <button @click="themeOpen = false" class="text-gray-400 hover:text-sakura-500">✕</button>
@@ -410,8 +411,9 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </Teleport>
   </header>
 </template>
 
