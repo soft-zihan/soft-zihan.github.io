@@ -20,9 +20,8 @@ docs/
 public/raw
 public/*.json
 !public/source-notes-preset.json
-*修复.md
-*方案.md
-*方案2.md
-*方案3.md
+*.md
+!README.md
+!README_zh.md
 旧版本*
 *方案
