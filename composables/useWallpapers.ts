@@ -293,6 +293,10 @@ export function useWallpapers() {
       isApiLoading.value = false
     }
   }
+
+  const fetchUpx8Wallpaper = async (keyword?: string, limit = 9) => {
+    await fetchSearchWallpapers(keyword || '', limit)
+  }
   
   // 初始化时加载壁纸
   loadWallpapers().then(() => {
@@ -312,6 +316,7 @@ export function useWallpapers() {
     beautyWallpapers,
     animeWallpapers,
     searchWallpapers,
+    upx8Wallpapers: searchWallpapers,
     isApiLoading,
     currentWallpaper,
     loadWallpapers,
@@ -321,6 +326,7 @@ export function useWallpapers() {
     removeCustomWallpaper,
     downloadWallpaper,
     fetchBingWallpapers,
+    fetchUpx8Wallpaper,
     fetchBeautyWallpapers,
     fetchAnimeWallpapers,
     fetchSearchWallpapers,

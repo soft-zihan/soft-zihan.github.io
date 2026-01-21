@@ -9,7 +9,7 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./', import.meta.url))
     }
   },
-  base: './', // Ensure relative paths for GitHub Pages
+  base: './', 
   build: {
     outDir: 'dist',
     assetsDir: 'assets',

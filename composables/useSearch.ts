@@ -48,7 +48,8 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
   // Load all file contents and rebuild index with complete data
   const loadFullContentAndRebuild = async () => {
     if (isFullIndexReady.value || isLoadingContent.value) return
-    if (!fetchFileContentFn) {
+    const fetchFn = fetchFileContentFn
+    if (!fetchFn) {
       console.warn('fetchFileContentFn not provided to useSearch')
       return
     }
@@ -64,7 +65,7 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
             // Only load files from current language directory
             if (node.path.startsWith(langPrefix)) {
               try {
-                node.content = await fetchFileContentFn(node)
+                node.content = await fetchFn(node)
                 // Rebuild index progressively as content loads
                 rebuildSearchIndex()
               } catch (e) {
