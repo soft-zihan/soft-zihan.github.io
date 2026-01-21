@@ -10,7 +10,9 @@
     <div v-if="!isMobile" class="h-full flex items-center justify-between">
       <!-- Breadcrumbs -->
       <div class="flex items-center text-sm overflow-x-auto no-scrollbar whitespace-nowrap mask-linear flex-1 mr-4 py-2">
-        <span class="text-[var(--primary-300)] dark:text-[var(--primary-500)] mr-2 shrink-0 text-lg cursor-pointer hover:scale-110 transition-transform" @click="$emit('reset')">🏠</span>
+        <span class="text-[var(--primary-300)] dark:text-[var(--primary-500)] mr-2 shrink-0 cursor-pointer hover:scale-110 transition-transform" @click="$emit('reset')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </span>
         <span class="text-[var(--primary-200)] dark:text-gray-700 mx-1">/</span>
         <span class="font-bold text-[var(--primary-500)] dark:text-[var(--primary-400)] bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/20 px-2 py-0.5 rounded mr-2">{{ lang }}</span>
         
@@ -354,17 +356,17 @@
                      @click="appStore.userSettings.wallpaperFill = 'cover'" 
                      class="px-2 py-1 text-[10px] rounded border transition-colors"
                      :class="appStore.userSettings.wallpaperFill === 'cover' ? 'bg-white dark:bg-gray-700 border-[var(--primary-300)] text-[var(--primary-500)]' : 'border-transparent text-gray-400 hover:text-gray-600'"
-                 >Cover</button>
+                 >{{ lang === 'zh' ? '覆盖' : 'Cover' }}</button>
                  <button 
                    @click="appStore.userSettings.wallpaperFill = 'contain'" 
                    class="px-2 py-1 text-[10px] rounded border transition-colors"
                    :class="appStore.userSettings.wallpaperFill === 'contain' ? 'bg-white dark:bg-gray-700 border-[var(--primary-300)] text-[var(--primary-500)]' : 'border-transparent text-gray-400 hover:text-gray-600'"
-                 >Contain</button>
+                 >{{ lang === 'zh' ? '包含' : 'Contain' }}</button>
                  <button 
                    @click="appStore.userSettings.wallpaperFill = 'fill'" 
                    class="px-2 py-1 text-[10px] rounded border transition-colors"
                    :class="appStore.userSettings.wallpaperFill === 'fill' ? 'bg-white dark:bg-gray-700 border-[var(--primary-300)] text-[var(--primary-500)]' : 'border-transparent text-gray-400 hover:text-gray-600'"
-                 >Stretch</button>
+                 >{{ lang === 'zh' ? '拉伸' : 'Stretch' }}</button>
               </div>
            </div>
            <div class="flex items-center justify-between">

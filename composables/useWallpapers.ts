@@ -364,57 +364,69 @@ export function useWallpapers() {
     const mode = appStore.userSettings.autoChangeMode
     if (mode === 'off') return
 
-    if (mode === 'custom') {
-      const list = customThemeWallpapers.value
-      if (list.length) {
-        const random = list[Math.floor(Math.random() * list.length)]
-        appStore.setWallpaper(random.filename)
-      }
-    } else if (mode === 'preset') {
-      const list = presetThemeWallpapers.value
-      if (list.length) {
-        const random = list[Math.floor(Math.random() * list.length)]
-        appStore.setWallpaper(random.filename)
-      }
-    } else if (mode === 'search') {
-       // Search mode auto-change
-       if (forceRefresh) {
-         await fetchBaiduWallpaper()
-         if (searchWallpapers.value.length) {
-           appStore.setWallpaper(searchWallpapers.value[0].filename)
+    let nextWallpaper: WallpaperItem | null = null;
+
+    // Retry loop for finding a valid wallpaper
+    for (let attempt = 0; attempt < 3; attempt++) {
+      if (mode === 'custom') {
+        const list = customThemeWallpapers.value
+        if (list.length) {
+          nextWallpaper = list[Math.floor(Math.random() * list.length)]
+        }
+      } else if (mode === 'preset') {
+        const list = presetThemeWallpapers.value
+        if (list.length) {
+          nextWallpaper = list[Math.floor(Math.random() * list.length)]
+        }
+      } else if (mode === 'search') {
+         if (forceRefresh || !searchWallpapers.value.length) {
+           await fetchBaiduWallpaper()
          }
-       } else {
-         // Cycle through existing?
          const list = searchWallpapers.value
          if (list.length) {
-           const random = list[Math.floor(Math.random() * list.length)]
-           appStore.setWallpaper(random.filename)
+           // If we just fetched, use the first one, otherwise random
+           if (forceRefresh) {
+             nextWallpaper = list[0]
+           } else {
+             nextWallpaper = list[Math.floor(Math.random() * list.length)]
+           }
          }
-       }
-    } else if (mode === 'anime') {
-      if (forceRefresh) {
-         // Clear cache to force new
-         animeWallpapers.value = []
-         await fetchAnimeWallpapers(1)
-      } else if (animeWallpapers.value.length === 0) {
-         await fetchAnimeWallpapers(1)
+      } else if (mode === 'anime') {
+        if (forceRefresh || animeWallpapers.value.length === 0) {
+           // Clear cache to force new
+           animeWallpapers.value = []
+           await fetchAnimeWallpapers(1)
+        }
+        
+        if (animeWallpapers.value.length) {
+          nextWallpaper = animeWallpapers.value[Math.floor(Math.random() * animeWallpapers.value.length)]
+        }
+      } else if (mode === 'beauty') {
+        if (forceRefresh || beautyWallpapers.value.length === 0) {
+          beautyWallpapers.value = []
+          await fetchBeautyWallpapers(1)
+        }
+        
+        if (beautyWallpapers.value.length) {
+          nextWallpaper = beautyWallpapers.value[Math.floor(Math.random() * beautyWallpapers.value.length)]
+        }
       }
-      
-      if (animeWallpapers.value.length) {
-        const random = animeWallpapers.value[Math.floor(Math.random() * animeWallpapers.value.length)]
-        appStore.setWallpaper(random.filename)
-      }
-    } else if (mode === 'beauty') {
-      if (forceRefresh) {
-        beautyWallpapers.value = []
-        await fetchBeautyWallpapers(1)
-      } else if (beautyWallpapers.value.length === 0) {
-        await fetchBeautyWallpapers(1)
-      }
-      
-      if (beautyWallpapers.value.length) {
-        const random = beautyWallpapers.value[Math.floor(Math.random() * beautyWallpapers.value.length)]
-        appStore.setWallpaper(random.filename)
+
+      if (nextWallpaper && nextWallpaper.filename) {
+        // Validate before setting
+        const isValid = await validateImage(nextWallpaper.filename)
+        if (isValid) {
+          appStore.setWallpaper(nextWallpaper.filename)
+          return // Success
+        } else {
+          console.warn(`Wallpaper validation failed for ${nextWallpaper.filename}, retrying...`)
+          // If invalid, try to refresh list for next attempt
+          forceRefresh = true
+          nextWallpaper = null
+        }
+      } else {
+        // No wallpaper found, break to avoid infinite loop if lists are empty
+        break
       }
     }
   }

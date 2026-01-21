@@ -196,7 +196,7 @@
              </div>
 
              <!-- Header with Like/Favorite buttons -->
-             <div class="mb-8 border-b border-gray-100 dark:border-gray-700 pb-6">
+             <div class="mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 bg-black/5 dark:bg-black/30 rounded-xl p-6 backdrop-blur-sm">
                  <div class="flex justify-between items-start gap-4">
                    <div class="flex flex-wrap items-center gap-3 flex-1">
                      <span v-if="currentAuthorName || currentAuthorUrl" class="text-sm text-gray-400 flex items-center gap-1">
