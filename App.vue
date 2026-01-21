@@ -17,8 +17,10 @@
     <!-- Left Sidebar: Navigation -->
     <AppSidebar 
       v-if="!readingMode"
-      :class="[sidebarOpen ? 'translate-x-0' : '-translate-x-full']"
-      class="fixed md:relative z-40 transition-transform duration-300 ease-out"
+      :class="[
+        sidebarOpen ? 'translate-x-0 md:translate-x-0 md:w-72 lg:w-80' : '-translate-x-full md:-translate-x-full md:w-0 md:opacity-0 md:overflow-hidden md:pointer-events-none'
+      ]"
+      class="fixed md:relative z-40 transition-all duration-300 ease-out"
       :lang="lang"
       :t="t"
       v-model:viewMode="viewMode"
@@ -44,8 +46,19 @@
       @select-file="handleSidebarFileSelect"
       @select-folder="openFolder"
       @open-search="showSearch = true"
+      @toggle-sidebar="sidebarOpen = !sidebarOpen"
       @update:activeLabTab="handleLabTabChange"
     />
+    <button
+      v-if="!readingMode && !sidebarOpen"
+      @click="sidebarOpen = true"
+      class="fixed top-4 left-4 z-50 w-9 h-9 rounded-lg border bg-white/80 dark:bg-gray-900/80 text-sakura-500 dark:text-sakura-400 shadow-md backdrop-blur transition-all hover:bg-white dark:hover:bg-gray-800"
+      :title="lang === 'zh' ? '展开边栏' : 'Expand Sidebar'"
+    >
+      <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
 
     <!-- Main Content Wrapper -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
@@ -74,7 +87,6 @@
         :is-dark="appStore.isDark"
         :petal-speed="appStore.userSettings.petalSpeed"
         :header-hidden="headerHidden"
-        :sidebar-open="sidebarOpen"
         :dual-column-mode="dualColumnMode"
         :get-article-views="getArticleViews"
         v-model:isRawMode="isRawMode"
@@ -82,14 +94,14 @@
         @navigate="navigateToBreadcrumb"
         @copy-link="copyLink"
         @download="downloadSource"
-        @open-settings="showSettings = true; if (isMobile) sidebarOpen = false"
+        @open-settings="showSettings = true; headerHidden = false; if (isMobile) sidebarOpen = false"
+        @open-theme-panel="headerHidden = false"
         @open-search="showSearch = true; if (isMobile) sidebarOpen = false"
         @open-music="musicStore.showMusicPlayer = true; if (isMobile) sidebarOpen = false"
         @open-write="showWriteEditor = true; if (isMobile) sidebarOpen = false"
         @open-download="showDownloadModal = true; if (isMobile) sidebarOpen = false"
         @toggle-theme="toggleTheme(!appStore.isDark)"
         @update:petal-speed="handlePetalSpeedChange"
-        @toggle-sidebar="sidebarOpen = !sidebarOpen"
         @toggle-dual-column="dualColumnMode = !dualColumnMode; if(dualColumnMode && !currentTool) currentTool = 'dashboard'"
       />
 
@@ -387,60 +399,61 @@
         </div>
 
         <!-- Empty State / Home -->
-        <div v-else class="flex-1 flex flex-col items-center justify-start pt-2 md:pt-6 text-sakura-400 dark:text-gray-500 animate-fade-in p-6 text-center">
+        <div v-else id="scroll-container" class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-6">
+          <div class="mx-auto w-full max-w-4xl flex flex-col items-center text-center text-sakura-400 dark:text-gray-500 animate-fade-in pt-2 md:pt-4 pb-12">
             <div class="relative group cursor-default">
-               <div class="text-[12rem] mb-4 opacity-90 animate-float drop-shadow-2xl filter saturate-150 transform hover:scale-105 transition-transform duration-700">🌸</div>
-               <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-48 h-8 bg-sakura-800/20 dark:bg-sakura-900/40 blur-2xl rounded-full group-hover:w-64 transition-all duration-500"></div>
+              <div class="text-[12rem] mb-4 opacity-90 animate-float drop-shadow-2xl filter saturate-150 transform hover:scale-105 transition-transform duration-700">🌸</div>
+              <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-48 h-8 bg-sakura-800/20 dark:bg-sakura-900/40 blur-2xl rounded-full group-hover:w-64 transition-all duration-500"></div>
             </div>
             <h2 class="text-5xl font-bold mb-4 tracking-tight drop-shadow-sm bg-gradient-to-r from-sakura-500 via-pink-500 to-purple-500 dark:from-sakura-300 dark:via-rose-300 dark:to-purple-300 text-transparent bg-clip-text">{{ t.welcome_title }}</h2>
             <p class="text-sakura-500/80 dark:text-gray-300 max-w-lg mx-auto leading-relaxed text-lg">
               {{ t.welcome_desc }}<br>
               <span class="text-sm opacity-90 bg-white/70 dark:bg-gray-800/70 px-4 py-1.5 rounded-full mt-3 inline-block border border-white/70 dark:border-gray-700/70 shadow-sm backdrop-blur">{{ t.welcome_tags }}</span>
             </p>
-            <div class="mt-4 w-full max-w-2xl">
-              <div class="bg-white/80 dark:bg-gray-900/70 border border-white/70 dark:border-gray-700/70 rounded-3xl px-6 py-6 text-center shadow-[0_20px_50px_rgba(244,63,114,0.18)] backdrop-blur">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                    <span class="text-base">📜</span>
-                    <span class="font-semibold text-sakura-600 dark:text-sakura-400">{{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}</span>
-                  </div>
-                  <button
-                    class="px-3 py-1.5 text-xs rounded-full border border-sakura-200/80 dark:border-gray-700 text-sakura-600 dark:text-sakura-300 hover:bg-sakura-50/80 dark:hover:bg-gray-800 transition-colors"
-                    :disabled="welcomePoemLoading"
-                    @click="loadRandomPoem"
-                  >
-                    {{ lang === 'zh' ? '换一首' : 'New' }}
-                  </button>
+            <div class="mt-10 w-full max-w-3xl">
+              <div class="flex flex-wrap items-center justify-center gap-3">
+                <div class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
+                  <span class="text-base">📜</span>
+                  <span class="font-semibold text-sakura-600 dark:text-sakura-400">{{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}</span>
                 </div>
-                <div v-if="welcomePoemLoading" class="mt-4 text-sm text-gray-400">{{ lang === 'zh' ? '加载中...' : 'Loading...' }}</div>
-                <div v-else-if="welcomePoemError" class="mt-4 text-sm text-amber-500">{{ welcomePoemError }}</div>
-                <div v-else class="mt-4 max-h-72 overflow-y-auto custom-scrollbar pr-1">
-                  <div class="text-center">
-                    <div class="text-2xl md:text-3xl font-bold tracking-wide text-sakura-600 dark:text-sakura-300 poem-font">
-                      {{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}
-                    </div>
-                    <div v-if="welcomePoemAuthorLine" class="mt-2 text-base text-gray-500 dark:text-gray-400 poem-font">
-                      {{ welcomePoemAuthorLine }}
-                    </div>
+                <button
+                  class="px-3 py-1.5 text-xs rounded-full border border-sakura-200/80 dark:border-gray-700 text-sakura-600 dark:text-sakura-300 hover:bg-sakura-50/80 dark:hover:bg-gray-800 transition-colors"
+                  :disabled="welcomePoemLoading"
+                  @click="loadRandomPoem"
+                >
+                  {{ lang === 'zh' ? '换一首' : 'New' }}
+                </button>
+              </div>
+              <div v-if="welcomePoemLoading" class="mt-4 text-sm text-gray-400">{{ lang === 'zh' ? '加载中...' : 'Loading...' }}</div>
+              <div v-else-if="welcomePoemError" class="mt-4 text-sm text-amber-500">{{ welcomePoemError }}</div>
+              <div v-else class="mt-6">
+                <div class="text-center">
+                  <div class="text-2xl md:text-3xl font-bold tracking-wide text-sakura-600 dark:text-sakura-300 poem-font">
+                    {{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}
                   </div>
-                  <div v-if="welcomePoemLines.length" class="mt-5 space-y-2 text-xl md:text-2xl leading-relaxed text-sakura-600 dark:text-sakura-200 poem-font poem-page">
-                    <div v-for="(line, idx) in welcomePoemLines" :key="idx" class="poem-line" :style="{ animationDelay: `${idx * 120}ms` }">
-                      {{ line }}
-                    </div>
-                  </div>
-                  <div v-if="welcomePoemDetails.length" class="mt-6 space-y-3 text-sm text-gray-600 dark:text-gray-300 text-left">
-                    <div v-for="detail in welcomePoemDetails" :key="detail.label" class="bg-white/70 dark:bg-gray-900/50 rounded-xl border border-white/60 dark:border-gray-700 px-4 py-3 shadow-sm">
-                      <div class="text-xs font-semibold text-sakura-500 dark:text-sakura-300 mb-1">{{ detail.label }}</div>
-                      <div class="whitespace-pre-line leading-relaxed">{{ detail.value }}</div>
-                    </div>
+                  <div v-if="welcomePoemAuthorLine" class="mt-2 text-base text-gray-500 dark:text-gray-400 poem-font">
+                    {{ welcomePoemAuthorLine }}
                   </div>
                 </div>
-                <div v-if="welcomePoemNeedsScroll" class="mt-4 flex items-center justify-center gap-2 text-xs text-gray-400">
-                  <span class="animate-bounce">⬇️</span>
-                  <span>{{ lang === 'zh' ? '下滑查看更多' : 'Scroll for more' }}</span>
+                <div v-if="welcomePoemLines.length" class="mt-6 space-y-2 text-xl md:text-2xl leading-relaxed text-sakura-600 dark:text-sakura-200 poem-font poem-page">
+                  <div v-for="(line, idx) in welcomePoemLines" :key="idx" class="poem-line" :style="{ animationDelay: `${idx * 120}ms` }">
+                    {{ line }}
+                  </div>
+                </div>
+                <div v-if="welcomePoemDetails.length" class="mt-8 w-full text-left space-y-6 text-sm text-gray-600 dark:text-gray-300">
+                  <div v-for="detail in welcomePoemDetails" :key="detail.label" class="pt-4 border-t border-white/60 dark:border-gray-700/60">
+                    <div class="text-xs font-semibold text-sakura-500 dark:text-sakura-300 mb-2">{{ detail.label }}</div>
+                    <div class="whitespace-pre-line leading-relaxed">{{ detail.value }}</div>
+                  </div>
                 </div>
               </div>
             </div>
+            <div v-if="welcomePoemNeedsScroll" class="mt-10 flex items-center justify-center gap-2 text-xs text-gray-400">
+              <span class="animate-bounce">⬇️</span>
+              <span>{{ lang === 'zh' ? '下滑查看更多' : 'Scroll for more' }}</span>
+            </div>
+          </div>
+          <div class="h-16"></div>
         </div>
 
         <!-- Right Sidebar (TOC) -->

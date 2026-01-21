@@ -3,7 +3,7 @@
     class="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-white/60 dark:border-gray-800/60 shrink-0 z-20 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition-all duration-300 hover:bg-white/80 dark:hover:bg-gray-900/80"
     :class="[
       isMobile ? 'px-3 py-2' : 'h-16 px-6',
-      { 'translate-y-0': !headerHidden, '-translate-y-full': headerHidden }
+      { 'translate-y-0': !headerHidden || themeOpen, '-translate-y-full': headerHidden && !themeOpen }
     ]"
   >
     <!-- Desktop Layout -->
@@ -34,16 +34,6 @@
 
       <!-- Desktop Actions -->
       <div class="flex gap-2 shrink-0 items-center">
-        <button
-          @click="$emit('toggle-sidebar')"
-          class="p-2 rounded-lg border bg-white/70 dark:bg-gray-800/70 text-sakura-500 dark:text-sakura-400 hover:bg-sakura-50/80 dark:hover:bg-sakura-900/30 transition-all shadow-sm"
-          :title="lang === 'zh' ? (sidebarOpen ? '收起边栏' : '展开边栏') : (sidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar')"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path v-if="!sidebarOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-            <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
         <!-- File Actions (before search) -->
         <template v-if="currentFile">
           <button v-if="!currentFile.isSource && !isPdf" @click="$emit('update:isRawMode', !isRawMode)" class="p-2 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 hover:text-sakura-600 rounded-lg transition-colors" :title="isRawMode ? t.view_render : t.view_source">
@@ -106,7 +96,7 @@
 
         <div class="relative">
           <button
-            @click="themeOpen = !themeOpen"
+            @click.stop="openThemePanel"
             ref="themeButtonRef"
             class="p-2 hover:bg-white/80 dark:hover:bg-gray-700/80 rounded-lg transition-colors"
             :title="lang === 'zh' ? '主题' : 'Theme'"
@@ -163,16 +153,6 @@
       <div class="flex items-center justify-between gap-1">
         <!-- Left: File Actions -->
         <div class="flex items-center gap-1">
-          <button
-            @click="$emit('toggle-sidebar')"
-            class="p-1.5 rounded-lg border bg-white/70 dark:bg-gray-800/70 text-sakura-500 dark:text-sakura-400 hover:bg-sakura-50/80 dark:hover:bg-sakura-900/30 transition-all shadow-sm"
-            :title="lang === 'zh' ? (sidebarOpen ? '收起边栏' : '展开边栏') : (sidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar')"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path v-if="!sidebarOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-              <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
           <template v-if="currentFile">
             <button v-if="!currentFile.isSource && !isPdf" @click="$emit('update:isRawMode', !isRawMode)" class="p-1.5 text-sakura-400 hover:bg-white dark:hover:bg-gray-700 rounded transition-colors text-sm">
               {{ isRawMode ? '👁️' : '🖊️' }}
@@ -203,7 +183,7 @@
     <Teleport to="body">
       <div
         v-if="themeOpen"
-        class="fixed inset-0 z-[120] flex items-center justify-center bg-black/20 backdrop-blur-sm"
+        class="fixed inset-0 z-[160] flex items-center justify-center bg-black/20 backdrop-blur-sm"
         @click.self="themeOpen = false"
       >
         <div
@@ -566,7 +546,6 @@ const props = defineProps<{
   petalSpeed: 'off' | 'slow' | 'fast';
   headerHidden?: boolean;
   dualColumnMode?: boolean;
-  sidebarOpen?: boolean;
 }>();
 
 const emit = defineEmits([
@@ -582,9 +561,9 @@ const emit = defineEmits([
   'open-write',
   'open-download',
   'toggle-theme',
-  'toggle-sidebar',
   'update:petal-speed',
-  'toggle-dual-column'
+  'toggle-dual-column',
+  'open-theme-panel'
 ]);
 
 // Mobile detection
@@ -605,6 +584,11 @@ const themeColors = THEME_COLOR_LIST
 const setThemeColor = (id: ThemeColorId) => {
   appStore.setThemeColor(id)
 }
+
+const openThemePanel = () => {
+  themeOpen.value = !themeOpen.value;
+  if (themeOpen.value) emit('open-theme-panel');
+};
 
 const primaryButtonStyle = computed(() => ({
   borderColor: appStore.isDark ? 'var(--primary-700)' : 'var(--primary-300)',

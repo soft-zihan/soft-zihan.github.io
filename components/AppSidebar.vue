@@ -1,6 +1,6 @@
 
 <template>
-  <aside class="w-full md:w-72 lg:w-80 flex-shrink-0 flex flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-white/60 dark:border-gray-700/50 h-full z-30 transition-all duration-300">
+  <aside class="w-full flex-shrink-0 flex flex-col bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.02)] border-r border-white/60 dark:border-gray-700/50 h-full z-30 transition-all duration-300">
     <!-- Profile Header -->
     <div class="p-8 pb-4 flex flex-col items-center border-b flex-shrink-0 relative overflow-hidden" :style="softBorderStyle">
       <div class="absolute top-0 left-0 w-full h-24 pointer-events-none" :style="headerGlowStyle"></div>
@@ -10,6 +10,13 @@
           <button @click="$emit('toggle-lang')" class="text-xs font-bold px-2 py-1 rounded transition-colors shadow-sm border dark:border-gray-700" :style="languageButtonStyle">
             {{ lang === 'en' ? 'EN / 中' : '中 / EN' }}
           </button>
+      </div>
+      <div class="absolute top-4 right-4 z-20">
+        <button @click="$emit('toggle-sidebar')" class="w-8 h-8 rounded-lg border shadow-sm flex items-center justify-center transition-colors" :style="languageButtonStyle">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
       </div>
 
       <div class="relative group cursor-pointer z-10" @click="handleLogoClick">
@@ -263,6 +270,7 @@ const labFolderFiles = computed(() => {
 
 const emit = defineEmits([
   'toggle-lang',
+  'toggle-sidebar',
   'reset',
   'logo-click',
   'update:viewMode',
