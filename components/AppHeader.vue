@@ -241,7 +241,7 @@
               class="py-2 border rounded-xl text-xs transition-colors"
               :class="appStore.userSettings.articleStyle === 'classic' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
               :style="appStore.userSettings.articleStyle === 'classic' ? primaryButtonStyle : undefined"
-            >{{ lang === 'zh' ? '经典' : 'Classic' }}</button>
+            >{{ lang === 'zh' ? '默认' : 'Default' }}</button>
             <button
               @click="appStore.userSettings.articleStyle = 'clean'"
               class="py-2 border rounded-xl text-xs transition-colors"
