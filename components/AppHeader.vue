@@ -377,6 +377,7 @@
                    <option value="preset">{{ lang === 'zh' ? '预置壁纸' : 'Preset' }}</option>
                    <option value="anime">{{ lang === 'zh' ? '动漫' : 'Anime' }}</option>
                    <option value="beauty">{{ lang === 'zh' ? '美女' : 'Beauty' }}</option>
+                   <option value="bing">Bing</option>
                    <option value="search">{{ lang === 'zh' ? '搜索结果' : 'Search' }}</option>
                 </select>
              </div>
