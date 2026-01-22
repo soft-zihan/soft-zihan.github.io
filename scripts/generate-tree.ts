@@ -6,6 +6,7 @@ import { execSync } from 'child_process';
 const rootDir = process.cwd();
 const publicDir = path.join(rootDir, 'public');
 const rawDir = path.join(publicDir, 'raw'); // New directory for raw code files
+const publicNotesDir = path.join(publicDir, 'notes'); // Target directory for notes in public
 const outputFile = path.join(publicDir, 'files.json'); 
 const notesDir = path.join(rootDir, 'notes');
 
@@ -15,6 +16,16 @@ console.log("🌸 Sakura Notes: Generating File Tree...");
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 if (fs.existsSync(rawDir)) fs.rmSync(rawDir, { recursive: true, force: true });
 fs.mkdirSync(rawDir, { recursive: true });
+
+// Copy notes to public/notes to make them accessible via fetch
+if (fs.existsSync(publicNotesDir)) fs.rmSync(publicNotesDir, { recursive: true, force: true });
+// Use cpSync for recursive copy (Node 16.7+)
+if (fs.existsSync(notesDir)) {
+    console.log(`📦 Copying notes to ${publicNotesDir}...`);
+    fs.cpSync(notesDir, publicNotesDir, { recursive: true });
+} else {
+    console.warn(`⚠️ Notes directory not found at ${notesDir}`);
+}
 
 interface FileNode {
   name: string;

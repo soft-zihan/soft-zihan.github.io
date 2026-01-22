@@ -397,34 +397,70 @@ export function useWallpapers() {
     }
   }
 
-  const fetchBaiduWallpaper = async (keyword = '小姐姐') => {
+  const fetchBaiduWallpaper = async (keyword?: string, targetCount?: number) => {
     if (isApiLoading.value) return
     isApiLoading.value = true
+    
+    // Default settings
+    const kw = keyword || appStore.wallpaperApiSettings.baiduKeyword || '小姐姐'
+    const limit = targetCount || appStore.wallpaperApiSettings.baiduLimit || 5
+    // Fetch 2x limit to ensure enough valid images
+    const fetchLimit = limit * 2
+    
+    const validItems: WallpaperItem[] = []
+    let page = 1
+    const maxPages = 3 // Max pages to try
+    
     try {
-      // New Baidu Image Search API
-      // Type=2 returns JSON with preview URLs
-      const url = `https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=e46073f4d678fa87669b88526e7448bc&words=${encodeURIComponent(keyword)}&page=1&limit=5&type=2`
-      
-      const response = await fetch(url)
-      if (response.ok) {
-        const data = await response.json()
-        // Format: { code: 200, res: [url1, url2, ...] }
-        if (data.code === 200 && Array.isArray(data.res)) {
-          const items = data.res
-            .filter((url: string) => url && url.startsWith('http')) // Filter empty or invalid
-            .map((url: string, idx: number) => ({
-              filename: url,
-              path: url,
-              name: `Baidu ${keyword} ${idx + 1}`,
-              source: 'api' as const
-            }))
-          
-          if (items.length > 0) {
-            searchWallpapers.value = items
-            hasSearched.value = true
+      while (validItems.length < limit && page <= maxPages) {
+        // New Baidu Image Search API
+        // Type=2 returns JSON with preview URLs
+        const url = `https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=e46073f4d678fa87669b88526e7448bc&words=${encodeURIComponent(kw)}&page=${page}&limit=${fetchLimit}&type=2`
+        
+        console.log(`Fetching Baidu wallpapers (Page ${page})...`)
+        const response = await fetch(url)
+        
+        if (response.ok) {
+          const data = await response.json()
+          // Format: { code: 200, res: [url1, url2, ...] }
+          if (data.code === 200 && Array.isArray(data.res)) {
+            const rawUrls = data.res.filter((url: string) => url && url.startsWith('http'))
+            
+            // Validate images
+            for (const url of rawUrls) {
+              if (validItems.length >= limit) break
+              
+              // Skip if already exists
+              if (validItems.some(i => i.path === url)) continue
+              
+              const isValid = await validateImage(url)
+              if (isValid) {
+                validItems.push({
+                  filename: url,
+                  path: url,
+                  name: `Baidu ${kw} ${validItems.length + 1}`,
+                  source: 'api' as const
+                })
+              }
+            }
           }
         }
+        
+        page++
+        // Small delay to be nice to API
+        if (validItems.length < limit) await new Promise(r => setTimeout(r, 500))
       }
+      
+      if (validItems.length > 0) {
+        searchWallpapers.value = validItems
+        hasSearched.value = true
+        // Automatically switch to first found wallpaper if requested
+        // But usually we just update the list.
+        // If the user is in 'search' mode, autoChangeWallpaper will pick from this list.
+      } else {
+        console.warn('No valid wallpapers found from Baidu search.')
+      }
+      
     } catch (e) {
       console.warn('Failed to load Baidu wallpapers:', e)
     } finally {
@@ -494,11 +530,8 @@ export function useWallpapers() {
          }
          const list = searchWallpapers.value
          if (list.length) {
-           if (forceRefresh) {
-             nextWallpaper = list[0] // or random?
-           } else {
-             nextWallpaper = list[Math.floor(Math.random() * list.length)]
-           }
+           // Always pick random to avoid getting stuck on index 0 if fetch fails
+           nextWallpaper = list[Math.floor(Math.random() * list.length)]
          }
       } else if (mode === 'anime') {
         // Fetch if needed or forced. Note: fetchAnimeWallpapers now ensures valid items.
