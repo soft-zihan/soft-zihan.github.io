@@ -142,6 +142,38 @@
            <pre v-else class="bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl overflow-x-auto"><code>{{ file.content }}</code></pre>
         </div>
 
+        <!-- Prev/Next Buttons -->
+        <div v-if="!file.isSource && !isRawMode" class="mt-12 flex justify-between gap-4">
+          <button 
+            v-if="prevFile"
+            @click="navigateTo(prevFile)"
+            class="flex-1 max-w-[45%] text-left p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
+          >
+            <div class="text-xs text-gray-400 mb-1 flex items-center gap-1">
+              <span>←</span>
+              <span>{{ t.previous || (lang === 'zh' ? '上一篇' : 'Previous') }}</span>
+            </div>
+            <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
+              {{ prevFile.name.replace('.md', '') }}
+            </div>
+          </button>
+          <div v-else class="flex-1"></div>
+          <button 
+            v-if="nextFile"
+            @click="navigateTo(nextFile)"
+            class="flex-1 max-w-[45%] text-right p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
+          >
+            <div class="text-xs text-gray-400 mb-1 flex items-center justify-end gap-1">
+              <span>{{ t.next || (lang === 'zh' ? '下一篇' : 'Next') }}</span>
+              <span>→</span>
+            </div>
+            <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
+              {{ nextFile.name.replace('.md', '') }}
+            </div>
+          </button>
+          <div v-else class="flex-1"></div>
+        </div>
+
         <!-- Giscus Comments -->
         <GiscusComments 
           v-if="!file.isSource" 
@@ -227,7 +259,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, ref, watch, onMounted } from 'vue';
+import { computed, toRef, ref, watch, onMounted, nextTick } from 'vue';
 import type { FileNode } from '../types';
 import { useAppStore } from '../stores/appStore';
 import { useArticleStore } from '../stores/articleStore';
@@ -250,11 +282,89 @@ const props = defineProps<{
   onContentClick: (e: MouseEvent) => void;
 }>();
 
+const emit = defineEmits([
+  'update-comment-count', 
+  'open-file',
+  'open-search',
+  'open-settings',
+  'open-music',
+  'open-write',
+  'open-download',
+  'toggle-theme'
+]);
+
 const appStore = useAppStore();
 const articleStore = useArticleStore();
 
 const currentFile = toRef(props, 'file');
 const isRawMode = toRef(props, 'isRawMode');
+
+// Navigation Logic
+const flatFiles = computed(() => appStore.flatFiles || []); 
+const sortedFiles = computed(() => appStore.sortedFiles || []);
+
+const prevFile = computed(() => {
+  if (!props.file || props.file.isSource) return null;
+  const list = appStore.userSettings.articleSortMode === 'date' ? sortedFiles.value : flatFiles.value;
+  if (!list.length) return null;
+  const idx = list.findIndex(f => f.path === props.file.path);
+  return idx > 0 ? list[idx - 1] : null;
+});
+
+const nextFile = computed(() => {
+  if (!props.file || props.file.isSource) return null;
+  const list = appStore.userSettings.articleSortMode === 'date' ? sortedFiles.value : flatFiles.value;
+  if (!list.length) return null;
+  const idx = list.findIndex(f => f.path === props.file.path);
+  return idx !== -1 && idx < list.length - 1 ? list[idx + 1] : null;
+});
+
+const navigateTo = (file: FileNode) => {
+  emit('open-file', file);
+  // Auto expand folder logic could be here if needed
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Search Jump with Range API
+watch(() => appStore.searchTarget, (target) => {
+  if (target) {
+    nextTick(() => {
+      setTimeout(() => {
+        const viewer = document.getElementById('markdown-viewer');
+        if (viewer) {
+          // Use TreeWalker to find text node
+          const walker = document.createTreeWalker(viewer, NodeFilter.SHOW_TEXT, null);
+          let node;
+          while (node = walker.nextNode()) {
+             const text = node.textContent || '';
+             const index = text.indexOf(target);
+             if (index !== -1) {
+                const range = document.createRange();
+                range.setStart(node, index);
+                range.setEnd(node, index + target.length);
+                
+                const selection = window.getSelection();
+                if (selection) {
+                   selection.removeAllRanges();
+                   selection.addRange(range);
+                }
+                
+                // Scroll into view
+                const element = node.parentElement;
+                if (element) {
+                   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                   element.classList.add('sakura-highlight-pulse');
+                   setTimeout(() => element.classList.remove('sakura-highlight-pulse'), 2000);
+                }
+                break;
+             }
+          }
+        }
+        appStore.searchTarget = null;
+      }, 300);
+    });
+  }
+});
 
 // Article Meta
 const { currentMeta, currentTags, currentAuthorName, currentAuthorUrl, currentWordCount, currentLineCount } = useArticleMeta(currentFile);

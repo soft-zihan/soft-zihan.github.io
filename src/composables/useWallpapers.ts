@@ -331,11 +331,11 @@ export function useWallpapers() {
     if (isApiLoading.value) return
     isApiLoading.value = true
     try {
-      const key = await getWallpaperKey()
+      // const key = await getWallpaperKey() // No longer needed
       const userLimit = appStore.wallpaperApiSettings.baiduLimit || limit || 8
       const target = Math.min(Math.max(userLimit, 1), 20)
       
-      if (!key) return
+      // if (!key) return
       
       const fetchLimit = Math.min(target * 2, 30) 
       const results: Array<WallpaperItem & { source: 'api' }> = []
@@ -346,7 +346,9 @@ export function useWallpapers() {
       let attempts = 0
       
       while (results.length < target && attempts < 5) {
-        const url = `https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=${key}&words=${encodeURIComponent(keyword || '小姐姐')}&page=${page}&limit=${fetchLimit}&type=2`
+        // User provided example: https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=e46073f4d678fa87669b88526e7448bc&limit=10&page=1&words=张含韵
+        const apiKey = 'e46073f4d678fa87669b88526e7448bc';
+        const url = `https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=${apiKey}&words=${encodeURIComponent(keyword || '小姐姐')}&page=${page}&limit=${fetchLimit}`;
         
         try {
           const response = await fetch(url)

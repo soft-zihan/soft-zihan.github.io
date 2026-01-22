@@ -108,14 +108,14 @@
                @click="addCurrentToList('light')" 
                class="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors text-gray-700 dark:text-gray-200"
              >
-               <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+               <span class="w-2 h-2 rounded-full bg-white border border-gray-300 dark:border-gray-600"></span>
                {{ lang === 'zh' ? '添加到明亮主题' : 'Add to Light Theme' }}
              </button>
              <button 
                @click="addCurrentToList('dark')" 
                class="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors text-gray-700 dark:text-gray-200"
              >
-               <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+               <span class="w-2 h-2 rounded-full bg-black border border-gray-300 dark:border-gray-600"></span>
                {{ lang === 'zh' ? '添加到深色主题' : 'Add to Dark Theme' }}
              </button>
           </div>
@@ -673,26 +673,28 @@ const changeWallpaper = () => {
   changeWallpaperSameSeries();
 };
 
-const addToWallpaperList = (wp: WallpaperItem | { name?: string; url: string; [key: string]: any }) => {
-  const url = 'path' in wp ? wp.path : wp.url;
-  addCustomWallpaper({
-    name: wp.name || 'Wallpaper',
-    url: url || '',
-    theme: appStore.isDark ? 'dark' : 'light',
-    source: 'api'
-  });
-  // showToast(t.value.added_to_list);
-};
-
-const addCurrentToList = () => {
-  const wp = {
-    name: 'Saved Wallpaper',
-    url: currentWallpaper.value,
-    theme: appStore.isDark ? 'dark' : 'light',
-    source: 'api'
+const addToWallpaperList = (wp: WallpaperItem | { name?: string; url: string; [key: string]: any }, theme?: 'light' | 'dark') => {
+    const url = 'path' in wp ? wp.path : wp.url;
+    addCustomWallpaper({
+      name: wp.name || 'Wallpaper',
+      url: url || '',
+      theme: theme || (appStore.isDark ? 'dark' : 'light'),
+      source: 'api'
+    });
+    // showToast(t.value.added_to_list);
   };
-  addToWallpaperList(wp);
-};
+
+  const addCurrentToList = (theme?: 'light' | 'dark') => {
+    const wp = {
+      name: 'Saved Wallpaper',
+      url: currentWallpaper.value,
+      theme: theme || (appStore.isDark ? 'dark' : 'light'),
+      source: 'api'
+    };
+    addToWallpaperList(wp, theme);
+    showCollectionDropdown.value = false;
+    appStore.showToast(theme === 'light' ? (props.lang === 'zh' ? '已添加到明亮主题' : 'Added to Light Theme') : (props.lang === 'zh' ? '已添加到深色主题' : 'Added to Dark Theme'));
+  };
 
 const downloadCurrentWallpaper = () => {
   const url = currentWallpaper.value;

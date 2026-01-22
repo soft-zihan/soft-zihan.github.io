@@ -137,6 +137,12 @@
           @open-file="openFile"
           @update-comment-count="handleCommentCountUpdate"
           @load-random-poem="loadRandomPoem"
+          @open-search="showSearch = true; if (isMobile) sidebarOpen = false; appStore.setRightSidebarOpen(false)"
+          @open-settings="showSettings = true; if (isMobile) sidebarOpen = false; appStore.setRightSidebarOpen(false)"
+          @open-music="musicStore.showMusicPlayer = true; if (isMobile) sidebarOpen = false; appStore.setRightSidebarOpen(false)"
+          @open-write="showWriteEditor = true; if (isMobile) sidebarOpen = false; appStore.setRightSidebarOpen(false)"
+          @open-download="showDownloadModal = true; if (isMobile) sidebarOpen = false; appStore.setRightSidebarOpen(false)"
+          @toggle-theme="toggleTheme(!appStore.isDark); appStore.setRightSidebarOpen(false)"
         />
       </div>
     </main>
@@ -1098,32 +1104,20 @@ body {
 }
 
 .article-style-lined {
-  --line-h: 1.8em;
-  --line-color: var(--primary-100);
-  line-height: var(--line-h) !important;
-  background-image: linear-gradient(to bottom, transparent calc(var(--line-h) - 1px), var(--line-color) calc(var(--line-h) - 1px)) !important;
-  background-size: 100% var(--line-h) !important;
-  background-position: 0 0.2em; /* Slight offset to align text baseline */
-  background-attachment: local;
-}
-
-.article-style-lined #markdown-viewer p,
-.article-style-lined #markdown-viewer ul,
-.article-style-lined #markdown-viewer ol,
-.article-style-lined #markdown-viewer li,
-.article-style-lined #markdown-viewer h1,
-.article-style-lined #markdown-viewer h2,
-.article-style-lined #markdown-viewer h3,
-.article-style-lined #markdown-viewer h4,
-.article-style-lined #markdown-viewer blockquote {
-  line-height: var(--line-h) !important;
-  margin-bottom: var(--line-h) !important;
-  margin-top: 0 !important;
+  text-decoration: underline;
+  text-decoration-color: var(--primary-200);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
 }
 
 .dark .article-style-lined {
-  --line-color: var(--primary-900-30);
+  text-decoration-color: var(--primary-800);
 }
+
+/* 
+.article-style-lined #markdown-viewer p,
+... removed fixed line-height overrides ...
+*/
 
 .article-style-grid {
   --line-h: 2rem;

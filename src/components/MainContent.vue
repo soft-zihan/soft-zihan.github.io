@@ -57,7 +57,13 @@
        :getArticleComments="getArticleComments"
        :onContentClick="onContentClick"
        @update-comment-count="$emit('update-comment-count', $event)"
-       @navigate="$emit('open-file', $event)"
+       @open-file="$emit('open-file', $event)"
+       @open-search="$emit('open-search')"
+       @open-settings="$emit('open-settings')"
+       @open-music="$emit('open-music')"
+       @open-write="$emit('open-write')"
+       @open-download="$emit('open-download')"
+       @toggle-theme="$emit('toggle-theme')"
     />
 
   </div>
