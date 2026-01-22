@@ -47,8 +47,9 @@
       @select-folder="openFolder"
       @open-search="showSearch = true"
       @toggle-sidebar="sidebarOpen = !sidebarOpen"
-      @update:activeLabTab="handleLabTabChange"
-    />
+        @toggle-right-sidebar="rightSidebarOpen = !rightSidebarOpen"
+        @update:activeLabTab="handleLabTabChange"
+      />
 
     <!-- Main Content Wrapper -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative isolate">
@@ -78,6 +79,7 @@
         :petal-speed="appStore.userSettings.petalSpeed"
         :header-hidden="headerHidden"
         :dual-column-mode="dualColumnMode"
+        :sidebar-open="sidebarOpen"
         :get-article-views="getArticleViews"
         v-model:isRawMode="isRawMode"
         @reset="resetToHome"
@@ -94,6 +96,7 @@
         @update:petal-speed="handlePetalSpeedChange"
         @toggle-dual-column="dualColumnMode = !dualColumnMode; if(dualColumnMode && !currentTool) currentTool = 'dashboard'"
         @toggle-sidebar="sidebarOpen = !sidebarOpen"
+        @toggle-right-sidebar="rightSidebarOpen = !rightSidebarOpen"
       />
 
       <!-- Content Area -->
@@ -704,6 +707,7 @@ const showDownloadModal = ref(false);
 const showSearch = searchModalOpen;
 const showWriteEditor = ref(false);
 const sidebarOpen = ref(true);
+const rightSidebarOpen = ref(false);
 const handleThemePanelChange = (open: boolean) => {
   themePanelOpen.value = open;
   if (open) headerHidden.value = false;
@@ -1786,6 +1790,48 @@ body {
 }
 
 .poem-line {
+  opacity: 0;
+  transform: rotateX(-18deg) translateY(10px) scale(0.98);
+  transform-origin: top;
+  transform-style: preserve-3d;
+  animation: poem-turn 0.6s ease forwards;
+}
+
+@keyframes poem-turn {
+  0% {
+    opacity: 0;
+    transform: rotateX(-18deg) translateY(10px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(0deg) translateY(0) scale(1);
+  }
+}
+
+input,
+textarea,
+[contenteditable="true"],
+pre,
+code {
+  user-select: text;
+}
+
+#markdown-viewer h1 {
+  color: var(--primary-600);
+}
+.dark #markdown-viewer h1 {
+  color: var(--primary-400);
+}
+
+.sakura-block-highlight {
+  background: rgba(252, 211, 77, 0.35);
+  border: 1px solid rgba(252, 211, 77, 0.8);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  padding: 0.05em 0.2em;
+  border-radius: 0.35rem;
+}
+</style>
   opacity: 0;
   transform: rotateX(-18deg) translateY(10px) scale(0.98);
   transform-origin: top;

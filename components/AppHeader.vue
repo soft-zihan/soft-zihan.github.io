@@ -8,6 +8,16 @@
   >
     <!-- Desktop Layout -->
     <div v-if="!isMobile" class="h-full flex items-center justify-between">
+      <!-- Left Sidebar Toggle (Desktop) -->
+      <button 
+        @click="$emit('toggle-sidebar')" 
+        class="mr-4 shrink-0 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[var(--primary-50)] dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+        :title="lang === 'zh' ? '切换侧边栏' : 'Toggle Sidebar'"
+      >
+        <svg v-if="sidebarOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/></svg>
+        <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m10 15 3-3-3-3"/></svg>
+      </button>
+
       <!-- Breadcrumbs -->
       <div class="flex items-center text-sm overflow-x-auto no-scrollbar whitespace-nowrap mask-linear flex-1 mr-4 py-2">
         <span class="text-[var(--primary-300)] dark:text-[var(--primary-500)] mr-2 shrink-0 cursor-pointer hover:scale-110 transition-transform" @click="$emit('reset')">
@@ -139,8 +149,16 @@
 
     <!-- Mobile Layout -->
     <div v-else class="flex items-center h-full px-3 gap-2">
+      <!-- Left Sidebar Toggle Button -->
+      <button 
+        @click="$emit('toggle-sidebar')" 
+        class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 active:scale-95 transition-transform"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/></svg>
+      </button>
+
       <!-- Breadcrumbs (Scrollable) -->
-      <div class="flex-1 flex items-center text-xs overflow-x-auto no-scrollbar whitespace-nowrap mask-linear pr-2">
+      <div class="flex-1 flex items-center text-xs overflow-x-auto no-scrollbar whitespace-nowrap mask-linear px-2">
         <span class="text-[var(--primary-300)] dark:text-[var(--primary-500)] mr-1 shrink-0 cursor-pointer" @click="$emit('reset')">🏠</span>
         <span class="text-[var(--primary-200)] dark:text-gray-700 mx-1">/</span>
         <span class="font-bold text-[var(--primary-500)] dark:text-[var(--primary-400)] bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/20 px-1.5 py-0.5 rounded text-[10px]">{{ lang }}</span>
@@ -161,12 +179,12 @@
         </template>
       </div>
 
-      <!-- Sidebar Toggle Button -->
+      <!-- Right Sidebar Toggle Button -->
       <button 
-        @click="$emit('toggle-sidebar')" 
+        @click="$emit('toggle-right-sidebar')" 
         class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 active:scale-95 transition-transform"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M9 3v18"/><path d="m14 9 3 3-3 3"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
       </button>
     </div>
 
@@ -712,16 +730,16 @@ const emit = defineEmits([
   'toggle-theme',
   'update:petal-speed',
   'toggle-dual-column',
-  'open-theme-panel'
+  'open-theme-panel',
+  'toggle-sidebar',
+  'toggle-right-sidebar'
 ]);
 
 // Mobile detection
 const isMobile = ref(false);
-const showMobileTools = ref(false);
 
 const checkMobile = () => {
   isMobile.value = window.innerWidth < 768;
-  if (!isMobile.value) showMobileTools.value = false;
 };
 
 const isPdf = computed(() => !!props.currentFile?.path && props.currentFile.path.toLowerCase().endsWith('.pdf'))
