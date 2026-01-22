@@ -397,8 +397,39 @@ export function useWallpapers() {
     }
   }
 
-  const fetchBaiduWallpaper = async (keyword?: string, limit = 9) => {
-    await fetchSearchWallpapers(keyword || appStore.wallpaperApiSettings.baiduKeyword || '二次元', limit)
+  const fetchBaiduWallpaper = async (keyword = '小姐姐') => {
+    if (isApiLoading.value) return
+    isApiLoading.value = true
+    try {
+      // New Baidu Image Search API
+      // Type=2 returns JSON with preview URLs
+      const url = `https://cn.apihz.cn/api/img/apihzimgbaidu.php?id=10012344&key=e46073f4d678fa87669b88526e7448bc&words=${encodeURIComponent(keyword)}&page=1&limit=5&type=2`
+      
+      const response = await fetch(url)
+      if (response.ok) {
+        const data = await response.json()
+        // Format: { code: 200, res: [url1, url2, ...] }
+        if (data.code === 200 && Array.isArray(data.res)) {
+          const items = data.res
+            .filter((url: string) => url && url.startsWith('http')) // Filter empty or invalid
+            .map((url: string, idx: number) => ({
+              filename: url,
+              path: url,
+              name: `Baidu ${keyword} ${idx + 1}`,
+              source: 'api' as const
+            }))
+          
+          if (items.length > 0) {
+            searchWallpapers.value = items
+            hasSearched.value = true
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to load Baidu wallpapers:', e)
+    } finally {
+      isApiLoading.value = false
+    }
   }
   
   // Detect current wallpaper mode/series

@@ -103,19 +103,19 @@
           </button>
           
           <!-- Dropdown Menu -->
-          <div v-if="showCollectionDropdown" class="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 py-1 z-50 animate-fade-in origin-top-right">
+          <div v-if="showCollectionDropdown" class="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 z-50 animate-fade-in origin-top-right space-y-1">
              <button 
                @click="addCurrentToList('light')" 
-               class="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors text-gray-700 dark:text-gray-200"
+               class="w-full text-left px-4 py-3 text-xs rounded-lg flex items-center gap-3 transition-colors border shadow-sm group bg-white border-gray-200 text-gray-800 hover:bg-gray-50 hover:border-gray-300"
              >
-               <span class="w-2 h-2 rounded-full bg-white border border-gray-300 dark:border-gray-600"></span>
+               <span class="w-3 h-3 rounded-full bg-white border border-gray-300 shadow-sm group-hover:scale-110 transition-transform"></span>
                {{ lang === 'zh' ? '添加到明亮主题' : 'Add to Light Theme' }}
              </button>
              <button 
                @click="addCurrentToList('dark')" 
-               class="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-2 transition-colors text-gray-700 dark:text-gray-200"
+               class="w-full text-left px-4 py-3 text-xs rounded-lg flex items-center gap-3 transition-colors border shadow-sm group bg-gray-900 border-gray-700 text-white hover:bg-black hover:border-gray-600"
              >
-               <span class="w-2 h-2 rounded-full bg-black border border-gray-300 dark:border-gray-600"></span>
+               <span class="w-3 h-3 rounded-full bg-black border border-gray-600 shadow-sm group-hover:scale-110 transition-transform"></span>
                {{ lang === 'zh' ? '添加到深色主题' : 'Add to Dark Theme' }}
              </button>
           </div>

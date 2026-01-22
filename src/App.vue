@@ -412,8 +412,6 @@ const handleContentClickEvent = (e: MouseEvent) => {
 // Actions
 // =====================
 
-
-
 const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
   appStore.userSettings.petalSpeed = speed;
   appStore.showParticles = speed !== 'off';

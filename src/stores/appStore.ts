@@ -253,7 +253,9 @@ export const useAppStore = defineStore('app', () => {
     setCurrentFolder,
     setLoading,
     // Computed
-    fontSizeClass
+    fontSizeClass,
+    flatFiles,
+    sortedFiles
   }
 }, {
   persist: {

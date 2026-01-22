@@ -17,6 +17,11 @@ export function useFileOperations() {
     appStore.currentTool = null;
     appStore.isRawMode = !!file.isSource;
     
+    // Ensure we are not in lab mode, otherwise MainContent might prioritize lab view
+    if (appStore.viewMode === 'lab') {
+      appStore.viewMode = 'files';
+    }
+    
     updateUrl(file.path);
     
     const container = document.getElementById('scroll-container');
@@ -29,7 +34,7 @@ export function useFileOperations() {
       try {
           const content = await fetchFileContent(file);
           // Update content in file object and store
-          const updatedFile = { ...file, content };
+          const updatedFile = { ...file, content: content || '' };
           appStore.currentFile = updatedFile;
           
           // Try to update original node if possible to cache content
