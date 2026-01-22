@@ -1873,4 +1873,3 @@ code {
   padding: 0.05em 0.2em;
   border-radius: 0.35rem;
 }
-</style>
