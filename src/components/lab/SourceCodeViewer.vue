@@ -89,7 +89,6 @@
           class="flex-1 overflow-auto custom-scrollbar relative" 
           :class="isDark ? 'bg-[#1e1e1e]' : 'bg-[#fafafa]'"
           ref="codeContainer" 
-          @scroll="syncMinimapScroll"
         >
           <div v-if="selectedFile && fileContent" class="py-4">
             <!-- Render each line with possible inline note -->
@@ -184,33 +183,12 @@
         </div>
 
         <!-- Right: Minimap (hidden in compact mode) -->
-        <div 
+        <CodeMinimap 
           v-if="!compact && selectedFile && fileContent && fileLines.length > 20"
-          class="w-24 flex-shrink-0 bg-[#1e1e1e] border-l border-gray-700 overflow-hidden relative cursor-pointer"
-          ref="minimapContainer"
-          @click="handleMinimapClick"
-          @mousedown="startMinimapDrag"
-        >
-          <!-- Minimap Content -->
-          <div class="minimap-content" :style="{ transform: `scale(${minimapScale})`, transformOrigin: 'top left' }">
-            <div 
-              v-for="(line, idx) in fileLines" 
-              :key="'mini-' + idx"
-              class="h-[3px] mx-1 my-[1px] rounded-sm overflow-hidden"
-              :class="getMinimapLineClass(idx + 1)"
-            >
-              <div 
-                class="h-full"
-                :style="{ width: Math.min(line.length * 0.5, 100) + '%', backgroundColor: getMinimapLineColor(line, idx + 1) }"
-              ></div>
-            </div>
-          </div>
-          <!-- Viewport Indicator -->
-          <div 
-            class="absolute left-0 right-0 bg-white/10 border border-white/20 pointer-events-none transition-transform"
-            :style="viewportIndicatorStyle"
-          ></div>
-        </div>
+          :lines="fileLines"
+          :code-container="codeContainer"
+          :has-note="hasNonEmptyNoteAtLine"
+        />
       </div>
       
       <!-- Bottom hint -->
@@ -272,6 +250,7 @@ hljs.registerLanguage('java', java)
 
 // Child component for file tree
 import SourceFileTree from './SourceFileTree.vue'
+import CodeMinimap from './CodeMinimap.vue'
 
 interface SourceFile {
   name: string
@@ -329,104 +308,46 @@ const isSubmitting = ref(false)
 const submitMessage = ref('')
 const submitSuccess = ref(false)
 
-onMounted(() => {
-  hasToken.value = checkHasToken()
-})
-
-// Project file tree (hardcoded for this project) - without root level
+// Project file tree (fetched from files.json)
 const projectTree = ref<SourceFile[]>([
   { name: 'index.html', path: 'index.html', type: 'file' },
   { name: 'index.tsx', path: 'index.tsx', type: 'file' },
-  { name: 'App.vue', path: 'App.vue', type: 'file' },
-  { name: 'constants.ts', path: 'constants.ts', type: 'file' },
-  { name: 'types.ts', path: 'types.ts', type: 'file' },
-  { name: 'vite.config.ts', path: 'vite.config.ts', type: 'file' },
-  { name: 'package.json', path: 'package.json', type: 'file' },
-  { name: 'tsconfig.json', path: 'tsconfig.json', type: 'file' },
-  {
-    name: 'components',
-    path: 'components',
+  { 
+    name: 'src', 
+    path: 'src', 
     type: 'directory',
     children: [
-      { name: 'AppHeader.vue', path: 'components/AppHeader.vue', type: 'file' },
-      { name: 'AppSidebar.vue', path: 'components/AppSidebar.vue', type: 'file' },
-      { name: 'ArticleCard.vue', path: 'components/ArticleCard.vue', type: 'file' },
-      { name: 'FileTree.vue', path: 'components/FileTree.vue', type: 'file' },
-      { name: 'FolderView.vue', path: 'components/FolderView.vue', type: 'file' },
-      { name: 'SearchModal.vue', path: 'components/SearchModal.vue', type: 'file' },
-      { name: 'SettingsModal.vue', path: 'components/SettingsModal.vue', type: 'file' },
-      { name: 'WriteEditor.vue', path: 'components/WriteEditor.vue', type: 'file' },
-      { name: 'MusicPlayer.vue', path: 'components/MusicPlayer.vue', type: 'file' },
-      { name: 'GiscusComments.vue', path: 'components/GiscusComments.vue', type: 'file' },
-      { name: 'PetalBackground.vue', path: 'components/PetalBackground.vue', type: 'file' },
-      { name: 'WallpaperLayer.vue', path: 'components/WallpaperLayer.vue', type: 'file' },
-      {
-        name: 'lab',
-        path: 'components/lab',
-        type: 'directory',
-        children: [
-              { name: 'index.ts', path: 'components/lab/index.ts', type: 'file' },
-              { name: 'LabDashboard.vue', path: 'components/lab/LabDashboard.vue', type: 'file' },
-              { name: 'LabProjectTour.vue', path: 'components/lab/LabProjectTour.vue', type: 'file' },
-              { name: 'SourceCodeViewer.vue', path: 'components/lab/SourceCodeViewer.vue', type: 'file' },
-            ]
-          },
-          {
-            name: 'petal',
-            path: 'components/petal',
-            type: 'directory',
-            children: [
-              { name: 'usePetals.ts', path: 'components/petal/usePetals.ts', type: 'file' },
-            ]
-          }
-        ]
-      },
-      {
-        name: 'composables',
-        path: 'composables',
-        type: 'directory',
-        children: [
-          { name: 'index.ts', path: 'composables/index.ts', type: 'file' },
-          { name: 'useArticleMeta.ts', path: 'composables/useArticleMeta.ts', type: 'file' },
-          { name: 'useBackup.ts', path: 'composables/useBackup.ts', type: 'file' },
-          { name: 'useCodeModal.ts', path: 'composables/useCodeModal.ts', type: 'file' },
-          { name: 'useContentClick.ts', path: 'composables/useContentClick.ts', type: 'file' },
-          { name: 'useContentRenderer.ts', path: 'composables/useContentRenderer.ts', type: 'file' },
-          { name: 'useFile.ts', path: 'composables/useFile.ts', type: 'file' },
-          { name: 'useGitHubPublish.ts', path: 'composables/useGitHubPublish.ts', type: 'file' },
-          { name: 'useLightbox.ts', path: 'composables/useLightbox.ts', type: 'file' },
-          { name: 'useMarkdown.ts', path: 'composables/useMarkdown.ts', type: 'file' },
-          { name: 'useRawEditor.ts', path: 'composables/useRawEditor.ts', type: 'file' },
-          { name: 'useSearch.ts', path: 'composables/useSearch.ts', type: 'file' },
-          { name: 'useSelectionMenu.ts', path: 'composables/useSelectionMenu.ts', type: 'file' },
-          { name: 'useWallpapers.ts', path: 'composables/useWallpapers.ts', type: 'file' },
-          { name: 'useTokenSecurity.ts', path: 'composables/useTokenSecurity.ts', type: 'file' },
-        ]
-      },
-      {
-        name: 'stores',
-        path: 'stores',
-        type: 'directory',
-        children: [
-          { name: 'index.ts', path: 'stores/index.ts', type: 'file' },
-          { name: 'appStore.ts', path: 'stores/appStore.ts', type: 'file' },
-          { name: 'articleStore.ts', path: 'stores/articleStore.ts', type: 'file' },
-          { name: 'learningStore.ts', path: 'stores/learningStore.ts', type: 'file' },
-          { name: 'musicStore.ts', path: 'stores/musicStore.ts', type: 'file' },
-        ]
-      },
-      {
-        name: 'scripts',
-        path: 'scripts',
-        type: 'directory',
-        children: [
-          { name: 'generate-tree.js', path: 'scripts/generate-tree.js', type: 'file' },
-          { name: 'generate-raw.js', path: 'scripts/generate-raw.js', type: 'file' },
-          { name: 'generate-music.js', path: 'scripts/generate-music.js', type: 'file' },
-          { name: 'generate-wallpapers.js', path: 'scripts/generate-wallpapers.js', type: 'file' },
-        ]
-      }
+       { name: 'App.vue', path: 'src/App.vue', type: 'file' },
+       { name: 'main.ts', path: 'src/main.ts', type: 'file' }
+    ]
+  }
 ])
+
+// ... existing onMounted ...
+onMounted(async () => {
+  hasToken.value = checkHasToken()
+  
+  await loadPresetNotes()
+  loadUserNotes()
+  loadCollapsedState()
+  loadFoldedState()
+  
+  // Fetch files.json to populate project tree
+  try {
+    const res = await fetch('./files.json')
+    if (res.ok) {
+      const allFiles = await res.json()
+      // Find "Project Source Code" node
+      const sourceNode = allFiles.find((node: any) => node.name === 'Project Source Code')
+      if (sourceNode && sourceNode.children) {
+        projectTree.value = sourceNode.children
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load source tree, using default:', e)
+    // Fallback is already set in ref initialization
+  }
+})
 
 const selectedFile = ref<SourceFile | null>(null)
 const fileContent = ref<string>('')
@@ -434,10 +355,9 @@ const showNotes = ref(true)
 // File tree visibility - controlled by compact prop, can be toggled in compact mode
 const fileTreeVisible = ref(true)
 const codeContainer = ref<HTMLElement | null>(null)
-const minimapContainer = ref<HTMLElement | null>(null)
 
 // Initialize fileTreeVisible based on compact mode
-watch(() => props.compact, (isCompact) => {
+watch(() => props.compact, (isCompact: boolean | undefined) => {
   if (isCompact) {
     fileTreeVisible.value = false
   }
@@ -486,7 +406,7 @@ const loadPresetNotes = async () => {
       // Convert notes format: filter out line 0 (now stored as intro)
       if (data.notes) {
         for (const [filePath, notes] of Object.entries(data.notes)) {
-          const filteredNotes = (notes as CodeNote[]).filter(n => n.line !== 0)
+          const filteredNotes = (notes as CodeNote[]).filter((n: CodeNote) => n.line !== 0)
           if (filteredNotes.length > 0) {
             presetNotes.value[filePath] = filteredNotes
           }
@@ -554,10 +474,26 @@ const saveFoldedState = () => {
 
 // Initialize
 onMounted(async () => {
+  hasToken.value = checkHasToken()
   await loadPresetNotes()
   loadUserNotes()
   loadCollapsedState()
   loadFoldedState()
+
+  // Fetch files.json to populate project tree
+  try {
+    const res = await fetch('./files.json')
+    if (res.ok) {
+      const allFiles = await res.json()
+      // Find "Project Source Code" node
+      const sourceNode = allFiles.find((node: any) => node.name === 'Project Source Code')
+      if (sourceNode && sourceNode.children) {
+        projectTree.value = sourceNode.children
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load source tree:', e)
+  }
 })
 
 // Current file intro
@@ -589,11 +525,11 @@ const currentFoldedLines = computed(() => {
 
 // Check if user has any notes
 const hasUserNotes = computed(() => {
-  return Object.values(userNotes.value).some(notes => notes.length > 0)
+  return Object.values(userNotes.value).some((notes: CodeNote[]) => notes.length > 0)
 })
 
 // File lines
-const fileLines = computed(() => fileContent.value.split('\n'))
+const fileLines = computed((): string[] => fileContent.value.split('\n'))
 
 // Get language for highlighting
 const getLanguage = () => {
@@ -781,7 +717,7 @@ const foldableRanges = computed((): FoldRange[] => {
 
 // Check if a line is the start of a foldable range
 const isFoldStartLine = (line: number): boolean => {
-  return foldableRanges.value.some(r => r.start === line)
+  return foldableRanges.value.some((r: FoldRange) => r.start === line)
 }
 
 // Check if a line is currently folded
@@ -791,7 +727,7 @@ const isLineFolded = (line: number): boolean => {
 
 // Get the fold range for a start line
 const getFoldRange = (startLine: number): FoldRange | undefined => {
-  return foldableRanges.value.find(r => r.start === startLine)
+  return foldableRanges.value.find((r: FoldRange) => r.start === startLine)
 }
 
 // Get count of folded lines
@@ -833,7 +769,7 @@ const toggleFoldAtLine = (line: number) => {
 // Check if all foldable ranges are folded
 const allFolded = computed(() => {
   if (foldableRanges.value.length === 0) return false
-  return foldableRanges.value.every(r => currentFoldedLines.value.includes(r.start))
+  return foldableRanges.value.every((r: FoldRange) => currentFoldedLines.value.includes(r.start))
 })
 
 // Toggle all folds
@@ -844,108 +780,9 @@ const toggleAllFolds = () => {
   if (allFolded.value) {
     foldedState.value[path] = []
   } else {
-    foldedState.value[path] = foldableRanges.value.map(r => r.start)
+    foldedState.value[path] = foldableRanges.value.map((r: FoldRange) => r.start)
   }
   saveFoldedState()
-}
-
-// ==================== Minimap Logic ====================
-
-const minimapScale = computed(() => {
-  const totalLines = fileLines.value.length
-  if (totalLines < 100) return 1
-  if (totalLines < 500) return 0.8
-  return 0.6
-})
-
-const viewportIndicatorStyle = computed(() => {
-  if (!codeContainer.value) return {}
-  const container = codeContainer.value
-  const scrollTop = container.scrollTop
-  const scrollHeight = container.scrollHeight
-  const clientHeight = container.clientHeight
-  
-  const totalLines = fileLines.value.length
-  const lineHeight = 4
-  const minimapHeight = totalLines * lineHeight * minimapScale.value
-  
-  const ratio = clientHeight / scrollHeight
-  const top = (scrollTop / scrollHeight) * minimapHeight
-  const height = Math.max(20, ratio * minimapHeight)
-  
-  return {
-    top: `${top}px`,
-    height: `${height}px`
-  }
-})
-
-const syncMinimapScroll = () => {
-  // Trigger reactivity update for viewport indicator
-}
-
-const handleMinimapClick = (e: MouseEvent) => {
-  if (!codeContainer.value || !minimapContainer.value) return
-  
-  const rect = minimapContainer.value.getBoundingClientRect()
-  const clickY = e.clientY - rect.top
-  const totalLines = fileLines.value.length
-  const lineHeight = 4 * minimapScale.value
-  const minimapHeight = totalLines * lineHeight
-  
-  const ratio = clickY / minimapHeight
-  const scrollTarget = ratio * codeContainer.value.scrollHeight
-  
-  codeContainer.value.scrollTo({
-    top: scrollTarget - codeContainer.value.clientHeight / 2,
-    behavior: 'smooth'
-  })
-}
-
-let isDraggingMinimap = false
-
-const startMinimapDrag = (e: MouseEvent) => {
-  isDraggingMinimap = true
-  handleMinimapClick(e)
-  
-  const onMove = (e: MouseEvent) => {
-    if (isDraggingMinimap) {
-      handleMinimapClick(e)
-    }
-  }
-  
-  const onUp = () => {
-    isDraggingMinimap = false
-    window.removeEventListener('mousemove', onMove)
-    window.removeEventListener('mouseup', onUp)
-  }
-  
-  window.addEventListener('mousemove', onMove)
-  window.addEventListener('mouseup', onUp)
-}
-
-const getMinimapLineClass = (line: number) => {
-  if (hasNonEmptyNoteAtLine(line)) {
-    return 'bg-[var(--primary-500)]/30'
-  }
-  return ''
-}
-
-const getMinimapLineColor = (line: string, lineNum: number) => {
-  const trimmed = line.trim()
-  
-  if (trimmed.startsWith('//') || trimmed.startsWith('#') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
-    return '#6a9955'
-  }
-  
-  if (/^(import|export|const|let|var|function|class|if|else|for|while|return|async|await)/.test(trimmed)) {
-    return '#569cd6'
-  }
-  
-  if (trimmed.includes('"') || trimmed.includes("'") || trimmed.includes('`')) {
-    return '#ce9178'
-  }
-  
-  return '#9cdcfe'
 }
 
 // ==================== Note Functions ====================
@@ -985,7 +822,7 @@ const getIndentGuideClass = (level: number): string => {
 
 // Check if user has non-empty note at line
 const hasNonEmptyUserNoteAtLine = (line: number) => {
-  return currentUserNotes.value.some(n => n.line === line && n.content.trim())
+  return currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
 }
 
 // Toggle only user notes at line (preset notes are controlled by global toggle)
@@ -1002,12 +839,12 @@ const toggleUserNoteAtLine = (line: number) => {
     }
     
     if (isCollapsed) {
-      collapsedState.value[path] = collapsedState.value[path].filter(l => l !== line)
+      collapsedState.value[path] = collapsedState.value[path].filter((l: number) => l !== line)
     } else {
-      const userNote = currentUserNotes.value.find(n => n.line === line)
+      const userNote = currentUserNotes.value.find((n: CodeNote) => n.line === line)
       if (userNote && !userNote.content.trim()) {
         // Remove empty user note
-        userNotes.value[path] = userNotes.value[path].filter(n => n.line !== line)
+        userNotes.value[path] = userNotes.value[path].filter((n: CodeNote) => n.line !== line)
         saveUserNotes()
         return
       }
@@ -1020,12 +857,12 @@ const toggleUserNoteAtLine = (line: number) => {
       userNotes.value[path] = []
     }
     userNotes.value[path].push({ line, content: '' })
-    userNotes.value[path].sort((a, b) => a.line - b.line)
+    userNotes.value[path].sort((a: CodeNote, b: CodeNote) => a.line - b.line)
     saveUserNotes()
     
     // Uncollapse if collapsed
     if (collapsedState.value[path]) {
-      collapsedState.value[path] = collapsedState.value[path].filter(l => l !== line)
+      collapsedState.value[path] = collapsedState.value[path].filter((l: number) => l !== line)
       saveCollapsedState()
     }
   }
@@ -1041,11 +878,11 @@ const highlightLine = (line: string) => {
 }
 
 const hasPresetNoteAtLine = (line: number) => {
-  return currentPresetNotes.value.some(n => n.line === line)
+  return currentPresetNotes.value.some((n: CodeNote) => n.line === line)
 }
 
 const hasUserNoteAtLine = (line: number) => {
-  return currentUserNotes.value.some(n => n.line === line)
+  return currentUserNotes.value.some((n: CodeNote) => n.line === line)
 }
 
 const hasAnyNoteAtLine = (line: number) => {
@@ -1053,8 +890,8 @@ const hasAnyNoteAtLine = (line: number) => {
 }
 
 const hasNonEmptyNoteAtLine = (line: number) => {
-  const hasPreset = currentPresetNotes.value.some(n => n.line === line && n.content.trim())
-  const hasUser = currentUserNotes.value.some(n => n.line === line && n.content.trim())
+  const hasPreset = currentPresetNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
+  const hasUser = currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
   return hasPreset || hasUser
 }
 
@@ -1063,8 +900,8 @@ const isLineCollapsed = (line: number) => {
 }
 
 const getLineNumberClass = (line: number) => {
-  const hasPreset = currentPresetNotes.value.some(n => n.line === line && n.content.trim())
-  const hasUser = currentUserNotes.value.some(n => n.line === line && n.content.trim())
+  const hasPreset = currentPresetNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
+  const hasUser = currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
   
   if (hasPreset || hasUser) {
     if (hasPreset && hasUser) {
@@ -1092,12 +929,12 @@ const toggleNoteAtLine = (line: number) => {
     }
     
     if (isCollapsed) {
-      collapsedState.value[path] = collapsedState.value[path].filter(l => l !== line)
+      collapsedState.value[path] = collapsedState.value[path].filter((l: number) => l !== line)
     } else {
       if (hasUser) {
-        const userNote = currentUserNotes.value.find(n => n.line === line)
+        const userNote = currentUserNotes.value.find((n: CodeNote) => n.line === line)
         if (userNote && !userNote.content.trim()) {
-          userNotes.value[path] = userNotes.value[path].filter(n => n.line !== line)
+          userNotes.value[path] = userNotes.value[path].filter((n: CodeNote) => n.line !== line)
           saveUserNotes()
           return
         }
@@ -1110,11 +947,11 @@ const toggleNoteAtLine = (line: number) => {
       userNotes.value[path] = []
     }
     userNotes.value[path].push({ line, content: '' })
-    userNotes.value[path].sort((a, b) => a.line - b.line)
+    userNotes.value[path].sort((a: CodeNote, b: CodeNote) => a.line - b.line)
     saveUserNotes()
     
     if (collapsedState.value[path]) {
-      collapsedState.value[path] = collapsedState.value[path].filter(l => l !== line)
+      collapsedState.value[path] = collapsedState.value[path].filter((l: number) => l !== line)
       saveCollapsedState()
     }
   }
@@ -1124,18 +961,18 @@ const deleteUserNote = (line: number) => {
   if (!selectedFile.value) return
   const path = selectedFile.value.path
   if (userNotes.value[path]) {
-    userNotes.value[path] = userNotes.value[path].filter(n => n.line !== line)
+    userNotes.value[path] = userNotes.value[path].filter((n: CodeNote) => n.line !== line)
     saveUserNotes()
   }
 }
 
 const getPresetNoteContent = (line: number): string => {
-  const note = currentPresetNotes.value.find(n => n.line === line)
+  const note = currentPresetNotes.value.find((n: CodeNote) => n.line === line)
   return note?.content || ''
 }
 
 const getUserNoteContent = (line: number): string => {
-  const note = currentUserNotes.value.find(n => n.line === line)
+  const note = currentUserNotes.value.find((n: CodeNote) => n.line === line)
   return note?.content || ''
 }
 
@@ -1143,7 +980,7 @@ const updateUserNoteContent = (line: number, content: string) => {
   if (!selectedFile.value) return
   const path = selectedFile.value.path
   if (!userNotes.value[path]) return
-  const note = userNotes.value[path].find(n => n.line === line)
+  const note = userNotes.value[path].find((n: CodeNote) => n.line === line)
   if (note) {
     note.content = content
     saveUserNotes()
@@ -1200,7 +1037,7 @@ const onDrop = (e: DragEvent, targetLine: number) => {
     return
   }
   
-  const noteIdx = userNotes.value[path].findIndex(n => n.line === sourceLine)
+  const noteIdx = userNotes.value[path].findIndex((n: CodeNote) => n.line === sourceLine)
   if (noteIdx < 0) {
     dragOverLine.value = null
     draggingNoteLine.value = null
@@ -1208,7 +1045,7 @@ const onDrop = (e: DragEvent, targetLine: number) => {
   }
   
   userNotes.value[path][noteIdx].line = targetLine
-  userNotes.value[path].sort((a, b) => a.line - b.line)
+  userNotes.value[path].sort((a: CodeNote, b: CodeNote) => a.line - b.line)
   saveUserNotes()
   
   if (collapsedState.value[path]) {

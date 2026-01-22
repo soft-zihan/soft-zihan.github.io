@@ -63,8 +63,7 @@ const loadGiscus = () => {
   giscusContainer.value.innerHTML = ''
   
   // 构建用于评论映射的唯一标识符（基于文章路径）
-  // 去掉前缀斜杠，确保路径一致性
-  const normalizedPath = props.path.replace(/^\//, '')
+  // 使用 pathname 映射，与旧版本保持一致
   
   // Create new script
   const script = document.createElement('script')
@@ -73,15 +72,13 @@ const loadGiscus = () => {
   script.setAttribute('data-repo-id', config.repoId)
   script.setAttribute('data-category', config.category)
   script.setAttribute('data-category-id', config.categoryId)
-  script.setAttribute('data-mapping', 'specific')  // 使用 specific 映射
-  script.setAttribute('data-term', normalizedPath)  // 指定具体的路径作为 term
-  script.setAttribute('data-strict', '1')  // 严格匹配
+  script.setAttribute('data-mapping', 'pathname')  // 使用 pathname 映射
+  script.setAttribute('data-strict', '0')
   script.setAttribute('data-reactions-enabled', '1')
-  script.setAttribute('data-emit-metadata', '1')
-  script.setAttribute('data-input-position', 'bottom')
+  script.setAttribute('data-emit-metadata', '0')
+  script.setAttribute('data-input-position', 'top')
   script.setAttribute('data-theme', 'preferred_color_scheme')
   script.setAttribute('data-lang', props.lang === 'zh' ? 'zh-CN' : 'en')
-  script.setAttribute('data-loading', 'lazy')
   script.crossOrigin = 'anonymous'
   script.async = true
   

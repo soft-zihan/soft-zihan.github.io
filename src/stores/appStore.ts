@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { I18N, THEME_COLORS } from '../constants'
 import type { ThemeColorId } from '../constants'
+import type { FileNode } from '../types'
 
 export const useAppStore = defineStore('app', () => {
   // Language
@@ -63,7 +64,29 @@ export const useAppStore = defineStore('app', () => {
   const viewMode = ref<'latest' | 'files' | 'lab'>('latest')
   const expandedFolders = ref<string[]>([])
   
+  // File System State
+  const fileSystem = ref<FileNode[]>([])
+  const currentFile = ref<FileNode | null>(null)
+  const currentFolder = ref<FileNode | null>(null)
+  const loading = ref(true)
+  
   // Actions
+  function setFileSystem(files: FileNode[]) {
+    fileSystem.value = files
+  }
+
+  function setCurrentFile(file: FileNode | null) {
+    currentFile.value = file
+  }
+
+  function setCurrentFolder(folder: FileNode | null) {
+    currentFolder.value = folder
+  }
+
+  function setLoading(val: boolean) {
+    loading.value = val
+  }
+
   function toggleLang() {
     lang.value = lang.value === 'en' ? 'zh' : 'en'
   }
@@ -194,6 +217,10 @@ export const useAppStore = defineStore('app', () => {
     readingMode,
     viewMode,
     expandedFolders,
+    fileSystem,
+    currentFile,
+    currentFolder,
+    loading,
     // Actions
     toggleLang,
     toggleTheme,
@@ -212,6 +239,10 @@ export const useAppStore = defineStore('app', () => {
     setReadingMode,
     applyThemeColor,
     setThemeColor,
+    setFileSystem,
+    setCurrentFile,
+    setCurrentFolder,
+    setLoading,
     // Computed
     fontSizeClass
   }

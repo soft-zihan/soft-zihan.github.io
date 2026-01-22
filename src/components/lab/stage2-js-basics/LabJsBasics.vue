@@ -602,12 +602,12 @@ const arrayMethods = [
 const arrayResult = computed(() => {
   const arr = demoArray.value;
   const results: Record<string, string> = {
-    map: `[${arr.map(x => x * 2).join(', ')}]`,
-    filter: `[${arr.filter(x => x > 2).join(', ')}]`,
-    reduce: `${arr.reduce((a, b) => a + b, 0)}`,
-    find: `${arr.find(x => x > 3)}`,
-    some: `${arr.some(x => x > 3)}`,
-    every: `${arr.every(x => x > 0)}`
+    map: `[${arr.map((x: number) => x * 2).join(', ')}]`,
+    filter: `[${arr.filter((x: number) => x > 2).join(', ')}]`,
+    reduce: `${arr.reduce((a: number, b: number) => a + b, 0)}`,
+    find: `${arr.find((x: number) => x > 3)}`,
+    some: `${arr.some((x: number) => x > 3)}`,
+    every: `${arr.every((x: number) => x > 0)}`
   };
   return results[selectedArrayMethod.value];
 });

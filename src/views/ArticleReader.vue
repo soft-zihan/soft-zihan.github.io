@@ -226,7 +226,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, ref } from 'vue';
+import { computed, toRef, ref, watch, onMounted } from 'vue';
 import type { FileNode } from '../types';
 import { useAppStore } from '../stores/appStore';
 import { useArticleStore } from '../stores/articleStore';
@@ -259,7 +259,18 @@ const isRawMode = toRef(props, 'isRawMode');
 const { currentMeta, currentTags, currentAuthorName, currentAuthorUrl, currentWordCount, currentLineCount } = useArticleMeta(currentFile);
 
 // Renderer
-const { renderedHtml, toc, activeHeaderId, activeIndicatorTop, updateRenderedContent, scrollToHeader } = useContentRenderer(currentFile, isRawMode);
+const { renderedHtml, toc, activeHeaderId, activeIndicatorTop, updateRenderedContent, scrollToHeader, setupMarkedRenderer, generateToc } = useContentRenderer(currentFile, isRawMode);
+
+onMounted(() => {
+  setupMarkedRenderer();
+  updateRenderedContent();
+  generateToc();
+});
+
+watch([currentFile, isRawMode], () => {
+  updateRenderedContent();
+  generateToc();
+});
 
 // Raw Editor
 const showToast = (msg: string) => appStore.showToast(msg);

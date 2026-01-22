@@ -31,7 +31,7 @@
            <span class="text-gray-500 dark:text-gray-400">{{ t.lab_dashboard }}</span>
         </template>
         <template v-else v-for="(item, index) in breadcrumbs" :key="item.path">
-          <span v-if="index > 0" class="mx-2 text-[var(--primary-300)] dark:text-gray-600">›</span>
+          <span v-if="Number(index) > 0" class="mx-2 text-[var(--primary-300)] dark:text-gray-600">›</span>
           <span 
             @click="$emit('navigate', item.path)"
             class="cursor-pointer transition-colors px-2 py-1 rounded-md"
@@ -402,7 +402,7 @@
               :class="wp.filename === appStore.currentWallpaperFilename && appStore.userSettings.bannerMode !== 'hide' ? 'ring-2' : 'border-gray-200 dark:border-gray-700'"
               :style="wp.filename === appStore.currentWallpaperFilename && appStore.userSettings.bannerMode !== 'hide' ? primaryRingStyle : undefined"
             >
-              <img :src="wp.path || wp.url" :alt="wp.name" class="w-full h-full object-cover" />
+              <img :src="wp.path" :alt="wp.name" class="w-full h-full object-cover" />
               <div @click="setWallpaperWithMode(wp.filename)" class="absolute inset-0 bg-black/0 hover:bg-black/10 transition-colors cursor-pointer"></div>
               
               <button 
@@ -615,7 +615,7 @@ import type { ThemeColorId } from '@/constants';
 import type { BreadcrumbItem, FileNode } from '@/types';
 import { useMusicStore } from '@/stores/musicStore';
 import { useAppStore } from '@/stores/appStore';
-import { useWallpapers } from '@/composables/useWallpapers';
+import { useWallpapers, type WallpaperItem } from '@/composables/useWallpapers';
 
 const musicStore = useMusicStore();
 const appStore = useAppStore();
@@ -645,6 +645,17 @@ const changeWallpaper = () => {
   changeWallpaperSameSeries();
 };
 
+const addToWallpaperList = (wp: WallpaperItem | { name?: string; url: string; [key: string]: any }) => {
+  const url = 'path' in wp ? wp.path : wp.url;
+  addCustomWallpaper({
+    name: wp.name || 'Wallpaper',
+    url: url || '',
+    theme: appStore.isDark ? 'dark' : 'light',
+    source: 'api'
+  });
+  // showToast(t.value.added_to_list);
+};
+
 const addCurrentToList = () => {
   const wp = {
     name: 'Saved Wallpaper',
@@ -666,9 +677,9 @@ const downloadCurrentWallpaper = () => {
   document.body.removeChild(link);
 };
 
-const downloadWallpaper = async (wp: any) => {
+const downloadWallpaper = async (wp: WallpaperItem) => {
   try {
-    const url = wp.path || wp.url;
+    const url = wp.path;
     const response = await fetch(url);
     const blob = await response.blob();
     const blobUrl = URL.createObjectURL(blob);
@@ -683,18 +694,8 @@ const downloadWallpaper = async (wp: any) => {
   }
 };
 
-const addToWallpaperList = (wp: any) => {
-  addCustomWallpaper({
-    name: wp.name || 'Wallpaper',
-    url: wp.path || wp.url,
-    theme: appStore.isDark ? 'dark' : 'light',
-    source: 'api'
-  });
-  // showToast(t.value.added_to_list);
-};
-
 const removeCustomWallpaper = (id: string) => {
-  const idx = appStore.customWallpapers.findIndex(w => w.id === id);
+  const idx = appStore.customWallpapers.findIndex((w: { id: string }) => w.id === id);
   if (idx !== -1) {
     appStore.customWallpapers.splice(idx, 1);
   }
@@ -917,7 +918,7 @@ const addCustomMusic = () => {
 };
 
 const clearCustomMusic = () => {
-  const ids = musicStore.customTracks.map(t => t.id);
+  const ids = musicStore.customTracks.map((t: { id: string }) => t.id);
   ids.forEach(id => musicStore.removeCustomTrack(id));
 };
 

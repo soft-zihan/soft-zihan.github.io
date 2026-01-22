@@ -128,9 +128,17 @@ const notesTree = scanDirectory(notesDir, '', false);
 
 // 2. Scan Source Code (Specific Folders/Files)
 const sourceTree = [];
-// Scan Components
-const componentsNodes = scanDirectory(path.join(rootDir, 'src', 'components'), 'src/components', true);
-if (componentsNodes.length > 0) sourceTree.push(...componentsNodes);
+
+// Scan Source Directories
+const sourceDirs = ['src/components', 'src/composables', 'src/stores', 'src/utils'];
+sourceDirs.forEach(dir => {
+    const fullPath = path.join(rootDir, dir);
+    if (fs.existsSync(fullPath)) {
+        const nodes = scanDirectory(fullPath, dir, true);
+        if (nodes.length > 0) sourceTree.push(...nodes);
+    }
+});
+
 // Scan Root Files (App.vue, index.html, etc manually picked or scanned)
 const rootFilesToScan = ['src/App.vue', 'src/index.html', 'src/main.ts', 'vite.config.ts', 'package.json', 'tsconfig.json'];
 rootFilesToScan.forEach(file => {
@@ -166,3 +174,4 @@ const finalTree = [
 fs.writeFileSync(outputFile, JSON.stringify(finalTree, null, 2));
 console.log(`✨ File tree generated at ${outputFile}`);
 console.log(`✨ Source code copied to ${rawDir} for static serving.`);
+

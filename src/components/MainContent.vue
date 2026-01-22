@@ -1,0 +1,119 @@
+<template>
+  <div 
+    v-if="currentFile || (viewMode === 'lab' && currentTool) || currentFolder" 
+    id="scroll-container" 
+    class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-4 md:p-6 lg:p-8 w-full"
+  >
+    
+    <!-- Lab Tool View (Unified Dashboard) -->
+    <div v-if="viewMode === 'lab' && currentTool === 'dashboard'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
+       <LabDashboard 
+         :lang="lang" 
+         :model-value="labDashboardTab" 
+         @update:model-value="$emit('update:labDashboardTab', $event)"
+         @tab-change="$emit('tab-change', $event)" 
+         @select-lab="$emit('select-tool', $event)" 
+       />
+    </div>
+
+    <!-- Lab: Source Code Viewer -->
+    <div v-else-if="viewMode === 'lab' && currentTool === 'source-code'" class="w-full h-[calc(100vh-12rem)] animate-fade-in">
+       <SourceCodeViewer :lang="lang" />
+    </div>
+
+    <!-- Lab: Event Handling -->
+    <div v-else-if="viewMode === 'lab' && currentTool === 'event-handling'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
+       <LabEventHandling :lang="lang" />
+    </div>
+
+    <!-- Lab: Slot System -->
+    <div v-else-if="viewMode === 'lab' && currentTool === 'slot'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
+       <LabSlot :lang="lang" />
+    </div>
+
+    <!-- Folder View Component -->
+    <FolderView 
+      v-else-if="currentFolder"
+      :current-folder="currentFolder"
+      @open-folder="$emit('open-folder', $event)"
+      @open-file="$emit('open-file', $event)"
+    />
+
+    <!-- Note Content View (ArticleReader) -->
+    <ArticleReader
+       v-else-if="currentFile" 
+       :file="currentFile"
+       :loading="contentLoading"
+       :isRawMode="isRawMode"
+       :lang="lang"
+       :t="t"
+       :getArticleViews="getArticleViews"
+       :getArticleComments="getArticleComments"
+       :onContentClick="onContentClick"
+       @update-comment-count="$emit('update-comment-count', $event)"
+    />
+
+  </div>
+
+  <!-- Empty State / Home -->
+  <div v-else id="scroll-container" class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-6">
+    <WelcomeScreen
+      :t="t"
+      :lang="lang"
+      :welcome-poem-loading="welcomePoemLoading"
+      :welcome-poem-error="welcomePoemError"
+      :welcome-poem="welcomePoem"
+      :welcome-poem-author-line="welcomePoemAuthorLine"
+      :welcome-poem-lines="welcomePoemLines"
+      :welcome-poem-details="welcomePoemDetails"
+      @load-random-poem="$emit('load-random-poem')"
+    />
+    <div class="h-16"></div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import type { FileNode } from '../types';
+import type { GuwenItem } from '../composables/usePoem';
+
+// Components
+import LabDashboard from './lab/LabDashboard.vue';
+import SourceCodeViewer from './lab/SourceCodeViewer.vue';
+import LabEventHandling from './lab/stage6-vue-core/LabEventHandling.vue';
+import LabSlot from './lab/stage7-vue-advanced/LabSlot.vue';
+import FolderView from './FolderView.vue';
+import ArticleReader from '../views/ArticleReader.vue';
+import WelcomeScreen from './WelcomeScreen.vue';
+
+defineProps<{
+  viewMode: string;
+  currentTool: string | null;
+  currentFile: FileNode | null;
+  currentFolder: FileNode | null;
+  labDashboardTab: string;
+  lang: string;
+  t: any;
+  loading: boolean;
+  contentLoading: boolean;
+  isRawMode: boolean;
+  welcomePoemLoading: boolean;
+  welcomePoemError: string;
+  welcomePoem: GuwenItem | null;
+  welcomePoemAuthorLine: string;
+  welcomePoemLines: string[];
+  welcomePoemDetails: Array<{ label: string; value: string }>;
+  getArticleViews: (path: string) => number;
+  getArticleComments: (path: string) => number;
+  onContentClick: (e: MouseEvent) => void;
+}>();
+
+defineEmits<{
+  (e: 'update:labDashboardTab', val: string): void;
+  (e: 'tab-change', val: string): void;
+  (e: 'select-tool', val: string): void;
+  (e: 'open-folder', val: FileNode): void;
+  (e: 'open-file', val: FileNode): void;
+  (e: 'update-comment-count', val: { path: string; count: number }): void;
+  (e: 'load-random-poem'): void;
+}>();
+</script>

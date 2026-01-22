@@ -104,144 +104,40 @@
       <div class="flex-1 flex overflow-hidden z-10 relative">
         
         <!-- Selection Menu (Floating) -->
-        <div 
-          v-show="selectionMenu.show" 
-          class="fixed z-50 flex bg-gray-900/95 text-white rounded-2xl shadow-2xl backdrop-blur-xl transform -translate-x-1/2 -translate-y-full mb-2 p-1.5 gap-0.5 border border-white/10"
-          :style="{ top: selectionMenu.y + 'px', left: selectionMenu.x + 'px' }"
-          @mousedown.prevent
-        >
-          <!-- Highlight Options -->
-          <button @click="applyFormatHandler('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
-            <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
-          </button>
-          <button @click="applyFormatHandler('highlight-green')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Green Highlight">
-            <span class="w-4 h-4 bg-green-400 rounded-full inline-block ring-2 ring-green-300/50"></span>
-          </button>
-          <button @click="applyFormatHandler('highlight-blue')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Blue Highlight">
-            <span class="w-4 h-4 bg-blue-400 rounded-full inline-block ring-2 ring-blue-300/50"></span>
-          </button>
-          <button @click="applyFormatHandler('highlight-pink')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Pink Highlight">
-            <span class="w-4 h-4 bg-pink-400 rounded-full inline-block ring-2 ring-pink-300/50"></span>
-          </button>
-          
-          <div class="w-px bg-white/20 mx-0.5"></div>
-          
-          <!-- Underline Styles -->
-          <button @click="applyFormatHandler('underline-wavy')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Wavy Underline">
-             <span class="underline decoration-wavy decoration-[var(--primary-400)] underline-offset-2">〰</span>
-          </button>
-          <button @click="applyFormatHandler('underline-double')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Double Underline">
-             <span class="underline decoration-double decoration-blue-400 underline-offset-2">≡</span>
-          </button>
+        <FloatingSelectionMenu 
+          :selection-menu="selectionMenu" 
+          @apply-format="applyFormatHandler"
+        />
 
-          <div class="w-px bg-white/20 mx-0.5"></div>
-
-          <!-- Block Highlight -->
-          <button @click="applyFormatHandler('highlight-block')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1 transition-all" title="Block Highlight">
-            <span class="px-2 py-0.5 border border-yellow-300 rounded bg-yellow-200/40">▭</span>
-          </button>
-        </div>
-
-        <!-- Center Stage -->
-        <div 
-          v-if="currentFile || (viewMode === 'lab' && currentTool) || currentFolder" 
-          id="scroll-container" 
-          class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-4 md:p-6 lg:p-8 w-full"
-        >
-          
-          <!-- Lab Tool View (Unified Dashboard) -->
-          <div v-if="viewMode === 'lab' && currentTool === 'dashboard'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
-             <LabDashboard :lang="lang" v-model="labDashboardTab" @tab-change="handleLabTabChange" @select-lab="selectTool" />
-          </div>
-
-          <!-- Lab: Source Code Viewer -->
-          <div v-else-if="viewMode === 'lab' && currentTool === 'source-code'" class="w-full h-[calc(100vh-12rem)] animate-fade-in">
-             <SourceCodeViewer :lang="lang" />
-          </div>
-
-          <!-- Lab: Event Handling -->
-          <div v-else-if="viewMode === 'lab' && currentTool === 'event-handling'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
-             <LabEventHandling :lang="lang" />
-          </div>
-
-          <!-- Lab: Slot System -->
-          <div v-else-if="viewMode === 'lab' && currentTool === 'slot'" class="w-full max-w-6xl mx-auto animate-fade-in pb-20">
-             <LabSlot :lang="lang" />
-          </div>
-
-          <!-- Folder View Component -->
-          <FolderView 
-            v-else-if="currentFolder"
-            :current-folder="currentFolder"
-            @open-folder="openFolder"
-            @open-file="openFile"
-          />
-
-          <!-- Note Content View (ArticleReader) -->
-          <ArticleReader
-             v-else-if="currentFile" 
-             :file="currentFile"
-             :loading="contentLoading"
-             :isRawMode="isRawMode"
-             :lang="lang"
-             :t="t"
-             :getArticleViews="getArticleViews"
-             :getArticleComments="getArticleComments"
-             :onContentClick="handleContentClickEvent"
-             @update-comment-count="handleCommentCountUpdate"
-          />
-
-        </div>
-
-        <!-- Empty State / Home -->
-        <div v-else id="scroll-container" class="flex-1 overflow-y-auto custom-scrollbar scroll-smooth p-6">
-          <div class="mx-auto w-full max-w-4xl flex flex-col items-center text-center text-[var(--primary-400)] dark:text-gray-500 animate-fade-in pt-2 md:pt-4 pb-12">
-            <div class="relative group cursor-default">
-              <div class="text-[12rem] mb-4 opacity-90 animate-float drop-shadow-2xl filter saturate-150 transform hover:scale-105 transition-transform duration-700">🌸</div>
-              <div class="absolute -bottom-10 left-1/2 transform -translate-x-1/2 w-48 h-8 bg-[var(--primary-800)]/20 dark:bg-[var(--primary-900)]/40 blur-2xl rounded-full group-hover:w-64 transition-all duration-500"></div>
-            </div>
-            <h2 class="text-5xl font-bold mb-4 tracking-tight drop-shadow-sm bg-gradient-to-r from-[var(--primary-500)] via-[var(--primary-400)] to-[var(--primary-600)] dark:from-[var(--primary-300)] dark:via-[var(--primary-200)] dark:to-[var(--primary-400)] text-transparent bg-clip-text">{{ t.welcome_title }}</h2>
-            <p class="text-[var(--primary-500)]/80 dark:text-gray-300 max-w-lg mx-auto leading-relaxed text-lg">
-              {{ t.welcome_desc }}<br>
-              <span class="text-sm opacity-90 bg-white/70 dark:bg-gray-800/70 px-4 py-1.5 rounded-full mt-3 inline-block border border-white/70 dark:border-gray-700/70 shadow-sm backdrop-blur">{{ t.welcome_tags }}</span>
-            </p>
-            <div class="mt-10 w-full max-w-3xl">
-              <div class="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  class="px-3 py-1.5 text-xs rounded-full border border-[var(--primary-200)]/80 dark:border-gray-700 text-[var(--primary-600)] dark:text-[var(--primary-300)] hover:bg-[var(--primary-50)]/80 dark:hover:bg-gray-800 transition-colors"
-                  :disabled="welcomePoemLoading"
-                  @click="loadRandomPoem"
-                >
-                  {{ lang === 'zh' ? '换一首' : 'New' }}
-                </button>
-              </div>
-              <div v-if="welcomePoemLoading" class="mt-4 text-sm text-gray-400">{{ lang === 'zh' ? '加载中...' : 'Loading...' }}</div>
-              <div v-else-if="welcomePoemError" class="mt-4 text-sm text-amber-500">{{ welcomePoemError }}</div>
-              <div v-else class="mt-6">
-                <div class="text-center">
-                  <div class="text-2xl md:text-3xl font-bold tracking-wide text-[var(--primary-600)] dark:text-[var(--primary-300)] poem-font">
-                    {{ welcomePoem?.title || (lang === 'zh' ? '随机古诗文' : 'Random Poem') }}
-                  </div>
-                  <div v-if="welcomePoemAuthorLine" class="mt-2 text-base text-gray-500 dark:text-gray-400 poem-font">
-                    {{ welcomePoemAuthorLine }}
-                  </div>
-                </div>
-                <div v-if="welcomePoemLines.length" class="mt-6 space-y-2 text-xl md:text-2xl leading-relaxed text-[var(--primary-600)] dark:text-[var(--primary-200)] poem-font poem-page">
-                  <div v-for="(line, idx) in welcomePoemLines" :key="idx" class="poem-line" :style="{ animationDelay: `${idx * 120}ms` }">
-                    {{ line }}
-                  </div>
-                </div>
-                <div v-if="welcomePoemDetails.length" class="mt-8 w-full text-left space-y-6 text-sm text-gray-600 dark:text-gray-300">
-                  <div v-for="detail in welcomePoemDetails" :key="detail.label" class="pt-4 border-t border-white/60 dark:border-gray-700/60">
-                    <div class="text-xs font-semibold text-[var(--primary-500)] dark:text-[var(--primary-300)] mb-2">{{ detail.label }}</div>
-                    <div class="whitespace-pre-line leading-relaxed">{{ detail.value }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="h-16"></div>
-        </div>
+        <!-- Main Content -->
+        <MainContent
+          :view-mode="viewMode"
+          :current-tool="currentTool"
+          :current-file="currentFile"
+          :current-folder="currentFolder"
+          :lab-dashboard-tab="labDashboardTab"
+          :lang="lang"
+          :t="t"
+          :loading="loading"
+          :content-loading="contentLoading"
+          :is-raw-mode="isRawMode"
+          :welcome-poem-loading="welcomePoemLoading"
+          :welcome-poem-error="welcomePoemError"
+          :welcome-poem="welcomePoem"
+          :welcome-poem-author-line="welcomePoemAuthorLine"
+          :welcome-poem-lines="welcomePoemLines"
+          :welcome-poem-details="welcomePoemDetails"
+          :get-article-views="getArticleViews"
+          :get-article-comments="getArticleComments"
+          :on-content-click="handleContentClickEvent"
+          @update:labDashboardTab="handleLabTabChange"
+          @tab-change="handleLabTabChange"
+          @select-tool="selectTool"
+          @open-folder="openFolder"
+          @open-file="openFile"
+          @update-comment-count="handleCommentCountUpdate"
+          @load-random-poem="loadRandomPoem"
+        />
       </div>
     </main>
     
@@ -360,11 +256,9 @@
 import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
 import { I18N, THEME_COLORS } from './constants';
 import { NodeType } from './types';
-import type { FileNode, BreadcrumbItem, TocItem } from './types';
+import type { FileNode, BreadcrumbItem } from './types';
 
 // Components
-import LabDashboard from './components/lab/LabDashboard.vue';
-import SourceCodeViewer from './components/lab/SourceCodeViewer.vue';
 import DualColumnView from './components/lab/DualColumnView.vue';
 import SettingsModal from './components/SettingsModal.vue';
 import DownloadModal from './components/DownloadModal.vue';
@@ -372,12 +266,12 @@ import PetalBackground from './components/PetalBackground.vue';
 import WallpaperLayer from './components/WallpaperLayer.vue';
 import AppSidebar from './components/AppSidebar.vue';
 import AppHeader from './components/AppHeader.vue';
-import FolderView from './components/FolderView.vue';
 import GlobalAudio from './components/GlobalAudio.vue';
 import MusicPlayer from './components/MusicPlayer.vue';
 import SearchModal from './components/SearchModal.vue';
 import WriteEditor from './components/WriteEditor.vue';
-import GiscusComments from './components/GiscusComments.vue';
+import FloatingSelectionMenu from './components/FloatingSelectionMenu.vue';
+import MainContent from './components/MainContent.vue';
 
 // Pinia Stores
 import { useAppStore } from './stores/appStore';
@@ -392,6 +286,7 @@ import { useLightbox } from './composables/useLightbox';
 import { useSelectionMenu } from './composables/useSelectionMenu';
 import { useContentClick, useFileVisibility, isSupportedInternalLink } from './composables/useContentClick';
 import { useWallpapers } from './composables/useWallpapers';
+import { usePoem } from './composables/usePoem';
 
 // =====================
 // Stores
@@ -418,8 +313,9 @@ const { lightboxImage, handleImageClick } = lightbox;
 // Selection Menu
 // =====================
 const { selectionMenu, handleSelection, handleSelectionContextMenu, applyFormat, hideSelectionMenu, handleSelectionChange } = useSelectionMenu(showToast);
-const handleSelectionEvent = (e: MouseEvent | TouchEvent) => handleSelection();
-const handleSelectionContextMenuEvent = (e: MouseEvent) => handleSelectionContextMenu(e);
+// Unused but kept for reference or future use if needed, otherwise can remove
+// const handleSelectionEvent = (e: MouseEvent | TouchEvent) => handleSelection();
+// const handleSelectionContextMenuEvent = (e: MouseEvent) => handleSelectionContextMenu(e);
 const applyFormatHandler = (format: string) => {
   const errorMsg = lang.value === 'zh' ? '应用格式失败' : 'Format failed';
   applyFormat(format, errorMsg);
@@ -430,28 +326,53 @@ const applyFormatHandler = (format: string) => {
 // =====================
 const lang = computed({
   get: () => appStore.lang,
-  set: (val) => appStore.setLang(val)
+  set: (val: string) => appStore.setLang(val as 'en' | 'zh')
 });
 const t = computed(() => I18N[lang.value]);
 
 // =====================
+// Poem
+// =====================
+const { 
+  welcomePoem, 
+  welcomePoemLoading, 
+  welcomePoemError, 
+  loadRandomPoem, 
+  welcomePoemLines, 
+  welcomePoemAuthorLine, 
+  welcomePoemDetails 
+} = usePoem(lang);
+
+// =====================
 // Core State
 // =====================
-const fileSystem = ref<FileNode[]>([]);
-const currentFile = ref<FileNode | null>(null);
-const currentFolder = ref<FileNode | null>(null);
+const fileSystem = computed({
+  get: () => appStore.fileSystem,
+  set: (val: FileNode[]) => appStore.setFileSystem(val)
+});
+const currentFile = computed({
+  get: () => appStore.currentFile,
+  set: (val: FileNode | null) => appStore.setCurrentFile(val)
+});
+const currentFolder = computed({
+  get: () => appStore.currentFolder,
+  set: (val: FileNode | null) => appStore.setCurrentFolder(val)
+});
 const viewMode = computed({
   get: () => appStore.viewMode,
-  set: (val) => appStore.viewMode = val
+  set: (val: string) => appStore.viewMode = val
 });
-const loading = ref(true);
+const loading = computed({
+  get: () => appStore.loading,
+  set: (val: boolean) => appStore.setLoading(val)
+});
 const expandedFolders = computed(() => appStore.expandedFolders);
 const contentLoading = ref(false);
 const currentTool = ref<'dashboard' | 'event-handling' | 'slot' | 'source-code' | null>(null);
 const isRawMode = ref(false);
 const readingMode = computed({
   get: () => appStore.readingMode,
-  set: (value) => appStore.setReadingMode(value)
+  set: (value: boolean) => appStore.setReadingMode(value)
 });
 const commentCounts = ref<Record<string, number>>({});
 
@@ -462,11 +383,11 @@ const showSearch = searchModalOpen;
 const showWriteEditor = ref(false);
 const sidebarOpen = computed({
   get: () => appStore.sidebarOpen,
-  set: (val) => appStore.setSidebarOpen(val)
+  set: (val: boolean) => appStore.setSidebarOpen(val)
 });
 const rightSidebarOpen = computed({
   get: () => appStore.rightSidebarOpen,
-  set: (val) => appStore.setRightSidebarOpen(val)
+  set: (val: boolean) => appStore.setRightSidebarOpen(val)
 });
 const handleThemePanelChange = (open: boolean) => {
   themePanelOpen.value = open;
@@ -483,74 +404,11 @@ const headerHidden = ref(false);
 const themePanelOpen = ref(false);
 const lastScrollY = ref(0);
 const isMobile = ref(false);
-const mounted = ref(false);
+// const mounted = ref(false); // Unused
 
 // Wallpaper URLs
 const wallpaperLightUrl = '/image/wallpaper-light.jpg';
 const wallpaperDarkUrl = '/image/wallpaper-dark.jpg';
-type GuwenItem = {
-  title?: string;
-  dynasty?: string;
-  writer?: string;
-  content?: string;
-  remark?: string;
-  translation?: string;
-  shangxi?: string;
-  type?: string;
-};
-const welcomePoem = ref<GuwenItem | null>(null);
-const welcomePoemLoading = ref(false);
-const welcomePoemError = ref('');
-const guwenUrls = Object.values(import.meta.glob('./gushiwen/guwen/*.json', { as: 'url', eager: true })) as string[];
-
-const parseGuwenItems = (raw: string) => {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (Array.isArray(parsed)) {
-      return (parsed as GuwenItem[]).filter(item => item?.content);
-    }
-    const data = (parsed as { data?: GuwenItem[] } | null)?.data;
-    if (Array.isArray(data)) {
-      return data.filter(item => item?.content);
-    }
-  } catch {
-  }
-  const items: GuwenItem[] = [];
-  const lines = raw.split(/\r?\n/);
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    try {
-      const item = JSON.parse(trimmed) as GuwenItem;
-      if (item?.content) items.push(item);
-    } catch {
-      continue;
-    }
-  }
-  return items;
-};
-
-const loadRandomPoem = async () => {
-  if (!guwenUrls.length) {
-    welcomePoemError.value = lang.value === 'zh' ? '未找到古诗文资源' : 'Poetry source missing';
-    return;
-  }
-  welcomePoemLoading.value = true;
-  welcomePoemError.value = '';
-  try {
-    const url = guwenUrls[Math.floor(Math.random() * guwenUrls.length)];
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    const raw = await res.text();
-    const items = parseGuwenItems(raw);
-    if (!items.length) throw new Error('Empty data');
-    welcomePoem.value = items[Math.floor(Math.random() * items.length)];
-  } catch (e) {
-    welcomePoemError.value = lang.value === 'zh' ? '诗文加载失败' : 'Failed to load poem';
-  } finally {
-    welcomePoemLoading.value = false;
-  }
-};
 
 // =====================
 // Composables 初始化
@@ -565,42 +423,12 @@ const { isFileVisible, collectAllTags } = useFileVisibility(articleStore);
 // =====================
 // Computed
 // =====================
-const welcomePoemLines = computed(() => {
-  const content = welcomePoem.value?.content?.trim();
-  if (!content) return [];
-  return content.split(/\n+/).map(line => line.trim()).filter(Boolean);
-});
-
-const welcomePoemAuthorLine = computed(() => {
-  const dynasty = welcomePoem.value?.dynasty?.trim();
-  const writer = welcomePoem.value?.writer?.trim();
-  if (!dynasty && !writer) return '';
-  const dynastyText = dynasty ? `【${dynasty}】` : '';
-  return `${dynastyText}${writer || ''}`;
-});
-
-const welcomePoemDetails = computed(() => {
-  const items: Array<{ label: string; value: string }> = [];
-  const dynasty = welcomePoem.value?.dynasty;
-  const type = welcomePoem.value?.type;
-  const remark = welcomePoem.value?.remark;
-  const translation = welcomePoem.value?.translation;
-  const shangxi = welcomePoem.value?.shangxi;
-  if (remark) items.push({ label: lang.value === 'zh' ? '注释' : 'Notes', value: remark });
-  if (translation) items.push({ label: lang.value === 'zh' ? '译文' : 'Translation', value: translation });
-  if (shangxi) items.push({ label: lang.value === 'zh' ? '赏析' : 'Appreciation', value: shangxi });
-  return items;
-});
-
-const welcomePoemNeedsScroll = computed(() => {
-  return welcomePoemLines.value.length > 6 || welcomePoemDetails.value.length > 0;
-});
 
 const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '');
 
 // Root Directory Logic based on Language
 const currentLangRoot = computed(() => {
-  const root = fileSystem.value.find(node => node.name === lang.value);
+  const root = fileSystem.value.find((node: FileNode) => node.name === lang.value);
   return root ? root.children : [];
 });
 
@@ -657,7 +485,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   const parts = path.split('/');
 
   let accumulatedPath = '';
-  return parts.map((part) => {
+  return parts.map((part: string) => {
     accumulatedPath = accumulatedPath ? `${accumulatedPath}/${part}` : part;
     return { name: part.replace('.md', ''), path: accumulatedPath };
   });
@@ -845,7 +673,7 @@ const buildLineSnippet = (content: string, startLine?: number, endLine?: number)
   const safeEnd = Math.min(lines.length, endLine && endLine >= safeStart ? endLine : safeStart);
   const width = String(safeEnd).length;
   const slice = lines.slice(safeStart - 1, safeEnd);
-  return slice.map((line, idx) => `${String(safeStart + idx).padStart(width, ' ')} | ${line}`).join('\n');
+  return slice.map((line: string, idx: number) => `${String(safeStart + idx).padStart(width, ' ')} | ${line}`).join('\n');
 };
 
 const openCodeByPath = async (path: string, range?: { startLine?: number; endLine?: number }) => {
@@ -1000,18 +828,7 @@ const downloadSource = () => {
   }
 };
 
-const formatDate = (dateStr?: string) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString(lang.value === 'zh' ? 'zh-CN' : 'en-US', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
+// const formatDate = (dateStr?: string) => { ... } // Unused
 
 const handleSearchSelect = (result: any) => {
   showSearch.value = false;
@@ -1065,7 +882,7 @@ const updateThemeColor = () => {
   const root = document.documentElement;
   
   Object.entries(theme.palette).forEach(([key, value]) => {
-    root.style.setProperty(`--primary-${key}`, value);
+    root.style.setProperty(`--primary-${key}`, String(value));
   });
   
   // Set main primary color for other uses
@@ -1388,44 +1205,3 @@ code {
   border-radius: 0.35rem;
 }
 </style>
-  opacity: 0;
-  transform: rotateX(-18deg) translateY(10px) scale(0.98);
-  transform-origin: top;
-  transform-style: preserve-3d;
-  animation: poem-turn 0.6s ease forwards;
-}
-
-@keyframes poem-turn {
-  0% {
-    opacity: 0;
-    transform: rotateX(-18deg) translateY(10px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: rotateX(0deg) translateY(0) scale(1);
-  }
-}
-
-input,
-textarea,
-[contenteditable="true"],
-pre,
-code {
-  user-select: text;
-}
-
-#markdown-viewer h1 {
-  color: var(--primary-600);
-}
-.dark #markdown-viewer h1 {
-  color: var(--primary-400);
-}
-
-.sakura-block-highlight {
-  background: rgba(252, 211, 77, 0.35);
-  border: 1px solid rgba(252, 211, 77, 0.8);
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  padding: 0.05em 0.2em;
-  border-radius: 0.35rem;
-}

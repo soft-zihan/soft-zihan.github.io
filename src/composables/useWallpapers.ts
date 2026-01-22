@@ -31,7 +31,7 @@ export function useWallpapers() {
   // Sync with store
   const searchWallpapers = computed({
     get: () => appStore.apiWallpapers || [],
-    set: (val) => appStore.setApiWallpapers(val)
+    set: (val: any) => appStore.setApiWallpapers(val)
   })
 
   // Timer reference
@@ -84,8 +84,8 @@ export function useWallpapers() {
   
   const customThemeWallpapers = computed(() => {
     const theme = appStore.isDark ? 'dark' : 'light'
-    return appStore.customWallpapers.filter(item => item.theme === theme || item.theme === 'auto')
-      .map(item => ({
+    return appStore.customWallpapers.filter((item: { theme: string }) => item.theme === theme || item.theme === 'auto')
+      .map((item: any) => ({
         filename: item.url,
         path: item.url,
         name: item.name,
@@ -337,7 +337,7 @@ export function useWallpapers() {
       if (!key) return
       
       const fetchLimit = Math.min(target * 2, 30) 
-      const results: WallpaperItem[] = []
+      const results: Array<WallpaperItem & { source: 'api' }> = []
       let page = 1
       let attempts = 0
       
@@ -400,22 +400,22 @@ export function useWallpapers() {
     const current = currentWallpaper.value
     
     // Check Bing
-    if (bingWallpapers.value.some(w => w.filename === current) || current.includes('peapix.com') || current.includes('bing.com')) {
+    if (bingWallpapers.value.some((w: WallpaperItem) => w.filename === current) || current.includes('peapix.com') || current.includes('bing.com')) {
       return 'bing'
     }
     
     // Check Preset
-    if (presetThemeWallpapers.value.some(w => w.filename === current || w.path === current)) {
+    if (presetThemeWallpapers.value.some((w: WallpaperItem) => w.filename === current || w.path === current)) {
       return 'preset'
     }
     
     // Check Custom
-    if (customThemeWallpapers.value.some(w => w.filename === current || w.path === current)) {
+    if (customThemeWallpapers.value.some((w: WallpaperItem) => w.filename === current || w.path === current)) {
       return 'custom'
     }
 
     // Check Search
-    if (searchWallpapers.value.some(w => w.filename === current || w.path === current)) {
+    if (searchWallpapers.value.some((w: WallpaperItem) => w.filename === current || w.path === current)) {
       return 'search'
     }
     
