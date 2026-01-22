@@ -3,11 +3,12 @@
   "version": "1.1",
   "type": "module",
   "scripts": {
-    "gen-all": "npm run gen-tree && npm run gen-music && npm run gen-wallpapers",
+    "gen-all": "npm run gen-tree && npm run gen-raw && npm run gen-music && npm run gen-wallpapers",
     "dev": "npm run gen-all && vite",
     "build": "npm run gen-all && vite build",
     "preview": "vite preview",
     "gen-tree": "node scripts/generate-tree.js",
+    "gen-raw": "node scripts/generate-raw.js",
     "gen-music": "node scripts/generate-music.js",
     "gen-wallpapers": "node scripts/generate-wallpapers.js"
   },
