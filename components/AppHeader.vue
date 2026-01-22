@@ -160,8 +160,6 @@
       <!-- Breadcrumbs (Scrollable) -->
       <div class="flex-1 flex items-center text-xs overflow-x-auto no-scrollbar whitespace-nowrap mask-linear px-2">
         <span class="text-[var(--primary-300)] dark:text-[var(--primary-500)] mr-1 shrink-0 cursor-pointer" @click="$emit('reset')">🏠</span>
-        <span class="text-[var(--primary-200)] dark:text-gray-700 mx-1">/</span>
-        <span class="font-bold text-[var(--primary-500)] dark:text-[var(--primary-400)] bg-[var(--primary-50)] dark:bg-[var(--primary-900)]/20 px-1.5 py-0.5 rounded text-[10px]">{{ lang }}</span>
         
         <template v-if="viewMode === 'lab' && currentTool">
            <span class="mx-1 text-[var(--primary-300)] dark:text-gray-600">›</span>
@@ -351,7 +349,7 @@
                      @click="appStore.userSettings.wallpaperFill = 'cover'" 
                      class="px-2 py-1 text-[10px] rounded border transition-colors"
                      :class="appStore.userSettings.wallpaperFill === 'cover' ? 'bg-white dark:bg-gray-700 border-[var(--primary-300)] text-[var(--primary-500)]' : 'border-transparent text-gray-400 hover:text-gray-600'"
-                 >{{ lang === 'zh' ? '覆盖' : 'Cover' }}</button>
+                 >{{ lang === 'zh' ? '裁剪' : 'Cut' }}</button>
                  <button 
                    @click="appStore.userSettings.wallpaperFill = 'contain'" 
                    class="px-2 py-1 text-[10px] rounded border transition-colors"
