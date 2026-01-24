@@ -22,6 +22,7 @@
 
 - [✨ Features Overview](#-features-overview)
 - [🎯 Quick Start](#-quick-start)
+- [🧪 Testing](#-testing)
 - [📁 Project Structure](#-project-structure)
 - [🏗️ Technical Architecture](#️-technical-architecture)
 - [🔧 Configuration Guide](#-configuration-guide)
@@ -124,6 +125,14 @@ Visit [Sakura Notes](https://soft-zihan.github.io/) directly and click the Setti
 
 ---
 
+## 🧪 Testing
+
+```bash
+npm run test -- --run
+```
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -138,11 +147,22 @@ sakura-notes/
 │   ├── 📁 views/            # Page Views
 │   │   └── ArticleReader.vue # Dedicated Article Reader & TOC
 │   │
+│   ├── 📁 layout/           # Layout shells
+│   │   └── AppLayout.vue
+│   │
 │   ├── 📁 components/       # Vue components
 │   │   ├── AppHeader.vue      # Top navigation bar
+│   │   ├── ThemePanel.vue     # Theme settings panel
 │   │   ├── AppSidebar.vue     # Sidebar navigation
-│   │   ├── ... (Feature components)
+│   │   ├── SidebarFilterPanel.vue # Sidebar filters
+│   │   ├── MainContent.vue    # Main content area
+│   │   ├── 📁 Modals/         # Modal components
+│   │   │   ├── CodeModal.vue
+│   │   │   └── Lightbox.vue
 │   │   └── 📁 lab/            # Learning Lab system
+│   │       ├── LabDashboard.vue
+│   │       ├── SourceCodeViewer.vue
+│   │       └── 📁 stage1-foundation/ ... 📁 stage8-challenge/
 │   │
 │   ├── 📁 composables/      # Vue 3 Composables (Logic Reuse)
 │   │   ├── useArticleMeta.ts  # Metadata extraction
@@ -155,6 +175,25 @@ sakura-notes/
 │       ├── articleStore.ts    # Article interactions
 │       ├── learningStore.ts   # Learning progress
 │       └── musicStore.ts      # Music player state
+│
+│   ├── 📁 locales/          # i18n locales
+│   │   ├── en.ts
+│   │   └── zh.ts
+│   │
+│   ├── 📁 styles/           # Global styles
+│   │   └── app.css
+│   │
+│   ├── 📁 utils/            # Utility functions
+│   │   ├── fileUtils.ts
+│   │   └── sanitize.ts
+│   │
+│   └── 📁 data/             # Preset data
+│       └── source-notes-preset.json
+│
+├── 📁 public/              # Static assets (generated data)
+│   ├── 📁 data/
+│   │   └── files.json
+│   └── 📁 notes/
 │
 ├── 📄 vite.config.ts      # Vite build configuration
 └── 📄 tsconfig.json       # TypeScript configuration

@@ -379,7 +379,7 @@ const downloadVueNotes = async () => {
       vueFiles = props.labFolder.children.filter((f: any) => f.name.endsWith('.md'))
     } else {
       // 根据语言查找 VUE 学习笔记文件夹
-      const vueFolderName = props.lang === 'zh' ? 'VUE学习笔记' : 'VUE Learning'
+      const vueFolderName = props.lang === 'zh' ? 'VUE学习笔记' : 'VUE学习笔记'//由于配图复杂，暂时没有英文版，等待贡献
       const findVueFolder = (items: any[]): any[] => {
         for (const item of items) {
           if (item.name === vueFolderName && item.children) {

@@ -11,7 +11,8 @@
     "gen-raw": "tsx scripts/generate-raw.ts",
     "gen-music": "tsx scripts/generate-music.ts",
     "gen-wallpapers": "tsx scripts/generate-wallpapers.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@types/dompurify": "^3.0.5",
