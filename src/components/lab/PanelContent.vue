@@ -126,6 +126,8 @@ import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
 import type { FileNode } from '../../types'
 import { NodeType } from '../../types'
+import { sanitizeHtml } from '../../utils/sanitize'
+import { LAB_TABS } from '../../labs/labCatalog'
 import LabDashboard from './LabDashboard.vue'
 import SourceCodeViewer from './SourceCodeViewer.vue'
 
@@ -151,21 +153,16 @@ const showFolderTree = ref(true)
 const showLabSidebar = ref(true)
 
 // Lab tabs configuration
-const labTabs = computed(() => [
-  { id: 'project-builder', icon: '🏗️', shortLabel: isZh.value ? 'Tlias 主线' : 'Tlias Path' },
-  { id: 'foundation', icon: '🧱', shortLabel: isZh.value ? '网页基础' : 'Foundation' },
-  { id: 'js-basics', icon: '⚡', shortLabel: isZh.value ? 'JS 基础' : 'JS Basics' },
-  { id: 'css-layout', icon: '🎨', shortLabel: isZh.value ? 'CSS 布局' : 'CSS Layout' },
-  { id: 'js-advanced', icon: '🛡️', shortLabel: isZh.value ? 'JS 进阶/TS' : 'JS Adv/TS' },
-  { id: 'engineering', icon: '🚀', shortLabel: isZh.value ? '工程化' : 'Engineering' },
-  { id: 'vue-core', icon: '🥝', shortLabel: isZh.value ? 'Vue 核心' : 'Vue Core' },
-  { id: 'vue-advanced', icon: '🧩', shortLabel: isZh.value ? 'Vue 进阶' : 'Vue Adv' },
-  { id: 'challenge', icon: '🏆', shortLabel: isZh.value ? '挑战' : 'Challenge' },
-  { id: 'extensions', icon: '✨', shortLabel: isZh.value ? '扩展' : 'Extensions' },
-])
+const labTabs = computed(() => {
+  return LAB_TABS.map(tab => ({
+    id: tab.id,
+    icon: tab.icon,
+    shortLabel: isZh.value ? tab.shortLabelZh : tab.shortLabelEn
+  }))
+})
 
 // Selected lab tab
-const selectedLabTab = ref(props.labDashboardTab || 'project-builder')
+const selectedLabTab = ref(props.labDashboardTab || 'foundation')
 
 // Sync with props
 watch(() => props.labDashboardTab, (val) => {

@@ -12,7 +12,7 @@ export function useFileOperations(scrollContainer?: Ref<HTMLElement | null>) {
 
   const isPdfFile = (file: FileNode) => file.path.toLowerCase().endsWith('.pdf');
 
-  const openFile = async (file: FileNode) => {
+  const openFile = async (file: FileNode, options?: { syncUrl?: boolean }) => {
     appStore.currentFile = file;
     appStore.currentFolder = null;
     appStore.currentTool = null;
@@ -23,7 +23,7 @@ export function useFileOperations(scrollContainer?: Ref<HTMLElement | null>) {
     //   appStore.viewMode = 'files';
     // }
     
-    updateUrl(file.path);
+    if (options?.syncUrl !== false) updateUrl(file.path);
     
     const container = scrollContainer?.value || null;
     if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
@@ -47,11 +47,11 @@ export function useFileOperations(scrollContainer?: Ref<HTMLElement | null>) {
     }
   };
 
-  const openFolder = (folder: FileNode) => {
+  const openFolder = (folder: FileNode, options?: { syncUrl?: boolean }) => {
     appStore.currentFile = null;
     appStore.currentFolder = folder;
     appStore.currentTool = null;
-    updateUrl(folder.path);
+    if (options?.syncUrl !== false) updateUrl(folder.path);
     
     if (appStore.viewMode === 'latest') appStore.viewMode = 'files';
     

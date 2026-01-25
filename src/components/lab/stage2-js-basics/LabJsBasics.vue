@@ -406,15 +406,34 @@ const dataTypes = [
   { name: 'object', icon: '📦', exampleZh: '对象/数组', exampleEn: 'object/array' }
 ];
 
+const parseLiteralValue = (raw: string): { ok: true; value: unknown } | { ok: false } => {
+  const val = raw.trim();
+  if (!val) return { ok: false };
+  if (val === 'true') return { ok: true, value: true };
+  if (val === 'false') return { ok: true, value: false };
+  if (val === 'null') return { ok: true, value: null };
+  if (val === 'undefined') return { ok: true, value: undefined };
+  if (val === 'NaN') return { ok: true, value: NaN };
+  if (val === 'Infinity') return { ok: true, value: Infinity };
+  if (/^[-+]?\d+(\.\d+)?$/.test(val)) return { ok: true, value: Number(val) };
+  const strMatch = /^(["'])([\s\S]*)\1$/.exec(val);
+  if (strMatch) return { ok: true, value: strMatch[2] };
+  if (val.startsWith('[') || val.startsWith('{')) {
+    try {
+      return { ok: true, value: JSON.parse(val) };
+    } catch {
+      return { ok: false };
+    }
+  }
+  return { ok: false };
+};
+
 const computedTypeof = computed(() => {
   const val = typeofInput.value.trim();
   if (!val) return '...';
-  try {
-    const evaluated = new Function(`return (${val})`)();
-    return typeof evaluated;
-  } catch {
-    return 'syntax error';
-  }
+  const parsed = parseLiteralValue(val);
+  if (!parsed.ok) return 'syntax error';
+  return typeof parsed.value;
 });
 
 const typeCode = computed(() => {

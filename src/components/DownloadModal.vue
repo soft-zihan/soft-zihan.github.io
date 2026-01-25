@@ -560,7 +560,7 @@ const downloadSourceCodeWithNotes = async (withNotes: boolean) => {
       // Load preset notes from server
       try {
         const baseUrl = (import.meta as any).env?.BASE_URL || './'
-        const notesRes = await fetch(`${baseUrl}source-notes-preset.json`)
+        const notesRes = await fetch(`${baseUrl}data/source-notes-preset.json`)
         if (notesRes.ok) {
           const data = await notesRes.json()
           presetNotes = data.notes || {}

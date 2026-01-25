@@ -261,10 +261,10 @@ const isZh = computed(() => props.lang === 'zh')
 
 const activeTab = ref('concept')
 const tabs = computed(() => [
-  { id: 'concept', icon: '💡', label: isZh.value ? '概念' : 'Concept' },
-  { id: 'demo', icon: '🎮', label: isZh.value ? '演示' : 'Demo' },
-  { id: 'compare', icon: '🤼', label: isZh.value ? '对比 Pinia' : 'vs Pinia' },
-  { id: 'real', icon: '📁', label: isZh.value ? '实际应用' : 'Real Use' }
+  { id: 'concept', icon: '💡', label: t.value.lab_provide_inject_tab_concept },
+  { id: 'demo', icon: '🎮', label: t.value.lab_provide_inject_tab_demo },
+  { id: 'compare', icon: '🤼', label: t.value.lab_provide_inject_tab_compare },
+  { id: 'real', icon: '📁', label: t.value.lab_provide_inject_tab_real }
 ])
 
 // Demo state

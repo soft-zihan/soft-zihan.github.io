@@ -1,5 +1,5 @@
 <template>
-  <div class="banner-settings">
+  <div ref="rootRef" class="banner-settings">
     <!-- Toggle Button -->
     <button 
       @click="showPanel = !showPanel"
@@ -105,6 +105,7 @@ const appStore = useAppStore()
 const { currentThemeWallpapers, setWallpaper } = useWallpapers()
 
 const showPanel = ref(false)
+const rootRef = ref<HTMLElement | null>(null)
 const currentMode = ref(appStore.userSettings.bannerMode)
 
 const modes = [
@@ -143,6 +144,14 @@ const setMode = (mode: string) => {
 
 const selectWallpaper = (filename: string) => {
   setWallpaper(filename)
+}
+
+const handleClickOutside = (e: MouseEvent) => {
+  if (!showPanel.value) return
+  const root = rootRef.value
+  const target = e.target as Node | null
+  if (!root || !target) return
+  if (!root.contains(target)) showPanel.value = false
 }
 
 onMounted(() => {

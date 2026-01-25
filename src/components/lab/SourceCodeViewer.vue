@@ -37,6 +37,9 @@
           <span>{{ getFileIcon(selectedFile.name) }}</span>
           <span class="font-mono text-xs" :class="isDark ? 'text-gray-300' : 'text-gray-700'">{{ selectedFile.name }}</span>
         </div>
+        <div v-if="selectedFile" class="text-xs px-2 py-1 rounded" :class="isDark ? 'text-gray-500' : 'text-gray-500'">
+          {{ isZh ? '点击行号添加笔记' : 'Click line number to add note' }}
+        </div>
         <div v-else class="text-sm italic" :class="isDark ? 'text-gray-500' : 'text-gray-400'">
           {{ isZh ? '选择文件查看源码' : 'Select a file to view source' }}
         </div>
@@ -77,9 +80,9 @@
         v-if="selectedFile && currentFileIntro" 
         class="px-4 py-2 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/30 dark:to-blue-900/20 border-b border-cyan-200 dark:border-cyan-700/50"
       >
-        <p class="text-sm text-gray-700 dark:text-gray-200">
-          <span class="mr-2">💡</span>{{ currentFileIntro }}
-        </p>
+        <div class="text-sm text-gray-700 dark:text-gray-200 whitespace-pre-wrap break-words leading-6">
+          <span class="mr-2">💡</span><span>{{ currentFileIntro }}</span>
+        </div>
       </div>
 
       <!-- Code Content with Inline Notes -->
@@ -121,7 +124,7 @@
                 <pre 
                   class="flex-1 pr-4 text-sm font-mono leading-6 whitespace-pre relative"
                   :class="isDark ? 'text-gray-200' : 'text-gray-800'"
-                ><!-- Indent Guide Lines at the beginning of code --><span class="inline-block relative" :style="{ width: getIndentWidth(line) + 'px', minWidth: '0' }"><template v-for="level in getIndentLevels(line)" :key="'indent-' + level"><span class="absolute top-0 bottom-0 w-px" :style="{ left: (level * indentSize) + 'px' }" :class="getIndentGuideClass(level)"></span></template></span><code v-html="highlightLine(line.replace(/^\s+/, ''))" :class="isDark ? 'hljs-dark' : 'hljs-light'"></code></pre>
+                ><!-- Indent Guide Lines at the beginning of code --><span class="inline-block relative" :style="{ width: getIndentWidth(line) + 'px', minWidth: '0' }"><template v-for="level in getIndentLevels(line)" :key="'indent-' + level"><span class="absolute top-0 bottom-0 w-px" :style="{ left: (level * indentSize) + 'px' }" :class="getIndentGuideClass(level)"></span></template></span><code v-html="highlightedLines[idx] || sanitizeHtml(line.replace(/^\s+/, '') || ' ')" :class="isDark ? 'hljs-dark' : 'hljs-light'"></code></pre>
               </div>
               
               <!-- Preset Note (below the line) - Blue/Cyan theme - controlled by global toggle only -->
@@ -203,7 +206,7 @@
             {{ isZh ? '我的笔记' : 'My Notes' }}
           </span>
         </div>
-        <span>💡 {{ isZh ? '点击行号展开/折叠笔记，拖拽可移动' : 'Click line number to toggle, drag to move' }}</span>
+        <span>💡 {{ isZh ? '点击行号添加/折叠笔记，拖拽可移动' : 'Click line number to add/toggle, drag to move' }}</span>
       </div>
     </div>
   </div>
@@ -235,7 +238,6 @@ import python from 'highlight.js/lib/languages/python'
 import java from 'highlight.js/lib/languages/java'
 import { useGitHubPublish } from '../../composables/useGitHubPublish'
 import { useAppStore } from '../../stores/appStore'
-import presetNotesData from '../../data/source-notes-preset.json'
 import { sanitizeHtml } from '../../utils/sanitize'
 
 // Register languages
@@ -392,18 +394,10 @@ const foldedState = ref<FoldedState>({})
 // Load preset notes from server or local import
 const loadPresetNotes = async () => {
   try {
-    let data: any = presetNotesData
-    
-    // Try to fetch updated data if available (optional)
-    try {
-      const baseUrl = (import.meta as any).env?.BASE_URL || '/'
-      const res = await fetch(`${baseUrl}data/source-notes-preset.json`)
-      if (res.ok) {
-        data = await res.json()
-      }
-    } catch (e) {
-      // Ignore fetch error, use imported data
-    }
+    const baseUrl = (import.meta as any).env?.BASE_URL || '/'
+    const res = await fetch(`${baseUrl}data/source-notes-preset.json`)
+    if (!res.ok) return
+    const data: any = await res.json()
     
     if (data) {
       const serverVersion = data.version || '1.0.0'
@@ -516,6 +510,30 @@ const hasUserNotes = computed(() => {
 
 // File lines
 const fileLines = computed((): string[] => fileContent.value.split('\n'))
+
+const highlightedCache = new Map<string, { content: string; lines: string[] }>()
+
+const highlightedLines = computed((): string[] => {
+  if (!selectedFile.value) return []
+  const key = selectedFile.value.path
+  const content = fileContent.value
+  const cached = highlightedCache.get(key)
+  if (cached && cached.content === content) return cached.lines
+
+  const language = getLanguage()
+  const lines = fileLines.value.map((raw) => {
+    const line = raw.replace(/^\s+/, '')
+    try {
+      const highlighted = hljs.highlight(line || ' ', { language }).value
+      return sanitizeHtml(highlighted)
+    } catch {
+      return sanitizeHtml(line || ' ')
+    }
+  })
+
+  highlightedCache.set(key, { content, lines })
+  return lines
+})
 
 // Get language for highlighting
 const getLanguage = () => {
@@ -806,9 +824,39 @@ const getIndentGuideClass = (level: number): string => {
   return colors[level % colors.length]
 }
 
+const presetNoteContentByLine = computed(() => {
+  const map = new Map<number, string>()
+  for (const n of currentPresetNotes.value) map.set(n.line, n.content)
+  return map
+})
+
+const userNoteContentByLine = computed(() => {
+  const map = new Map<number, string>()
+  for (const n of currentUserNotes.value) map.set(n.line, n.content)
+  return map
+})
+
+const presetNonEmptyLineSet = computed(() => {
+  const set = new Set<number>()
+  for (const n of currentPresetNotes.value) {
+    if (n.content.trim()) set.add(n.line)
+  }
+  return set
+})
+
+const userNonEmptyLineSet = computed(() => {
+  const set = new Set<number>()
+  for (const n of currentUserNotes.value) {
+    if (n.content.trim()) set.add(n.line)
+  }
+  return set
+})
+
+const collapsedLineSet = computed(() => new Set<number>(currentCollapsedLines.value))
+
 // Check if user has non-empty note at line
 const hasNonEmptyUserNoteAtLine = (line: number) => {
-  return currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
+  return userNonEmptyLineSet.value.has(line)
 }
 
 // Toggle only user notes at line (preset notes are controlled by global toggle)
@@ -854,22 +902,12 @@ const toggleUserNoteAtLine = (line: number) => {
   }
 }
 
-const highlightLine = (line: string) => {
-  const language = getLanguage()
-  try {
-    const highlighted = hljs.highlight(line || ' ', { language }).value
-    return sanitizeHtml(highlighted)
-  } catch {
-    return sanitizeHtml(line || ' ')
-  }
-}
-
 const hasPresetNoteAtLine = (line: number) => {
-  return currentPresetNotes.value.some((n: CodeNote) => n.line === line)
+  return presetNoteContentByLine.value.has(line)
 }
 
 const hasUserNoteAtLine = (line: number) => {
-  return currentUserNotes.value.some((n: CodeNote) => n.line === line)
+  return userNoteContentByLine.value.has(line)
 }
 
 const hasAnyNoteAtLine = (line: number) => {
@@ -877,18 +915,16 @@ const hasAnyNoteAtLine = (line: number) => {
 }
 
 const hasNonEmptyNoteAtLine = (line: number) => {
-  const hasPreset = currentPresetNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
-  const hasUser = currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
-  return hasPreset || hasUser
+  return presetNonEmptyLineSet.value.has(line) || userNonEmptyLineSet.value.has(line)
 }
 
 const isLineCollapsed = (line: number) => {
-  return currentCollapsedLines.value.includes(line)
+  return collapsedLineSet.value.has(line)
 }
 
 const getLineNumberClass = (line: number) => {
-  const hasPreset = currentPresetNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
-  const hasUser = currentUserNotes.value.some((n: CodeNote) => n.line === line && n.content.trim())
+  const hasPreset = presetNonEmptyLineSet.value.has(line)
+  const hasUser = userNonEmptyLineSet.value.has(line)
   
   if (hasPreset || hasUser) {
     if (hasPreset && hasUser) {
@@ -954,13 +990,11 @@ const deleteUserNote = (line: number) => {
 }
 
 const getPresetNoteContent = (line: number): string => {
-  const note = currentPresetNotes.value.find((n: CodeNote) => n.line === line)
-  return note?.content || ''
+  return presetNoteContentByLine.value.get(line) || ''
 }
 
 const getUserNoteContent = (line: number): string => {
-  const note = currentUserNotes.value.find((n: CodeNote) => n.line === line)
-  return note?.content || ''
+  return userNoteContentByLine.value.get(line) || ''
 }
 
 const updateUserNoteContent = (line: number, content: string) => {
@@ -1146,7 +1180,7 @@ const submitNotesToGitHub = async () => {
     
     const result = await uploadFile(
       { owner: repoOwner, repo: repoName, branch: 'main', token },
-      'public/source-notes-preset.json',
+      'public/data/source-notes-preset.json',
       content,
       `docs: add source code notes by ${authorName}`
     )

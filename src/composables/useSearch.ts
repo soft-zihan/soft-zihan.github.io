@@ -14,34 +14,90 @@ export interface SearchResult {
 }
 
 export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<string>) {
+  type IndexedDocument = {
+    id: string
+    path: string
+    name: string
+    content: string
+  }
+
   const searchQuery = ref('')
   const searchResults = ref<SearchResult[]>([])
   const isSearching = ref(false)
   const showSearchModal = ref(false)
   const isLoadingContent = ref(false)
-  const searchIndex = ref<MiniSearch<SearchResult> | null>(null)
+  const searchIndex = ref<MiniSearch<IndexedDocument> | null>(null)
   const fileSystem = ref<FileNode[]>([])
   const isFullIndexReady = ref(false)
   const currentLang = ref<'en' | 'zh'>('zh')
-  
-  // Initialize search index - 立即加载当前语言的全部内容
-  const initSearchIndex = async (fs: FileNode[], lang: 'en' | 'zh' = 'zh') => {
-    fileSystem.value = fs
-    currentLang.value = lang
-    // Create empty search index
-    const miniSearch = new MiniSearch({
+
+  const indexedDocumentsById = new Map<string, IndexedDocument>()
+
+  const hasLanguageRoots = (fs: FileNode[]) => {
+    return fs.some((n) => n.type === NodeType.DIRECTORY && (n.name === 'zh' || n.name === 'en'))
+  }
+
+  const buildLanguageFilter = (fs: FileNode[]) => {
+    if (!hasLanguageRoots(fs)) return null
+    return currentLang.value === 'zh' ? 'zh/' : 'en/'
+  }
+
+  const tokenizeMixed = (input: string): string[] => {
+    if (!input) return []
+    const tokens: string[] = []
+    const text = input.normalize('NFKC')
+    const wordMatches = text.match(/[A-Za-z0-9]+/g)
+    if (wordMatches) tokens.push(...wordMatches)
+
+    const cjkRuns = text.match(/[\u4E00-\u9FFF]+/g)
+    if (cjkRuns) {
+      for (const run of cjkRuns) {
+        if (run.length >= 2) tokens.push(run)
+        for (const ch of run) tokens.push(ch)
+      }
+    }
+
+    return tokens
+  }
+
+  const createMiniSearch = () => {
+    return new MiniSearch<IndexedDocument>({
       fields: ['name', 'content'],
       storeFields: ['name', 'path', 'content'],
+      tokenize: (text) => tokenizeMixed(text),
+      processTerm: (term) => (term ? term.toLowerCase() : term),
       searchOptions: {
         boost: { name: 2 },
         fuzzy: 0.2,
         prefix: true
       }
     })
-    searchIndex.value = miniSearch
+  }
+
+  const flattenFiles = (nodes: FileNode[], filterPrefix: string | null): FileNode[] => {
+    const files: FileNode[] = []
+    for (const node of nodes) {
+      if (node.type === NodeType.FILE && !node.isSource) {
+        if (!filterPrefix || node.path.startsWith(filterPrefix)) files.push(node)
+      } else if (node.children) {
+        files.push(...flattenFiles(node.children, filterPrefix))
+      }
+    }
+    return files
+  }
+
+  const getIndexContent = (node: FileNode) => {
+    const contentToIndex = (node.content || node.contentSnippet || '').trim()
+    return `${node.name.replace('.md', '')} ${contentToIndex}`.trim()
+  }
+  
+  // Initialize search index - 立即加载当前语言的全部内容
+  const initSearchIndex = async (fs: FileNode[], lang: 'en' | 'zh' = 'zh') => {
+    fileSystem.value = fs
+    currentLang.value = lang
     isFullIndexReady.value = false
-    
-    // 立即开始加载全部内容（不再懒加载）
+
+    await rebuildSearchIndex()
     loadFullContentAndRebuild()
   }
   
@@ -55,31 +111,25 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     }
     
     isLoadingContent.value = true
-    const langPrefix = currentLang.value === 'zh' ? 'zh/' : 'en/'
+    const langPrefix = buildLanguageFilter(fileSystem.value)
     
     try {
-      // Recursively load file contents (only for current language)
-      const loadFileContents = async (nodes: FileNode[]) => {
-        for (const node of nodes) {
-          if (node.type === NodeType.FILE && !node.isSource && !node.content) {
-            // Only load files from current language directory
-            if (node.path.startsWith(langPrefix)) {
-              try {
-                node.content = await fetchFn(node)
-                // Rebuild index progressively as content loads
-                rebuildSearchIndex()
-              } catch (e) {
-                console.warn(`Failed to load content for ${node.path}:`, e)
-              }
-            }
+      const filesToLoad = flattenFiles(fileSystem.value, langPrefix).filter((n) => !n.content)
+      for (const node of filesToLoad) {
+        try {
+          node.content = await fetchFn(node)
+          const updated: IndexedDocument = {
+            id: node.path,
+            name: node.name.replace('.md', ''),
+            path: node.path,
+            content: getIndexContent(node)
           }
-          if (node.children) {
-            await loadFileContents(node.children)
-          }
+          indexedDocumentsById.set(updated.id, updated)
+          searchIndex.value?.replace(updated)
+        } catch (e) {
+          console.warn(`Failed to load content for ${node.path}:`, e)
         }
       }
-      
-      await loadFileContents(fileSystem.value)
       isFullIndexReady.value = true
     } finally {
       isLoadingContent.value = false
@@ -87,48 +137,25 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
   }
   
   // Rebuild search index with current file contents
-  const rebuildSearchIndex = () => {
-    const miniSearch = new MiniSearch({
-      fields: ['name', 'content'],
-      storeFields: ['name', 'path', 'content'],
-      searchOptions: {
-        boost: { name: 2 },
-        fuzzy: 0.2,
-        prefix: true
+  const rebuildSearchIndex = async () => {
+    indexedDocumentsById.clear()
+
+    const langPrefix = buildLanguageFilter(fileSystem.value)
+    const nodes = flattenFiles(fileSystem.value, langPrefix)
+    const documents: IndexedDocument[] = nodes.map((node) => {
+      const doc: IndexedDocument = {
+        id: node.path,
+        name: node.name.replace('.md', ''),
+        path: node.path,
+        content: getIndexContent(node)
       }
+      indexedDocumentsById.set(doc.id, doc)
+      return doc
     })
-    
-    // Flatten files and add to index - filter by language
-    const flattenFiles = (nodes: FileNode[]): Array<{ id: string; name: string; path: string; content: string }> => {
-      const files: Array<{ id: string; name: string; path: string; content: string }> = []
-      const langPrefix = currentLang.value === 'zh' ? 'zh/' : 'en/'
-      
-      for (const node of nodes) {
-        if (node.type === NodeType.FILE && !node.isSource) {
-          // Filter by language: only include files from the current language directory
-          if (node.path.startsWith(langPrefix)) {
-            const contentToIndex = (node.content || node.contentSnippet || '').trim()
-            const nameAndContent = node.name.replace('.md', '') + ' ' + contentToIndex
-            
-            files.push({
-              id: node.path,
-              name: node.name.replace('.md', ''),
-              path: node.path,
-              content: nameAndContent
-            })
-          }
-        }
-        if (node.children) {
-          files.push(...flattenFiles(node.children))
-        }
-      }
-      
-      return files
-    }
-    
-    const documents = flattenFiles(fileSystem.value)
-    miniSearch.addAll(documents)
+
+    const miniSearch = createMiniSearch()
     searchIndex.value = miniSearch
+    await miniSearch.addAllAsync(documents, { chunkSize: 200 })
   }
   
   // Perform search with smart sorting
@@ -143,11 +170,11 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     isSearching.value = true
     
     try {
-      const results = searchIndex.value.search(query, {
+      const results = (searchIndex.value.search(query, {
         boost: { name: 3, content: 1 },
         fuzzy: 0.2,
         prefix: true
-      })
+      }) as any[])
       
       // Smart sorting: exact match > prefix match > fuzzy match
       const queryLower = query.toLowerCase()

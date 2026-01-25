@@ -121,17 +121,17 @@
                 class="relative bg-orange-200 dark:bg-orange-800/50 transition-all"
                 :style="{ padding: `${boxModel.margin}px` }"
               >
-                <div class="text-[8px] absolute top-0 left-1/2 -translate-x-1/2 text-orange-700 dark:text-orange-300">margin</div>
+                <div class="text-[8px] absolute top-0 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-white/60 dark:bg-gray-900/50 border border-orange-300/60 dark:border-orange-600/60 text-orange-700 dark:text-orange-200">margin</div>
                 <div 
                   class="bg-yellow-200 dark:bg-yellow-800/50 transition-all"
                   :style="{ padding: `${boxModel.border}px`, borderWidth: `${boxModel.border}px`, borderColor: '#666', borderStyle: 'solid' }"
                 >
-                  <div class="text-[8px] absolute text-gray-600">border</div>
+                  <div class="text-[8px] absolute top-1 left-1 px-1.5 py-0.5 rounded bg-white/60 dark:bg-gray-900/50 border border-gray-300/60 dark:border-gray-700/60 text-gray-600 dark:text-gray-200">border</div>
                   <div 
                     class="bg-green-200 dark:bg-green-800/50 transition-all"
                     :style="{ padding: `${boxModel.padding}px` }"
                   >
-                    <div class="text-[8px] text-green-700 dark:text-green-300">padding</div>
+                    <div class="text-[8px] inline-block px-1.5 py-0.5 rounded bg-white/60 dark:bg-gray-900/50 border border-green-300/60 dark:border-green-700/60 text-green-700 dark:text-green-200">padding</div>
                     <div class="w-20 h-12 bg-blue-300 dark:bg-blue-700 flex items-center justify-center text-xs font-bold text-blue-800 dark:text-blue-200">
                       content
                     </div>
@@ -351,7 +351,7 @@
           <div class="p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
             <h4 class="font-bold text-gray-700 dark:text-gray-200 mb-3">{{ isZh ? '定位演示' : 'Position Demo' }}</h4>
             <div class="relative h-40 bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
-              <div class="absolute top-2 left-2 text-[10px] text-gray-400">parent (relative)</div>
+              <div class="absolute top-2 left-2 text-[10px] font-mono px-2 py-1 rounded bg-white/70 dark:bg-gray-900/60 border border-gray-200/60 dark:border-gray-700/60 text-gray-600 dark:text-gray-300">parent (relative)</div>
               
               <div 
                 class="w-16 h-16 bg-[var(--primary-400)] rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-lg transition-all duration-300"

@@ -47,7 +47,7 @@ import { computed, ref } from 'vue'
 const props = defineProps<{ lang: 'en' | 'zh' }>()
 const isZh = computed(() => props.lang === 'zh')
 
-const modes = computed(() => [
+const modes = computed<{ id: 'esm' | 'cjs'; label: string }[]>(() => [
   { id: 'esm', label: 'ESM' },
   { id: 'cjs', label: 'CommonJS' }
 ])

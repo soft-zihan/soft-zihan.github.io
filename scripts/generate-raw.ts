@@ -60,6 +60,7 @@ const FILES_TO_GENERATE = [
   'src/components/lab/DualColumnView.vue',
   'src/components/lab/LabProjectTour.vue',
   'src/components/lab/PanelContent.vue',
+
   
   // lab/stage1-foundation
   'src/components/lab/stage1-foundation/LabCodeEvolution.vue',

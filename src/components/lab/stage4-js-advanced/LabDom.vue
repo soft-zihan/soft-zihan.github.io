@@ -7,7 +7,7 @@
       
       <!-- Simulation Box -->
       <div class="flex-1 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-8 relative flex items-center justify-center overflow-hidden">
-          <div class="absolute top-2 left-2 text-[10px] text-gray-400 font-mono">Window</div>
+          <div class="absolute top-2 left-2 text-[10px] font-mono px-2 py-1 rounded bg-white/70 dark:bg-gray-900/60 border border-gray-200/60 dark:border-gray-700/60 text-gray-600 dark:text-gray-300">Window</div>
           
           <!-- Target Element -->
           <div 

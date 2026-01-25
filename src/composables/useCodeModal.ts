@@ -89,19 +89,19 @@ export function useCodeModal() {
   /**
    * 打开代码弹窗并更新 URL
    */
-  const openCodeModal = async (title: string, content: string, path: string) => {
-    // 保存当前 URL
-    previousUrl.value = window.location.href
+  const openCodeModal = async (title: string, content: string, path: string, options?: { syncUrl?: boolean }) => {
+    if (options?.syncUrl !== false) previousUrl.value = window.location.href
 
     codeModalTitle.value = title
     codeModalContent.value = content
     codeModalPath.value = path
     showCodeModal.value = true
 
-    // 更新 URL（类似文章的路由方式）
-    const url = new URL(window.location.href)
-    url.searchParams.set('source', path)
-    window.history.pushState({ source: path }, '', url.toString())
+    if (options?.syncUrl !== false) {
+      const url = new URL(window.location.href)
+      url.searchParams.set('source', path)
+      window.history.pushState({ source: path }, '', url.toString())
+    }
   }
 
   /**

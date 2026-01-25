@@ -318,7 +318,7 @@ import { computed, ref, reactive } from 'vue'
 const props = defineProps<{ lang: 'en' | 'zh' }>()
 const isZh = computed(() => props.lang === 'zh')
 
-const tabs = computed(() => [
+const tabs = computed<{ id: 'basic' | 'union' | 'interface' | 'generic' | 'utility'; label: string }[]>(() => [
   { id: 'basic', label: isZh.value ? '基本类型' : 'Basic Types' },
   { id: 'union', label: isZh.value ? '联合类型' : 'Union Types' },
   { id: 'interface', label: isZh.value ? '接口' : 'Interface' },

@@ -6,14 +6,38 @@ export function useMarkdown() {
   const renderedHtml = ref('')
   const toc = ref<TocItem[]>([])
   const activeHeaderId = ref<string>('')
+  let headingIdCount = new Map<string, number>()
+
+  const normalizeHeadingText = (input: string) => {
+    return input
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+      .replace(/[`*_]+/g, '')
+  }
+
+  const slugifyHeading = (input: string) => {
+    const text = normalizeHeadingText(input).toLowerCase().trim()
+    const slug = text
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    return slug || 'section'
+  }
+
+  const nextUniqueHeadingId = (raw: string) => {
+    const base = slugifyHeading(raw)
+    const current = headingIdCount.get(base) ?? 0
+    const next = current + 1
+    headingIdCount.set(base, next)
+    return next === 1 ? base : `${base}-${next}`
+  }
   
   // Setup marked renderer
   const setupMarkedRenderer = () => {
     const renderer = new marked.Renderer()
-    renderer.heading = function(text, level) {
-      const id = text.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
+    renderer.heading = function(text, level, raw) {
+      const id = nextUniqueHeadingId(String(raw ?? text))
       return `<h${level} id="${id}">${text}</h${level}>`
     }
     marked.use({ renderer })
@@ -64,6 +88,7 @@ export function useMarkdown() {
     }
 
     try {
+      headingIdCount = new Map<string, number>()
       renderedHtml.value = await marked.parse(rawContent)
       return renderedHtml.value
     } catch (e) {
@@ -81,6 +106,7 @@ export function useMarkdown() {
     }
     
     const headers: TocItem[] = []
+    const localCount = new Map<string, number>()
     const lines = content.split(/\r?\n/)
     let inCodeBlock = false
     
@@ -88,13 +114,15 @@ export function useMarkdown() {
       if (line.trim().startsWith('```')) inCodeBlock = !inCodeBlock
       if (inCodeBlock) return
       
-      const match = line.match(/^(#{1,3})\s+(.+)$/)
+      const match = line.match(/^(#{1,6})\s+(.+)$/)
       if (match) {
         const text = match[2].trim()
-        const id = text.toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
-        headers.push({ id, text, level: match[1].length })
+        const base = slugifyHeading(text)
+        const current = localCount.get(base) ?? 0
+        const next = current + 1
+        localCount.set(base, next)
+        const id = next === 1 ? base : `${base}-${next}`
+        headers.push({ id, text: normalizeHeadingText(text).trim(), level: match[1].length })
       }
     })
     

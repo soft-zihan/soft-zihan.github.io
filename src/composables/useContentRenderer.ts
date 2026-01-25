@@ -15,6 +15,36 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
   const toc = ref<TocItem[]>([])
   const activeHeaderId = ref<string>('')
   let boundScrollContainer: HTMLElement | null = null
+  const renderCache = new Map<string, string>()
+  const renderCacheKeys: string[] = []
+  let isRendering = false
+  let rerenderRequested = false
+  let headingIdCount = new Map<string, number>()
+
+  const normalizeHeadingText = (input: string) => {
+    return input
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+      .replace(/[`*_]+/g, '')
+  }
+
+  const slugifyHeading = (input: string) => {
+    const text = normalizeHeadingText(input).toLowerCase().trim()
+    const slug = text
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
+      .replace(/-+/g, '-')
+      .replace(/^-+|-+$/g, '')
+    return slug || 'section'
+  }
+
+  const nextUniqueHeadingId = (raw: string) => {
+    const base = slugifyHeading(raw)
+    const current = headingIdCount.get(base) ?? 0
+    const next = current + 1
+    headingIdCount.set(base, next)
+    return next === 1 ? base : `${base}-${next}`
+  }
 
   const splitPathSuffix = (input: string) => {
     const trimmed = input.trim()
@@ -106,10 +136,8 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
    */
   const setupMarkedRenderer = () => {
     const renderer = new marked.Renderer()
-    renderer.heading = function(text, level) {
-      const id = text.toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
+    renderer.heading = function(text, level, raw) {
+      const id = nextUniqueHeadingId(String(raw ?? text))
       return `<h${level} id="${id}">${text}</h${level}>`
     }
     renderer.code = function(code, language) {
@@ -147,6 +175,11 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
    * 更新渲染内容
    */
   const updateRenderedContent = async () => {
+    if (isRendering) {
+      rerenderRequested = true
+      return
+    }
+
     if (!currentFile.value?.content) {
       if (currentFile.value?.path && isPdfPath(currentFile.value.path)) {
         const href = resolveContentPath(`notes/${currentFile.value.path}`)
@@ -159,6 +192,13 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
 
     // If it's source or raw mode, we don't render md
     if (currentFile.value.isSource || isRawMode.value) return
+
+    const cacheKey = `${currentFile.value.path}|${currentFile.value.lastModified || ''}|${currentFile.value.content.length}|toc-v2`
+    const cached = renderCache.get(cacheKey)
+    if (cached !== undefined) {
+      renderedHtml.value = cached
+      return
+    }
 
     let rawContent = stripMetaComment(currentFile.value.content)
 
@@ -188,15 +228,28 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
       })
     }
 
+    isRendering = true
+    rerenderRequested = false
     try {
+      headingIdCount = new Map<string, number>()
       const parsed = await marked.parse(rawContent)
       const sanitized = sanitizeHtml(parsed)
-      renderedHtml.value = sanitized || parsed
+      const finalHtml = sanitized || parsed
+      renderedHtml.value = finalHtml
+      renderCache.set(cacheKey, finalHtml)
+      renderCacheKeys.push(cacheKey)
+      if (renderCacheKeys.length > 25) {
+        const keyToDelete = renderCacheKeys.shift()
+        if (keyToDelete) renderCache.delete(keyToDelete)
+      }
     } catch (e) {
       console.error("Marked render error:", e)
       const errorHtml = `<div class="text-red-500 font-bold">Error rendering Markdown. Please check console.</div><pre>${rawContent}</pre>`
       const sanitizedError = sanitizeHtml(errorHtml)
       renderedHtml.value = sanitizedError || errorHtml
+    } finally {
+      isRendering = false
+      if (rerenderRequested) updateRenderedContent()
     }
   }
 
@@ -209,6 +262,7 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
       return
     }
     const headers: TocItem[] = []
+    const localCount = new Map<string, number>()
     const lines = currentFile.value.content.split(/\r?\n/)
     let inCodeBlock = false
 
@@ -216,13 +270,15 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
       if (line.trim().startsWith('```')) inCodeBlock = !inCodeBlock
       if (inCodeBlock) return
 
-      const match = line.match(/^(#{1,3})\s+(.+)$/)
+      const match = line.match(/^(#{1,6})\s+(.+)$/)
       if (match) {
         const text = match[2].trim()
-        const id = text.toLowerCase()
-          .replace(/\s+/g, '-')
-          .replace(/[^\w\-\u4e00-\u9fa5]+/g, '')
-        headers.push({ id, text, level: match[1].length })
+        const base = slugifyHeading(text)
+        const current = localCount.get(base) ?? 0
+        const next = current + 1
+        localCount.set(base, next)
+        const id = next === 1 ? base : `${base}-${next}`
+        headers.push({ id, text: normalizeHeadingText(text).trim(), level: match[1].length })
       }
     })
     toc.value = headers
@@ -260,6 +316,9 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       activeHeaderId.value = id
+      nextTick(() => {
+        updateActiveHeader()
+      })
     }
   }
 

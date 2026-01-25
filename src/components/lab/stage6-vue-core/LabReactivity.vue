@@ -3,8 +3,8 @@
   <div class="space-y-8">
     <!-- Header -->
     <div class="text-center mb-8">
-      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">⚛️ {{ lang === 'zh' ? '响应式系统深入' : 'Reactivity System' }}</h2>
-      <p class="text-gray-600 dark:text-gray-400 text-sm">{{ lang === 'zh' ? '理解 ref、reactive 和响应式原理' : 'Understand ref, reactive, and reactivity principles' }}</p>
+      <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-2">⚛️ {{ t.lab_reactivity_header_title }}</h2>
+      <p class="text-gray-600 dark:text-gray-400 text-sm">{{ t.lab_reactivity_header_subtitle }}</p>
     </div>
 
     <!-- Part 1: Original Dependency Tracking -->
@@ -61,36 +61,36 @@
     <!-- Part 2: ref vs reactive Comparison -->
     <div class="max-w-4xl mx-auto bg-white/80 dark:bg-gray-800/80 rounded-2xl p-8 border border-gray-200 dark:border-gray-700 shadow-lg">
       <h3 class="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 flex items-center gap-2">
-        <span class="text-2xl">1️⃣</span> {{ lang === 'zh' ? 'ref vs reactive' : 'ref vs reactive' }}
+        <span class="text-2xl">1️⃣</span> {{ t.lab_reactivity_ref_vs_reactive_title }}
       </h3>
       
       <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-        {{ lang === 'zh' ? 'ref 可以包装任何类型，需要 .value 访问；reactive 只能包装对象，不需要 .value。' : 'ref wraps any type and requires .value; reactive only wraps objects and doesn\'t need .value.' }}
+        {{ t.lab_reactivity_ref_vs_reactive_desc }}
       </p>
 
       <!-- Demo -->
       <div class="grid md:grid-cols-2 gap-6 mb-6">
         <!-- ref Demo -->
         <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 border-2 border-blue-300 dark:border-blue-600">
-          <h4 class="font-bold text-blue-700 dark:text-blue-300 mb-4">📦 ref (可包装任何类型)</h4>
+          <h4 class="font-bold text-blue-700 dark:text-blue-300 mb-4">{{ t.lab_reactivity_ref_card_title }}</h4>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '字符串：' : 'String:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_string }}</span>
               <span class="font-mono text-blue-600 dark:text-blue-300">"{{ refString }}"</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '数字：' : 'Number:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_number }}</span>
               <span class="font-mono text-blue-600 dark:text-blue-300">{{ refNumber }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '对象：' : 'Object:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_object }}</span>
               <span class="font-mono text-blue-600 dark:text-blue-300">{{ refObject.name }}</span>
             </div>
             <button 
               @click="updateRef"
               class="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded font-bold hover:bg-blue-600"
             >
-              {{ lang === 'zh' ? '更新 ref' : 'Update ref' }}
+              {{ t.lab_reactivity_btn_update_ref }}
             </button>
           </div>
           <div class="bg-blue-900 text-blue-200 p-3 rounded-lg font-mono text-xs mt-4 overflow-x-auto">
@@ -102,25 +102,25 @@ count.value++</pre>
 
         <!-- reactive Demo -->
         <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-300 dark:border-green-600">
-          <h4 class="font-bold text-green-700 dark:text-green-300 mb-4">📦 reactive (仅对象)</h4>
+          <h4 class="font-bold text-green-700 dark:text-green-300 mb-4">{{ t.lab_reactivity_reactive_card_title }}</h4>
           <div class="space-y-3">
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '名字：' : 'Name:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_name }}</span>
               <span class="font-mono text-green-600 dark:text-green-300">{{ reactiveObj.name }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '年龄：' : 'Age:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_age }}</span>
               <span class="font-mono text-green-600 dark:text-green-300">{{ reactiveObj.age }}</span>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-sm">{{ lang === 'zh' ? '城市：' : 'City:' }}</span>
+              <span class="text-sm">{{ t.lab_reactivity_label_city }}</span>
               <span class="font-mono text-green-600 dark:text-green-300">{{ reactiveObj.city }}</span>
             </div>
             <button 
               @click="updateReactive"
               class="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded font-bold hover:bg-green-600"
             >
-              {{ lang === 'zh' ? '更新 reactive' : 'Update reactive' }}
+              {{ t.lab_reactivity_btn_update_reactive }}
             </button>
           </div>
           <div class="bg-green-900 text-green-200 p-3 rounded-lg font-mono text-xs mt-4 overflow-x-auto">
@@ -136,26 +136,26 @@ obj.name = 'new value'</pre>
         <table class="w-full text-sm border-collapse">
           <thead>
             <tr class="bg-gray-100 dark:bg-gray-700">
-              <th class="border border-gray-300 dark:border-gray-600 p-3 text-left">{{ lang === 'zh' ? '特性' : 'Feature' }}</th>
+              <th class="border border-gray-300 dark:border-gray-600 p-3 text-left">{{ t.lab_reactivity_table_feature }}</th>
               <th class="border border-gray-300 dark:border-gray-600 p-3 text-left">ref</th>
               <th class="border border-gray-300 dark:border-gray-600 p-3 text-left">reactive</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ lang === 'zh' ? '支持类型' : 'Supported Types' }}</td>
-              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ lang === 'zh' ? '任何类型' : 'Any type' }}</td>
-              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ lang === 'zh' ? '仅对象' : 'Objects only' }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ t.lab_reactivity_table_supported_types }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ t.lab_reactivity_table_ref_supported }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ t.lab_reactivity_table_reactive_supported }}</td>
             </tr>
             <tr class="bg-gray-50 dark:bg-gray-800">
-              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ lang === 'zh' ? '访问方式' : 'Access' }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ t.lab_reactivity_table_access }}</td>
               <td class="border border-gray-300 dark:border-gray-600 p-3">.value</td>
-              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ lang === 'zh' ? '直接访问' : 'Direct' }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ t.lab_reactivity_table_direct }}</td>
             </tr>
             <tr>
-              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ lang === 'zh' ? '模板中' : 'In Template' }}</td>
-              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ lang === 'zh' ? '自动解包' : 'Auto unwrap' }}</td>
-              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ lang === 'zh' ? '直接使用' : 'Direct use' }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3 font-bold">{{ t.lab_reactivity_table_in_template }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ t.lab_reactivity_table_auto_unwrap }}</td>
+              <td class="border border-gray-300 dark:border-gray-600 p-3">{{ t.lab_reactivity_table_direct_use }}</td>
             </tr>
           </tbody>
         </table>
@@ -178,13 +178,7 @@ obj.name = 'new value'</pre>
         <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6 border-2 border-green-300 dark:border-green-600">
           <h4 class="font-bold text-green-700 dark:text-green-300 mb-4">✅ {{ lang === 'zh' ? 'Vue 3 数组响应（直接修改索引有效）' : 'Vue 3 Array Reactivity (Index modification works!)' }}</h4>
           <div class="bg-green-900 text-green-200 p-4 rounded-lg font-mono text-xs mb-4 overflow-x-auto">
-            <pre>// ✅ Vue 3 中直接修改索引是响应式的！
-const items = ref([1, 2, 3])
-items.value[0] = 999  // ✅ 会触发更新
-
-// ✅ 其他数组方法也正常工作
-items.value.push(4)
-items.value.splice(1, 1)</pre>
+            <pre>{{ arrayDemoCode }}</pre>
           </div>
 
           <div class="flex gap-2 mb-3">
@@ -217,16 +211,7 @@ items.value.splice(1, 1)</pre>
         <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6 border-2 border-red-300 dark:border-red-600">
           <h4 class="font-bold text-red-700 dark:text-red-300 mb-4">❌ {{ lang === 'zh' ? '常见错误：替换整个 reactive 对象' : 'Common Mistake: Replacing entire reactive object' }}</h4>
           <div class="bg-red-900 text-red-200 p-4 rounded-lg font-mono text-xs mb-4 overflow-x-auto">
-            <pre>// ❌ 错误：直接替换会丢失响应性
-let state = reactive({ count: 0 })
-state = { count: 1 }  // ❌ 不再是响应式的！
-
-// ✅ 正确：修改属性
-state.count = 1
-
-// ✅ 或者使用 ref
-const state = ref({ count: 0 })
-state.value = { count: 1 }  // ✅ 整体替换 OK</pre>
+            <pre>{{ replaceReactiveCode }}</pre>
           </div>
         </div>
 
@@ -234,15 +219,7 @@ state.value = { count: 1 }  // ✅ 整体替换 OK</pre>
         <div class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6 border-2 border-orange-300 dark:border-orange-600">
           <h4 class="font-bold text-orange-700 dark:text-orange-300 mb-4">⚠️ {{ lang === 'zh' ? '解构会丢失响应性' : 'Destructuring Loses Reactivity' }}</h4>
           <div class="bg-orange-900 text-orange-200 p-4 rounded-lg font-mono text-xs mb-4 overflow-x-auto">
-            <pre>const state = reactive({ name: 'Vue', version: 3 })
-
-// ❌ 解构后不再响应
-const { name } = state  // name 是普通变量
-
-// ✅ 使用 toRefs 保持响应性
-import { toRefs } from 'vue'
-const { name, version } = toRefs(state)
-// name.value 和 version.value 是响应式的</pre>
+            <pre>{{ destructureCode }}</pre>
           </div>
           
           <div class="space-y-2 mb-4 text-sm">
@@ -309,27 +286,7 @@ const { name, version } = toRefs(state)
             <span class="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded">stores/appStore.ts</span>
             <span class="text-xs text-gray-500">{{ lang === 'zh' ? '全局状态管理' : 'Global state management' }}</span>
           </div>
-          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 stores/appStore.ts - 使用 ref 定义全局状态
-const lang = ref&lt;'en' | 'zh'&gt;('zh')    // 语言设置
-const isDark = ref(false)              // 主题模式
-const showParticles = ref(true)        // 花瓣效果
-
-// 用户设置对象 - 也用 ref
-const userSettings = ref({
-  fontSize: 'normal' as 'small' | 'normal' | 'large',
-  fontFamily: 'sans' as 'sans' | 'serif',
-  petalSpeed: 'slow' as 'off' | 'slow' | 'fast'
-})
-
-// computed 派生状态
-const t = computed(() => I18N[lang.value])
-const fontSizeClass = computed(() => {
-  switch (userSettings.value.fontSize) {
-    case 'small': return 'text-sm lg:text-base'
-    case 'large': return 'text-xl lg:text-2xl'
-    default: return 'text-base lg:text-lg'
-  }
-})</pre>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">{{ appStoreCode }}</pre>
         </div>
 
         <!-- useSearch example -->
@@ -338,23 +295,7 @@ const fontSizeClass = computed(() => {
             <span class="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-300 px-2 py-1 rounded">composables/useSearch.ts</span>
             <span class="text-xs text-gray-500">{{ lang === 'zh' ? '搜索功能状态' : 'Search state' }}</span>
           </div>
-          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 composables/useSearch.ts - Composable 中的响应式
-export function useSearch() {
-  // 搜索状态 - ref
-  const searchQuery = ref('')
-  const searchResults = ref&lt;SearchResult[]&gt;([])
-  const isSearching = ref(false)
-  
-  // 搜索索引 - ref 包装复杂对象
-  const searchIndex = ref&lt;MiniSearch | null&gt;(null)
-  
-  // 计算属性
-  const hasResults = computed(() => 
-    searchResults.value.length > 0
-  )
-  
-  return { searchQuery, searchResults, isSearching, hasResults }
-}</pre>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">{{ useSearchCode }}</pre>
         </div>
 
         <!-- musicStore example -->
@@ -363,22 +304,7 @@ export function useSearch() {
             <span class="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-300 px-2 py-1 rounded">stores/musicStore.ts</span>
             <span class="text-xs text-gray-500">{{ lang === 'zh' ? '音乐播放器状态' : 'Music player state' }}</span>
           </div>
-          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">// 📍 stores/musicStore.ts - 复杂数组状态
-const playlist = ref&lt;MusicTrack[]&gt;([])
-const currentIndex = ref(0)
-const currentTime = ref(0)
-const duration = ref(0)
-
-// Getter: 当前曲目（派生状态）
-const currentTrack = computed(() => 
-  playlist.value[currentIndex.value] || null
-)
-
-// Getter: 播放进度百分比
-const progress = computed(() => {
-  if (duration.value === 0) return 0
-  return (currentTime.value / duration.value) * 100
-})</pre>
+          <pre class="text-xs font-mono bg-gray-900 text-green-300 p-3 rounded-lg overflow-x-auto">{{ musicStoreCode }}</pre>
         </div>
       </div>
       
@@ -399,6 +325,177 @@ const props = defineProps<{
 }>();
 
 const t = computed(() => I18N[props.lang]);
+const isZh = computed(() => props.lang === 'zh');
+
+const arrayDemoCode = computed(() =>
+  isZh.value
+    ? `// ✅ Vue 3 中直接修改索引是响应式的！
+const items = ref([1, 2, 3])
+items.value[0] = 999  // ✅ 会触发更新
+
+// ✅ 其他数组方法也正常工作
+items.value.push(4)
+items.value.splice(1, 1)`
+    : `// ✅ In Vue 3, index assignment is reactive!
+const items = ref([1, 2, 3])
+items.value[0] = 999  // ✅ triggers update
+
+// ✅ Common array methods work too
+items.value.push(4)
+items.value.splice(1, 1)`
+);
+
+const replaceReactiveCode = computed(() =>
+  isZh.value
+    ? `// ❌ 错误：直接替换会丢失响应性
+let state = reactive({ count: 0 })
+state = { count: 1 }  // ❌ 不再是响应式的！
+
+// ✅ 正确：修改属性
+state.count = 1
+
+// ✅ 或者使用 ref
+const state = ref({ count: 0 })
+state.value = { count: 1 }  // ✅ 整体替换 OK`
+    : `// ❌ Wrong: replacing breaks reactivity
+let state = reactive({ count: 0 })
+state = { count: 1 }  // ❌ no longer reactive
+
+// ✅ Correct: mutate properties
+state.count = 1
+
+// ✅ Or use ref for full replacement
+const state = ref({ count: 0 })
+state.value = { count: 1 }  // ✅ full replace works`
+);
+
+const destructureCode = computed(() =>
+  isZh.value
+    ? `const state = reactive({ name: 'Vue', version: 3 })
+
+// ❌ 解构后不再响应
+const { name } = state  // name 是普通变量
+
+// ✅ 使用 toRefs 保持响应性
+import { toRefs } from 'vue'
+const { name, version } = toRefs(state)
+// name.value 和 version.value 是响应式的`
+    : `const state = reactive({ name: 'Vue', version: 3 })
+
+// ❌ Destructuring loses reactivity
+const { name } = state  // name is now a plain variable
+
+// ✅ Use toRefs to keep reactivity
+import { toRefs } from 'vue'
+const { name, version } = toRefs(state)
+// name.value and version.value are reactive`
+);
+
+const appStoreCode = computed(() =>
+  isZh.value
+    ? `// 📍 stores/appStore.ts - 使用 ref 定义全局状态
+const lang = ref<'en' | 'zh'>('zh')    // 语言设置
+const isDark = ref(false)              // 主题模式
+const showParticles = ref(true)        // 花瓣效果
+
+const userSettings = ref({
+  fontSize: 'normal' as 'small' | 'normal' | 'large',
+  fontFamily: 'sans' as 'sans' | 'serif',
+  petalSpeed: 'slow' as 'off' | 'slow' | 'fast'
+})
+
+const t = computed(() => I18N[lang.value])
+const fontSizeClass = computed(() => {
+  switch (userSettings.value.fontSize) {
+    case 'small': return 'text-sm lg:text-base'
+    case 'large': return 'text-xl lg:text-2xl'
+    default: return 'text-base lg:text-lg'
+  }
+})`
+    : `// 📍 stores/appStore.ts - global state defined with ref
+const lang = ref<'en' | 'zh'>('zh')    // language
+const isDark = ref(false)              // theme mode
+const showParticles = ref(true)        // particle effect
+
+const userSettings = ref({
+  fontSize: 'normal' as 'small' | 'normal' | 'large',
+  fontFamily: 'sans' as 'sans' | 'serif',
+  petalSpeed: 'slow' as 'off' | 'slow' | 'fast'
+})
+
+const t = computed(() => I18N[lang.value])
+const fontSizeClass = computed(() => {
+  switch (userSettings.value.fontSize) {
+    case 'small': return 'text-sm lg:text-base'
+    case 'large': return 'text-xl lg:text-2xl'
+    default: return 'text-base lg:text-lg'
+  }
+})`
+);
+
+const useSearchCode = computed(() =>
+  isZh.value
+    ? `// 📍 composables/useSearch.ts - Composable 中的响应式
+export function useSearch() {
+  const searchQuery = ref('')
+  const searchResults = ref<SearchResult[]>([])
+  const isSearching = ref(false)
+  
+  const searchIndex = ref<MiniSearch | null>(null)
+  
+  const hasResults = computed(() =>
+    searchResults.value.length > 0
+  )
+  
+  return { searchQuery, searchResults, isSearching, hasResults }
+}`
+    : `// 📍 composables/useSearch.ts - reactivity inside a composable
+export function useSearch() {
+  const searchQuery = ref('')
+  const searchResults = ref<SearchResult[]>([])
+  const isSearching = ref(false)
+  
+  const searchIndex = ref<MiniSearch | null>(null)
+  
+  const hasResults = computed(() =>
+    searchResults.value.length > 0
+  )
+  
+  return { searchQuery, searchResults, isSearching, hasResults }
+}`
+);
+
+const musicStoreCode = computed(() =>
+  isZh.value
+    ? `// 📍 stores/musicStore.ts - 复杂数组状态
+const playlist = ref<MusicTrack[]>([])
+const currentIndex = ref(0)
+const currentTime = ref(0)
+const duration = ref(0)
+
+const currentTrack = computed(() =>
+  playlist.value[currentIndex.value] || null
+)
+
+const progress = computed(() => {
+  if (duration.value === 0) return 0
+  return (currentTime.value / duration.value) * 100
+})`
+    : `// 📍 stores/musicStore.ts - a complex array state
+const playlist = ref<MusicTrack[]>([])
+const currentIndex = ref(0)
+const currentTime = ref(0)
+const duration = ref(0)
+
+const currentTrack = computed(() =>
+  playlist.value[currentIndex.value] || null
+)
+
+const progress = computed(() => {
+  if (duration.value === 0) return 0
+  return (currentTime.value / duration.value) * 100
+})`
+);
 
 // Original demo state (keep for backward compat)
 const price = ref(10);

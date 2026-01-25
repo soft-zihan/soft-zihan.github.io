@@ -30,13 +30,17 @@ export function useCodeOpener() {
     return slice.map((line: string, idx: number) => `${String(safeStart + idx).padStart(width, ' ')} | ${line}`).join('\n');
   };
 
-  const openCodeByPath = async (path: string, range?: { startLine?: number; endLine?: number }) => {
+  const openCodeByPath = async (
+    path: string,
+    range?: { startLine?: number; endLine?: number },
+    options?: { syncUrl?: boolean }
+  ) => {
     const fileName = path.split('/').pop() || path;
     const rangeLabel = range?.startLine
       ? ` (L${range.startLine}${range.endLine && range.endLine !== range.startLine ? `-L${range.endLine}` : ''})`
       : '';
 
-    await codeModal.openCodeModal(`${fileName}${rangeLabel}`, 'Loading...', path);
+    await codeModal.openCodeModal(`${fileName}${rangeLabel}`, 'Loading...', path, options);
 
     let node = findNodeByPath(appStore.fileSystem, path);
     let content = '';

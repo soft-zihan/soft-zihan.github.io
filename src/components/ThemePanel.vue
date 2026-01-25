@@ -153,6 +153,28 @@
         </div>
 
         <div class="mb-4">
+          <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '快捷键' : 'Shortcuts' }}</div>
+          <div class="space-y-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-800 p-3 rounded-xl border border-gray-100 dark:border-gray-700">
+            <div class="flex items-center justify-between gap-4">
+              <span class="font-mono text-[10px] text-gray-500 dark:text-gray-400">Ctrl/Cmd + K</span>
+              <span>{{ lang === 'zh' ? '打开搜索' : 'Open search' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="font-mono text-[10px] text-gray-500 dark:text-gray-400">Esc</span>
+              <span>{{ lang === 'zh' ? '打开/收起侧边栏（若有弹窗则优先关闭）' : 'Toggle sidebar (closes modals first)' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="font-mono text-[10px] text-gray-500 dark:text-gray-400">← / →</span>
+              <span>{{ lang === 'zh' ? '上一篇 / 下一篇文章' : 'Previous / next article' }}</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="font-mono text-[10px] text-gray-500 dark:text-gray-400">↑ / ↓</span>
+              <span>{{ lang === 'zh' ? '上一篇 / 下一篇相邻标题' : 'Previous / next heading' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-4">
           <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{{ lang === 'zh' ? '樱花层级' : 'Petal Layer' }}</div>
           <div class="flex gap-2">
             <button

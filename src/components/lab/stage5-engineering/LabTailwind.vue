@@ -76,7 +76,7 @@ const colors = [
   { id: 'violet', label: 'Violet', btn: 'bg-violet-500 text-white' }
 ]
 
-const radiusOptions = [
+const radiusOptions: Array<{ id: 'rounded-md' | 'rounded-xl' | 'rounded-full'; label: string }> = [
   { id: 'rounded-md', label: isZh.value ? '中等' : 'Medium' },
   { id: 'rounded-xl', label: isZh.value ? '大' : 'Large' },
   { id: 'rounded-full', label: isZh.value ? '胶囊' : 'Pill' }

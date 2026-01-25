@@ -49,12 +49,13 @@ export const useAppStore = defineStore('app', () => {
     petalLayer: 'back' as 'front' | 'back',
     themeColor: 'sakura' as ThemeColorId,
     articleStyle: 'classic' as 'classic' | 'clean' | 'compact' | 'lined' | 'grid',
+    articleSortMode: 'date' as 'date' | 'tree',
     articleBackgroundColorLight: '',
     articleBackgroundColorDark: '',
     wallpaperFill: 'cover' as 'cover' | 'contain' | 'fill',
     autoChangeMode: 'off' as 'off' | 'custom' | 'preset' | 'anime' | 'beauty' | 'search',
     autoChangeTimer: 0,
-    musicPlayer: 'new' as 'new' | 'old'
+    musicPlayer: 'new' as 'new' | 'old' | 'off'
   })
 
   const legacyArticleBackgroundColor = (userSettings.value as { articleBackgroundColor?: string }).articleBackgroundColor
@@ -80,6 +81,7 @@ export const useAppStore = defineStore('app', () => {
   const readingMode = ref(false)
   const viewMode = ref<'latest' | 'files' | 'lab'>('latest')
   const expandedFolders = ref<string[]>([])
+  const searchTarget = ref<string | null>(null)
   
   // File System State
   const fileSystem = ref<FileNode[]>([])
@@ -205,8 +207,9 @@ export const useAppStore = defineStore('app', () => {
   }
 
   const currentLangRoot = computed(() => {
-    const root = fileSystem.value.find((node: FileNode) => node.name === lang.value)
-    return root ? root.children : []
+    const root = fileSystem.value.find((node: FileNode) => node.type === NodeType.DIRECTORY && node.name === lang.value)
+    if (root?.children?.length) return root.children
+    return fileSystem.value.filter((node: FileNode) => !(node.type === NodeType.DIRECTORY && node.path === 'source'))
   })
 
   const flatFiles = computed(() => flatten(currentLangRoot.value || []))
@@ -237,6 +240,7 @@ export const useAppStore = defineStore('app', () => {
     readingMode,
     viewMode,
     expandedFolders,
+    searchTarget,
     fileSystem,
     currentFile,
     currentFolder,

@@ -352,8 +352,9 @@ export function useContentClick(
           }
 
           const rest = href.slice('lab:'.length)
-          const [cmd, query] = rest.split('?')
-          const params = new URLSearchParams(query || '')
+          const [cmd, queryAndHash] = rest.split('?')
+          const query = (queryAndHash || '').split('#')[0]
+          const params = new URLSearchParams(query)
           const tab = params.get('tab') || (cmd && cmd !== 'dashboard' ? cmd : undefined)
           openLabDashboard(tab || undefined)
           hideSelectionMenu()

@@ -210,6 +210,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { I18N } from '../../../constants';
+import { sanitizeHtml } from '../../../utils/sanitize';
 
 const props = defineProps<{
   lang: 'en' | 'zh';

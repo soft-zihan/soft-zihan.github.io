@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 flex overflow-hidden z-10 relative">
     <div 
-      :ref="scrollContainerRef"
+      ref="localScrollContainerRef"
       class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-8 w-full"
     >
       <div 
@@ -107,7 +107,7 @@
         <div 
           v-if="!file.isSource && !isRawMode"
           id="markdown-viewer"
-          :ref="markdownViewerRef"
+          ref="markdownViewerRef"
           v-html="renderedHtml" 
           class="markdown-body"
           @click="handleContentClickEvent"
@@ -129,7 +129,7 @@
                 <button @click="rawEditor.saveRawContent()" class="text-xs text-green-400 hover:text-green-300 transition-colors" v-if="rawEditor.isEditingRaw.value">
                   {{ lang === 'zh' ? '保存' : 'Save' }}
                 </button>
-                <button @click="rawEditor.toggleEditRaw()" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                <button @click="rawEditor.isEditingRaw.value ? rawEditor.cancelEditingRaw() : rawEditor.startEditingRaw()" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">
                   {{ rawEditor.isEditingRaw.value ? (lang === 'zh' ? '取消' : 'Cancel') : (lang === 'zh' ? '编辑' : 'Edit') }}
                 </button>
              </div>
@@ -137,7 +137,7 @@
            
            <textarea 
              v-if="rawEditor.isEditingRaw.value"
-             v-model="rawEditor.rawContent.value"
+             v-model="rawEditor.editedRawContent.value"
              class="w-full h-[600px] bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"
            ></textarea>
            <pre v-else class="bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl overflow-x-auto"><code>{{ file.content }}</code></pre>
@@ -180,6 +180,9 @@
           v-if="!file.isSource" 
           class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800"
           :key="file.path" 
+          :lang="lang"
+          :is-dark="appStore.isDark"
+          :path="file.path"
           @update-comment-count="emit('update-comment-count', $event)"
         />
         
@@ -198,10 +201,54 @@
       </div>
     </div>
 
+    <div
+      v-if="!file.isSource && !isRawMode"
+      class="fixed bottom-4 right-4 xl:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
+    >
+      <button
+        type="button"
+        class="w-11 h-11 rounded-2xl bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl border border-white/60 dark:border-gray-700/60 shadow-lg text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="!prevFile"
+        @click="prevFile && navigateTo(prevFile)"
+        :aria-label="lang === 'zh' ? '上一篇' : 'Previous'"
+        :title="lang === 'zh' ? '上一篇' : 'Previous'"
+      >
+        ←
+      </button>
+      <button
+        type="button"
+        class="w-11 h-11 rounded-2xl bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl border border-white/60 dark:border-gray-700/60 shadow-lg text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="!nextFile"
+        @click="nextFile && navigateTo(nextFile)"
+        :aria-label="lang === 'zh' ? '下一篇' : 'Next'"
+        :title="lang === 'zh' ? '下一篇' : 'Next'"
+      >
+        →
+      </button>
+      <button
+        type="button"
+        class="w-11 h-11 rounded-2xl bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl border border-white/60 dark:border-gray-700/60 shadow-lg text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-900 transition-colors"
+        @click="scrollToBottom()"
+        :aria-label="lang === 'zh' ? '到底' : 'Bottom'"
+        :title="lang === 'zh' ? '到底' : 'Bottom'"
+      >
+        ⬇
+      </button>
+      <button
+        type="button"
+        class="w-11 h-11 rounded-2xl bg-white/80 dark:bg-gray-900/70 backdrop-blur-xl border border-white/60 dark:border-gray-700/60 shadow-lg text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-900 transition-colors"
+        @click="scrollToTop()"
+        :aria-label="lang === 'zh' ? '返回顶部' : 'Top'"
+        :title="lang === 'zh' ? '返回顶部' : 'Top'"
+      >
+        ⬆
+      </button>
+    </div>
+
     <!-- Right Sidebar (TOC) -->
     <aside 
       v-if="!file.isSource && !isRawMode"
-      class="hidden xl:flex w-72 2xl:w-80 flex-col gap-6 p-6 border-l border-white/30 dark:border-gray-700/30 backdrop-blur-md overflow-y-auto custom-scrollbar z-20 xl:static xl:h-auto xl:shadow-none xl:bg-white/20 xl:dark:bg-gray-900/20"
+      class="hidden lg:flex w-72 2xl:w-80 flex-col gap-6 p-6 border-l border-white/30 dark:border-gray-700/30 backdrop-blur-md overflow-y-auto custom-scrollbar z-20 lg:static lg:h-auto lg:shadow-none lg:bg-white/20 lg:dark:bg-gray-900/20"
     >
 
       <!-- Table of Contents -->
@@ -259,7 +306,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, ref, watch, onMounted, nextTick, type Ref } from 'vue';
+import { computed, toRef, ref, watch, onMounted, onUnmounted, nextTick, type Ref } from 'vue';
 import type { FileNode } from '../types';
 import { useAppStore } from '../stores/appStore';
 import { useArticleStore } from '../stores/articleStore';
@@ -269,19 +316,18 @@ import { useRawEditor } from '../composables/useRawEditor';
 import { useLightbox } from '../composables/useLightbox';
 import { useSelectionMenu } from '../composables/useSelectionMenu';
 import { useContentClick } from '../composables/useContentClick';
+import { useSearchJump } from '../composables/useSearchJump';
 import GiscusComments from '../components/GiscusComments.vue';
 
 const props = defineProps<{
   file: FileNode;
   loading?: boolean;
   isRawMode: boolean;
-  lang: string;
+  lang: 'en' | 'zh';
   t: any;
   getArticleViews: (path: string) => number;
   getArticleComments: (path: string) => number;
   onContentClick: (e: MouseEvent) => void;
-  scrollContainerRef: Ref<HTMLElement | null>;
-  markdownViewerRef: Ref<HTMLElement | null>;
 }>();
 
 const emit = defineEmits([
@@ -292,12 +338,15 @@ const emit = defineEmits([
   'open-music',
   'open-write',
   'open-download',
-  'toggle-theme'
+  'toggle-theme',
+  'scroll-container-change',
+  'markdown-viewer-change'
 ]);
 
 const appStore = useAppStore();
 const articleStore = useArticleStore();
-const markdownViewerRef = props.markdownViewerRef;
+const markdownViewerRef = ref<HTMLElement | null>(null)
+const localScrollContainerRef = ref<HTMLElement | null>(null)
 
 const currentFile = toRef(props, 'file');
 const isRawMode = toRef(props, 'isRawMode');
@@ -322,81 +371,167 @@ const nextFile = computed(() => {
   return idx !== -1 && idx < list.length - 1 ? list[idx + 1] : null;
 });
 
+const getScrollBehavior = () => {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth'
+}
+
+const scrollToTop = () => {
+  const behavior = getScrollBehavior()
+  const container = localScrollContainerRef.value || null
+  if (container) {
+    container.scrollTo({ top: 0, behavior })
+  } else {
+    window.scrollTo({ top: 0, behavior })
+  }
+}
+
+const scrollToBottom = () => {
+  const behavior = getScrollBehavior()
+  const container = localScrollContainerRef.value || null
+  if (container) {
+    container.scrollTo({ top: container.scrollHeight, behavior })
+  } else {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior })
+  }
+}
+
 const navigateTo = (file: FileNode) => {
   emit('open-file', file);
-  // Auto expand folder logic could be here if needed
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  nextTick(() => {
+    scrollToTop()
+  })
 };
 
-// Search Jump with Range API
-watch(() => appStore.searchTarget, (target) => {
-  if (target) {
-    nextTick(() => {
-      setTimeout(() => {
-        const viewer = props.markdownViewerRef?.value || null;
-        if (viewer) {
-          // Use TreeWalker to find text node
-          const walker = document.createTreeWalker(viewer, NodeFilter.SHOW_TEXT, null);
-          let node;
-          while (node = walker.nextNode()) {
-             const text = node.textContent || '';
-             const index = text.indexOf(target);
-             if (index !== -1) {
-                const range = document.createRange();
-                range.setStart(node, index);
-                range.setEnd(node, index + target.length);
-                
-                const selection = window.getSelection();
-                if (selection) {
-                   selection.removeAllRanges();
-                   selection.addRange(range);
-                }
-                
-                // Scroll into view
-                const element = node.parentElement;
-                if (element) {
-                   element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                   element.classList.add('sakura-highlight-pulse');
-                   setTimeout(() => element.classList.remove('sakura-highlight-pulse'), 2000);
-                }
-                break;
-             }
-          }
-        }
-        appStore.searchTarget = null;
-      }, 300);
-    });
-  }
-});
+// Renderer
+const { renderedHtml, toc, activeHeaderId, updateRenderedContent, scrollToHeader, setupMarkedRenderer, generateToc } = useContentRenderer(currentFile, isRawMode, localScrollContainerRef);
+
+useSearchJump({
+  getTarget: () => String((appStore as any).searchTarget ?? ''),
+  clearTarget: () => { (appStore as any).searchTarget = null },
+  getFilePath: () => props.file?.path || '',
+  renderedHtml,
+  getScrollBehavior,
+  getScrollContainer: () => localScrollContainerRef.value || null,
+  getViewer: () => markdownViewerRef.value || null
+})
 
 // Article Meta
 const { currentMeta, currentTags, currentAuthorName, currentAuthorUrl, currentWordCount, currentLineCount } = useArticleMeta(currentFile);
 
-// Renderer
-const { renderedHtml, toc, activeHeaderId, updateRenderedContent, scrollToHeader, setupMarkedRenderer, generateToc } = useContentRenderer(currentFile, isRawMode, props.scrollContainerRef);
+const isEditableTarget = (target: EventTarget | null) => {
+  const el = target as HTMLElement | null
+  if (!el) return false
+  const tag = el.tagName?.toLowerCase()
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
+  return !!(el as any).isContentEditable
+}
+
+const getCurrentTocIndex = () => {
+  const container = localScrollContainerRef.value || null
+  if (!container) return toc.value.findIndex((i) => i.id === activeHeaderId.value)
+
+  const scrollPosition = container.scrollTop
+  let idx = -1
+  for (let i = 0; i < toc.value.length; i++) {
+    const item = toc.value[i]
+    const el = document.getElementById(item.id)
+    if (el && el.offsetTop - container.offsetTop - 150 <= scrollPosition) {
+      idx = i
+    }
+  }
+  return idx
+}
+
+const jumpToPrevHeading = () => {
+  if (toc.value.length === 0) return
+  const idx = getCurrentTocIndex()
+  if (idx <= 0) {
+    scrollToTop()
+    return
+  }
+  scrollToHeader(toc.value[idx - 1].id)
+}
+
+const jumpToNextHeading = () => {
+  if (toc.value.length === 0) return
+  const idx = getCurrentTocIndex()
+  if (idx === -1) {
+    scrollToHeader(toc.value[0].id)
+    return
+  }
+  const next = toc.value[idx + 1]
+  if (!next) {
+    scrollToBottom()
+    return
+  }
+  scrollToHeader(next.id)
+}
+
+const handleReaderKeydown = (e: KeyboardEvent) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return
+  if (isEditableTarget(e.target)) return
+  if (appStore.showSearch || appStore.showSettings || appStore.showDownloadModal || appStore.showWriteEditor) return
+  if (!props.file || props.file.isSource || isRawMode.value) return
+
+  if (e.key === 'ArrowLeft') {
+    if (prevFile.value) {
+      e.preventDefault()
+      navigateTo(prevFile.value)
+    }
+    return
+  }
+  if (e.key === 'ArrowRight') {
+    if (nextFile.value) {
+      e.preventDefault()
+      navigateTo(nextFile.value)
+    }
+    return
+  }
+  if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    jumpToPrevHeading()
+    return
+  }
+  if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    jumpToNextHeading()
+    return
+  }
+}
 
 onMounted(() => {
   setupMarkedRenderer();
-  updateRenderedContent();
-  generateToc();
+  document.addEventListener('keydown', handleReaderKeydown)
 });
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleReaderKeydown)
+})
+
+watch(localScrollContainerRef, (el) => {
+  emit('scroll-container-change', el)
+}, { immediate: true })
+
+watch(markdownViewerRef, (el) => {
+  emit('markdown-viewer-change', el)
+}, { immediate: true })
 
 watch([currentFile, isRawMode], () => {
   updateRenderedContent();
   generateToc();
-});
+}, { immediate: true });
 
 // Raw Editor
 const showToast = (msg: string) => appStore.showToast(msg);
-const rawEditor = useRawEditor(currentFile, isRawMode, updateRenderedContent, showToast, computed(() => props.lang));
+const rawEditor = useRawEditor(currentFile, isRawMode, updateRenderedContent, showToast, toRef(props, 'lang'));
 
 // Selection Menu
-const selectionMenuComposable = useSelectionMenu(props.markdownViewerRef, showToast);
+const selectionMenuComposable = useSelectionMenu(markdownViewerRef, showToast);
 const { selectionMenu, handleSelection, handleSelectionContextMenu, applyFormat } = selectionMenuComposable;
 
-const handleSelectionEvent = (e: MouseEvent | TouchEvent) => handleSelection(e);
+const handleSelectionEvent = () => handleSelection();
 const handleSelectionContextMenuEvent = (e: MouseEvent) => handleSelectionContextMenu(e);
-const applyFormatHandler = (format: string) => applyFormat(format);
+const applyFormatHandler = (format: string) => applyFormat(format, props.lang === 'zh' ? '应用格式失败' : 'Format failed');
 
 // Content Click
 const handleContentClickEvent = (e: MouseEvent) => {

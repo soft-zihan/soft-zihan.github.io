@@ -30,6 +30,9 @@
 - [🔐 安全与数据](#-安全与数据)
 - [🤝 贡献指南](#-贡献指南)
 - [📜 更新日志](#-更新日志)
+- [🔬 技术实现解析](#-技术实现解析)
+- [🧩 静态部署的取舍](#-静态部署的取舍)
+- [🚀 改造成前后端项目（去除 Fork+PR 依赖）](#-改造成前后端项目去除-forkpr-依赖)
 
 ---
 
@@ -191,12 +194,12 @@ sakura-notes/
 │   │   ├── fileUtils.ts
 │   │   └── sanitize.ts
 │   │
-│   └── 📁 data/             # 预置数据
-│       └── source-notes-preset.json
-│
 ├── 📁 public/              # 静态资源（生成数据）
 │   ├── 📁 data/
-│   │   └── files.json
+│   │   ├── files.json
+│   │   ├── music.json
+│   │   ├── wallpapers.json
+│   │   └── source-notes-preset.json
 │   └── 📁 notes/
 │
 ├── 📄 vite.config.ts      # Vite 构建配置
@@ -228,14 +231,14 @@ sakura-notes/
 ├── 📁 notes/              # Markdown 笔记内容
 │   ├── 📁 zh/             # 中文笔记
 │   ├── 📁 en/             # 英文笔记
-│   ├── 📁 VUE学习笔记/     # Vue 中文教程
-│   └── 📁 VUE Learning/   # Vue English Tutorial
+│   └── 📁 VUE学习笔记/     # Vue 中文教程
 │
 ├── 📁 public/             # 静态资源
-│   ├── files.json         # 文件索引（自动生成）
-│   ├── music.json         # 音乐列表（自动生成）
-│   ├── wallpapers.json    # 壁纸配置（自动生成）
-│   ├── source-notes-preset.json # 预置源码笔记
+│   ├── 📁 data/
+│   │   ├── files.json         # 文件索引（自动生成）
+│   │   ├── music.json         # 音乐列表（自动生成）
+│   │   ├── wallpapers.json    # 壁纸配置（自动生成）
+│   │   └── source-notes-preset.json # 预置源码笔记
 │   ├── 📁 image/          # 图片资源
 │   ├── 📁 music/          # 音乐文件
 │   └── 📁 raw/            # 源码查看器用的原始文件
@@ -489,6 +492,104 @@ notes/
 - 📝 Markdown 笔记系统
 - 🌐 中英双语支持
 - 📱 响应式设计
+
+---
+
+## 🔬 技术实现解析
+
+这一节把“为什么它能工作”讲清楚：关键链路、数据形态、以及为什么这样设计更适合纯静态部署。
+
+### 1) 笔记树索引：从 `notes/` 到可被前端读取的数据
+
+- **目标**：让前端在运行时能够快速拿到“有哪些文件/目录、每个文件的标题/标签/时间”等结构化信息，而不需要后端。
+- **实现方式**：构建前置脚本扫描 `notes/`，生成索引 JSON，并把笔记镜像复制到 `public/notes/`，供浏览器 `fetch()` 读取。
+- **关键脚本**：`scripts/generate-tree.ts`
+- **产物**：`public/data/files.json`、`public/notes/**`
+
+### 2) 源码查看器：静态站内“读源码”的实现
+
+- **目标**：在网站里查看本项目的 Vue 组件/工具函数源码，并配合“预置笔记”做讲解。
+- **实现方式**：
+  - 构建前置脚本把需要展示的源码复制/生成到 `public/raw/`（避免线上直接访问 `src/`）。
+  - 前端按“虚拟文件系统”读取这些 raw 文本，并用预置的 notes 对关键文件做注释与导航。
+- **关键脚本**：`scripts/generate-raw.ts`
+- **关键组件**：`src/components/lab/SourceCodeViewer.vue`
+- **预置笔记数据**：`public/data/source-notes-preset.json`
+
+### 3) Markdown 渲染：目录、代码高亮与交互
+
+- **目标**：在纯前端渲染 Markdown，同时具备目录（ToC）、代码高亮、链接/图片等基础能力。
+- **实现方式**：在客户端把 Markdown 解析为 HTML，再叠加目录生成与必要的安全处理（避免注入）。
+- **相关模块**：`src/composables/useContentRenderer.ts`、`src/utils/sanitize.ts`
+
+### 4) 全文搜索：为什么要“先生成索引”
+
+- **目标**：不依赖后端、在浏览器内快速全文检索，并能高亮命中片段。
+- **实现方式**：使用 MiniSearch 在客户端建立索引；配合预处理的元数据与文章内容加载策略降低首屏成本。
+- **相关模块**：`src/composables/useSearch.ts`、`src/stores/articleStore.ts`
+
+### 5) 发布工作台：纯静态环境下的“写作/上传/发布”
+
+- **目标**：不跑服务端也能在网页端发布文章（含图片）。
+- **实现方式**：通过 GitHub API 在浏览器端完成写入；当用户无写权限时走 Fork + PR，避免直接写上游仓库。
+- **相关模块**：`src/composables/useGitHubPublish.ts`
+
+### 6) Token 加密与备份：在浏览器侧做“安全的最低保障”
+
+- **目标**：Token 不以明文落地；备份时避免把 Token 带走；尽量减少误泄漏风险。
+- **实现方式**：AES-256-GCM 加密 + 基于浏览器指纹派生密钥；备份流程明确排除 Token。
+- **相关模块**：`src/composables/useTokenSecurity.ts`、`src/composables/useBackup.ts`
+
+---
+
+## 🧩 静态部署的取舍
+
+为了能在 GitHub Pages 这种纯静态托管里“零后端上线”，项目做了这些取舍：
+
+- **把数据变成静态资源**：笔记索引、raw 源码、音乐/壁纸清单都在构建阶段生成到 `public/`，运行时只需要 `fetch()`。
+- **写入能力转移到第三方 API**：发布/图片上传/云端备份依赖 GitHub API（用 Token 授权），站点自身不提供写接口。
+- **权限与协作用 PR 兜底**：对无写权限用户，通过 Fork + PR 实现“可贡献但不可直接写上游”的协作模式。
+- **主要限制**：
+  - Token 存在于浏览器侧，即便加密也无法达到服务端级别的防护（XSS、防扩展窃取等需要额外策略）。
+  - GitHub API 有速率限制与权限边界，且 PR 流程意味着“发布不一定即时生效”（需合并）。
+  - 图片上传/大文件的体验受 GitHub 生态限制（大小、速度、可用性）。
+
+---
+
+## 🚀 改造成前后端项目（去除 Fork+PR 依赖）
+
+如果你希望彻底摆脱“提交到 GitHub → PR 合并 → Actions 构建”的迂回链路，可以把“写入/鉴权/存储”收回到自己的后端，前端继续保持 SPA。
+
+### 目标能力
+
+- 网页端直接“保存/发布”文章，**即时生效**（无需 PR、无需等待 CI 合并）。
+- 图片上传走自有存储（本地对象存储、OSS/S3、或任意 CDN）。
+- 账号体系可选：GitHub OAuth、邮箱密码、或内网账号。
+- 备份从“GitHub 仓库”升级为“数据库快照/对象存储版本”。
+
+### 推荐的最小改造方案（保持现有目录习惯）
+
+- **后端新增服务**（Node/NestJS、Go、Spring 都可）：
+  - `POST /auth/*`：登录/刷新（可接 GitHub OAuth 或自建账号）
+  - `GET /notes/tree`：返回目录树与元数据（替代 `public/data/files.json`）
+  - `GET /notes/:id`：按需拉取 Markdown（替代 `public/notes/**`）
+  - `POST /notes` / `PUT /notes/:id`：创建/更新文章
+  - `POST /upload`：图片上传，返回可访问 URL
+  - `POST /backup` / `GET /backup/:id`：备份与恢复
+- **存储层**：
+  - Markdown 内容：数据库（PostgreSQL/MySQL）或对象存储（按路径存）
+  - 索引：数据库表（title/tags/time/path），或定时重建缓存
+  - 图片：对象存储 + CDN
+- **前端改动点**：
+  - 把 “发布工作台” 的 GitHub API 写入替换为调用后端 API。
+  - 保留 `notes/` 目录与构建脚本作为“导入工具”，但线上读写走后端。
+  - 评论系统可继续用 Giscus，也可替换为自建评论 API。
+
+### 迁移路径建议
+
+1. 先把“图片上传”从 GitHub 切到后端（收益最大、改动可控）。
+2. 再把“文章写入”切到后端（去除 Fork+PR 依赖的核心一步）。
+3. 最后把“树索引/全文搜索索引”放到后端或由后端生成并缓存（改善大数据量性能）。
 
 ---
 

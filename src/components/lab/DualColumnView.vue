@@ -89,8 +89,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { FileNode } from '../../types'
+import { NodeType } from '../../types'
 import PanelContent from './PanelContent.vue'
 
 const props = defineProps<{
@@ -99,6 +100,7 @@ const props = defineProps<{
   rightPanel: 'notes' | 'lab' | 'source'
   labDashboardTab?: string
   labFolder: FileNode | null
+  openNotePath?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -119,4 +121,23 @@ const panelOptions = computed(() => [
 
 const selectedLeftNote = ref<FileNode | null>(null)
 const selectedRightNote = ref<FileNode | null>(null)
+
+const findByPath = (node: FileNode | null, targetPath: string): FileNode | null => {
+  if (!node) return null
+  if (node.path === targetPath) return node
+  if (!node.children) return null
+  for (const child of node.children) {
+    const found = findByPath(child, targetPath)
+    if (found) return found
+  }
+  return null
+}
+
+watch(() => props.openNotePath, (path) => {
+  if (!path) return
+  const node = findByPath(props.labFolder, path)
+  if (!node || node.type !== NodeType.FILE) return
+  if (props.leftPanel === 'notes') selectedLeftNote.value = node
+  if (props.rightPanel === 'notes') selectedRightNote.value = node
+}, { immediate: true })
 </script>

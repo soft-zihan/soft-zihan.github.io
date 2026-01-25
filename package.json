@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@types/dompurify": "^3.0.5",
+    "@vue/compiler-sfc": "^3.5.13",
     "dompurify": "^3.3.1",
     "highlight.js": "^11.9.0",
     "jszip": "^3.10.1",

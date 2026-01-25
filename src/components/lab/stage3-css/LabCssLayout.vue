@@ -111,15 +111,7 @@
           <!-- Visual Demo -->
           <div class="p-4 rounded-2xl border border-gray-200 dark:border-gray-700">
             <h4 class="font-bold text-gray-700 dark:text-gray-200 mb-3">{{ isZh ? '预览' : 'Preview' }}</h4>
-            <div 
-              class="h-40 bg-gray-100 dark:bg-gray-900 rounded-lg p-2 flex transition-all"
-              :style="{ 
-                flexDirection: flexDemo.direction,
-                justifyContent: flexDemo.justify,
-                alignItems: flexDemo.align,
-                gap: `${flexDemo.gap}px`
-              }"
-            >
+            <div class="h-40 bg-gray-100 dark:bg-gray-900 rounded-lg p-2 flex transition-all" :style="flexPreviewStyle">
               <div class="w-12 h-12 bg-sakura-400 rounded-lg flex items-center justify-center text-white font-bold">1</div>
               <div class="w-16 h-10 bg-purple-400 rounded-lg flex items-center justify-center text-white font-bold">2</div>
               <div class="w-10 h-14 bg-blue-400 rounded-lg flex items-center justify-center text-white font-bold">3</div>
@@ -346,7 +338,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive, onMounted, onUnmounted } from 'vue';
+import { computed, ref, reactive, onMounted, onUnmounted, type CSSProperties } from 'vue';
 
 const props = defineProps<{ lang: 'en' | 'zh' }>();
 const isZh = computed(() => props.lang === 'zh');
@@ -422,6 +414,13 @@ items-start     /* 顶部对齐 */
 items-center    /* 垂直居中 */
 items-end       /* 底部对齐 */
 items-stretch   /* 拉伸填充 */`);
+
+const flexPreviewStyle = computed<CSSProperties>(() => ({
+  flexDirection: flexDemo.direction as any,
+  justifyContent: flexDemo.justify as any,
+  alignItems: flexDemo.align as any,
+  gap: `${flexDemo.gap}px`
+}));
 
 // Tab 2: Grid
 const gridDemo = reactive({

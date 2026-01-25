@@ -197,7 +197,7 @@ import { computed, ref, watchEffect } from 'vue'
 const props = defineProps<{ lang: 'en' | 'zh' }>()
 const isZh = computed(() => props.lang === 'zh')
 
-const tabs = computed(() => [
+const tabs = computed<{ id: 'pipeline' | 'bfc' | 'selectors'; label: string }[]>(() => [
   { id: 'pipeline', label: isZh.value ? '🎛️ 回流/重绘/合成' : '🎛️ Reflow/Paint/Composite' },
   { id: 'bfc', label: isZh.value ? '🧱 BFC 与折叠' : '🧱 BFC & Collapse' },
   { id: 'selectors', label: isZh.value ? '🧬 选择器匹配' : '🧬 Selector Matching' }
@@ -205,7 +205,7 @@ const tabs = computed(() => [
 
 const activeTab = ref<'pipeline' | 'bfc' | 'selectors'>('pipeline')
 
-const demos = computed(() => [
+const demos = computed<{ id: 'layout' | 'paint' | 'composite'; title: string; cost: string; desc: string }[]>(() => [
   {
     id: 'layout',
     title: isZh.value ? '改变 width（触发布局）' : 'Change width (layout)',

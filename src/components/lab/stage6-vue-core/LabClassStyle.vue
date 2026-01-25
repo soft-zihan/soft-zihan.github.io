@@ -68,7 +68,7 @@
          
          <!-- Visual Result -->
          <div class="flex-1 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center relative overflow-hidden min-h-[200px]">
-            <div class="absolute top-2 left-2 text-[10px] text-gray-400 font-bold uppercase">{{ t.lab_class_result }}</div>
+            <div class="absolute top-2 left-2 text-[10px] font-mono px-2 py-1 rounded bg-white/70 dark:bg-gray-900/60 border border-gray-200/60 dark:border-gray-700/60 text-gray-600 dark:text-gray-300">{{ t.lab_class_result }}</div>
             
             <div 
                class="w-32 h-32 flex items-center justify-center font-bold text-lg shadow-xl transition-all duration-300 border-4"

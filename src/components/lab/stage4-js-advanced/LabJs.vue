@@ -114,27 +114,122 @@ const logs = ref<{msg: string, type: 'log' | 'error'}[]>([]);
 // REPL Logic
 const runCode = () => {
     logs.value = [];
-    
-    // Create a sandbox console
-    const sandboxConsole = {
-        log: (...args: any[]) => {
-            logs.value.push({ 
-                msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '), 
-                type: 'log' 
-            });
-        },
-        error: (msg: any) => {
-             logs.value.push({ msg: String(msg), type: 'error' });
+    const env: Record<string, unknown> = {};
+
+    const splitArgs = (input: string) => {
+        const out: string[] = [];
+        let cur = '';
+        let quote: '"' | "'" | null = null;
+        let depth = 0;
+        for (let i = 0; i < input.length; i++) {
+            const ch = input[i];
+            if (quote) {
+                cur += ch;
+                if (ch === quote && input[i - 1] !== '\\') quote = null;
+                continue;
+            }
+            if (ch === '"' || ch === "'") {
+                quote = ch;
+                cur += ch;
+                continue;
+            }
+            if (ch === '[' || ch === '{' || ch === '(') depth++;
+            if (ch === ']' || ch === '}' || ch === ')') depth = Math.max(0, depth - 1);
+            if (ch === ',' && depth === 0) {
+                out.push(cur.trim());
+                cur = '';
+                continue;
+            }
+            cur += ch;
         }
+        if (cur.trim()) out.push(cur.trim());
+        return out;
     };
 
+    const parseArrayNumbers = (raw: string) => {
+        const m = /^\[\s*([^\]]*)\s*\]$/.exec(raw.trim());
+        if (!m) return null;
+        const inner = m[1].trim();
+        if (!inner) return [];
+        const parts = inner.split(',').map(s => s.trim()).filter(Boolean);
+        const nums = parts.map(p => Number(p));
+        if (nums.some(n => !Number.isFinite(n))) return null;
+        return nums;
+    };
+
+    const parseStringLiteral = (raw: string) => {
+        const m = /^(["'])([\s\S]*)\1$/.exec(raw.trim());
+        if (!m) return null;
+        return m[2];
+    };
+
+    const evalAtom = (raw: string): unknown => {
+        const s = raw.trim();
+        if (s in env) return env[s];
+        if (s === 'null') return null;
+        if (s === 'undefined') return undefined;
+        if (s === 'true') return true;
+        if (s === 'false') return false;
+        const arr = parseArrayNumbers(s);
+        if (arr !== null) return arr;
+        const str = parseStringLiteral(s);
+        if (str !== null) return str;
+        if (/^[-+]?\d+(\.\d+)?$/.test(s)) return Number(s);
+        return undefined;
+    };
+
+    const evalExpr = (raw: string): unknown => {
+        const s = raw.trim();
+        const typeofMatch = /^typeof\s+(.+)$/.exec(s);
+        if (typeofMatch) return typeof evalAtom(typeofMatch[1]);
+
+        const eqMatch = /^(.+?)\s*(==|===)\s*(.+)$/.exec(s);
+        if (eqMatch) {
+            const left = evalAtom(eqMatch[1]);
+            const right = evalAtom(eqMatch[3]);
+            return eqMatch[2] === '===' ? left === right : (left as any) == (right as any);
+        }
+
+        return evalAtom(s);
+    };
+
+    const pushLog = (...args: unknown[]) => {
+        logs.value.push({
+            msg: args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' '),
+            type: 'log'
+        });
+    };
+
+    const pushError = (msg: unknown) => {
+        logs.value.push({ msg: String(msg), type: 'error' });
+    };
+
+    const lines = jsCode.value.replace(/\r\n/g, '\n').split('\n');
     try {
-        // Safe-ish eval using Function constructor
-        // We inject the mocked console
-        const func = new Function('console', jsCode.value);
-        func(sandboxConsole);
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+            if (line.startsWith('//')) continue;
+
+            const assign = /^const\s+([A-Za-z_$][\w$]*)\s*=\s*(.+?);?$/.exec(line);
+            if (assign) {
+                const name = assign[1];
+                const rhs = assign[2];
+                env[name] = evalExpr(rhs);
+                continue;
+            }
+
+            const logCall = /^console\.log\((.*)\);?$/.exec(line);
+            if (logCall) {
+                const args = splitArgs(logCall[1]).map(a => evalExpr(a));
+                pushLog(...args);
+                continue;
+            }
+
+            pushError(`Unsupported: ${line}`);
+        }
     } catch (e: any) {
-        logs.value.push({ msg: e.message, type: 'error' });
+        pushError(e?.message || e);
     }
 };
 

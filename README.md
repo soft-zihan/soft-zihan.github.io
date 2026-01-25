@@ -30,6 +30,9 @@
 - [🔐 Security &amp; Data](#-security--data)
 - [🤝 Contribution Guide](#-contribution-guide)
 - [📜 Changelog](#-changelog)
+- [🔬 Implementation Deep Dive](#-implementation-deep-dive)
+- [🧩 Trade-offs for Static Deployment](#-trade-offs-for-static-deployment)
+- [🚀 Migrating to a Full-Stack App (No Fork+PR Dependency)](#-migrating-to-a-full-stack-app-no-forkpr-dependency)
 
 ---
 
@@ -186,13 +189,13 @@ sakura-notes/
 │   ├── 📁 utils/            # Utility functions
 │   │   ├── fileUtils.ts
 │   │   └── sanitize.ts
-│   │
-│   └── 📁 data/             # Preset data
-│       └── source-notes-preset.json
 │
 ├── 📁 public/              # Static assets (generated data)
 │   ├── 📁 data/
-│   │   └── files.json
+│   │   ├── files.json
+│   │   ├── music.json
+│   │   ├── wallpapers.json
+│   │   └── source-notes-preset.json
 │   └── 📁 notes/
 │
 ├── 📄 vite.config.ts      # Vite build configuration
@@ -221,10 +224,11 @@ sakura-notes/
 ```bash
 npm run build
 # This triggers:
-# 1. generate-tree.js  → Scans notes/ to create public/files.json
-# 2. generate-raw.js   → Generates source files for the viewer
-# 3. generate-music.js → Scans public/music/ for music.json
-# 4. vite build        → Bundles the Vue application
+# 1. scripts/generate-tree.ts         → Scans notes/ to create public/data/files.json
+# 2. scripts/generate-raw.ts          → Generates source files for Source Viewer (/public/raw)
+# 3. scripts/generate-music.ts        → Scans public/music/ for music.json
+# 4. scripts/generate-wallpapers.ts   → Scans wallpapers to create wallpapers.json
+# 5. vite build                       → Bundles the Vue application
 ```
 
 ---
@@ -317,6 +321,104 @@ The publishing feature requires a Personal Access Token:
 - 📝 Basic Markdown note system.
 - 🌐 Multi-language support.
 - 📱 Responsive design.
+
+---
+
+## 🔬 Implementation Deep Dive
+
+This section explains the critical paths that make the project work as a fully static site: what gets generated at build time, what is loaded at runtime, and why the design is structured this way.
+
+### 1) Notes tree index: from `notes/` to runtime-consumable data
+
+- **Goal**: Let the frontend quickly know what files/folders exist and their metadata, without a backend.
+- **How**: A build-prep script scans `notes/`, generates an index JSON, and mirrors Markdown files into `public/notes/` so the browser can `fetch()` them.
+- **Key script**: `scripts/generate-tree.ts`
+- **Outputs**: `public/data/files.json`, `public/notes/**`
+
+### 2) Source viewer: reading project source code inside the site
+
+- **Goal**: Display this project’s own Vue components / utilities as readable source code in the Learning Lab, with “preset notes” that guide the reader.
+- **How**:
+  - A build-prep script exports selected source files into `public/raw/` (so production doesn’t need direct access to `src/`).
+  - The frontend loads these raw text files and overlays preset notes for navigation and explanations.
+- **Key script**: `scripts/generate-raw.ts`
+- **Key component**: `src/components/lab/SourceCodeViewer.vue`
+- **Preset notes data**: `public/data/source-notes-preset.json`
+
+### 3) Markdown rendering: ToC, code highlighting, and safety
+
+- **Goal**: Render Markdown client-side with a Table of Contents, syntax highlighting, and safe HTML.
+- **How**: Parse Markdown into HTML, generate ToC, and sanitize output to reduce injection risks.
+- **Relevant modules**: `src/composables/useContentRenderer.ts`, `src/utils/sanitize.ts`
+
+### 4) Full-text search: why indexing matters
+
+- **Goal**: Provide fast in-browser search with hit highlighting, without server-side search.
+- **How**: Use MiniSearch on the client, combined with metadata and loading strategies to keep initial load reasonable.
+- **Relevant modules**: `src/composables/useSearch.ts`, `src/stores/articleStore.ts`
+
+### 5) Publishing workbench: “write + upload + publish” in a static world
+
+- **Goal**: Publish notes directly from the browser, including image uploads, without running your own backend.
+- **How**: Use GitHub APIs for write operations; for users without write access, fall back to Fork + PR so contributions still work.
+- **Relevant module**: `src/composables/useGitHubPublish.ts`
+
+### 6) Token security and backups: best-effort protection in the browser
+
+- **Goal**: Avoid storing GitHub Tokens in plaintext and never include them in backups.
+- **How**: AES-256-GCM encryption with keys derived from a browser fingerprint; backup flow explicitly excludes tokens.
+- **Relevant modules**: `src/composables/useTokenSecurity.ts`, `src/composables/useBackup.ts`
+
+---
+
+## 🧩 Trade-offs for Static Deployment
+
+To run on GitHub Pages (or any static hosting) with no backend, the project makes these trade-offs:
+
+- **Make runtime data a build artifact**: notes index, raw source copies, music/wallpaper lists are generated into `public/` during build time.
+- **Outsource write operations to third-party APIs**: publishing/image uploads/cloud backup rely on GitHub APIs (authorized by a token).
+- **Use PR as a collaboration boundary**: when a user lacks write access, Fork + PR enables contribution while protecting the upstream repo.
+- **Key limitations**:
+  - Tokens exist in the browser; encryption helps, but it is not the same security posture as a server-side secret.
+  - GitHub APIs have rate limits and permission boundaries; PR-based publishing is not instantly live (merge required).
+  - Upload size/latency/availability are bounded by the GitHub ecosystem.
+
+---
+
+## 🚀 Migrating to a Full-Stack App (No Fork+PR Dependency)
+
+If you want to remove the “commit → PR → CI build → deploy” loop entirely, move authentication + write operations + storage into your own backend, while keeping the frontend as an SPA.
+
+### Target capabilities
+
+- Publish notes instantly from the web UI (no PR, no merge gate).
+- Upload images to your own storage (local object storage / S3 / OSS + CDN).
+- Choose an auth model: GitHub OAuth, email/password, or internal accounts.
+- Backups become database snapshots / object-storage versions rather than GitHub repo commits.
+
+### Minimal backend design (keep the current UX and mental model)
+
+- **Backend API service** (Node/NestJS, Go, Spring, etc.):
+  - `POST /auth/*`: login/refresh (GitHub OAuth or your own auth)
+  - `GET /notes/tree`: directory tree + metadata (replaces `public/data/files.json`)
+  - `GET /notes/:id`: fetch Markdown on demand (replaces `public/notes/**`)
+  - `POST /notes` / `PUT /notes/:id`: create/update notes
+  - `POST /upload`: image upload, return public URL
+  - `POST /backup` / `GET /backup/:id`: backup/restore
+- **Storage**:
+  - Markdown: DB rows (PostgreSQL/MySQL) or object storage (by path)
+  - Index: DB table (title/tags/time/path) or cached materialized views
+  - Images: object storage + CDN
+- **Frontend changes**:
+  - Replace GitHub write calls in the workbench with backend API calls.
+  - Keep `notes/` + scripts as import/export tooling, but production reads/writes go through the backend.
+  - Comments can remain Giscus or be replaced with a backend comment service.
+
+### Suggested migration order
+
+1. Move image uploads to the backend first (high impact, contained changes).
+2. Move note create/update to the backend (removes Fork+PR dependency).
+3. Move indexing and search indexing to the backend/caches for scale.
 
 ---
 

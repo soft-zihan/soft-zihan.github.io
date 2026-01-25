@@ -12,9 +12,9 @@ export function useFilteredFiles() {
   const { isFileVisible, collectAllTags } = useFileVisibility(articleStore);
 
   const currentLangRoot = computed(() => {
-    // appStore.fileSystem is array
-    const root = appStore.fileSystem.find((node: FileNode) => node.name === appStore.lang);
-    return root ? root.children : [];
+    const root = appStore.fileSystem.find((node: FileNode) => node.type === NodeType.DIRECTORY && node.name === appStore.lang);
+    if (root?.children?.length) return root.children;
+    return appStore.fileSystem.filter((node: FileNode) => !(node.type === NodeType.DIRECTORY && node.path === 'source'));
   });
 
   const filteredFileSystem = computed(() => {

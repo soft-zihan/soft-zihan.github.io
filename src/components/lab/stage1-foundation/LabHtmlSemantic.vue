@@ -150,10 +150,10 @@
             <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-xl border border-blue-100 dark:border-blue-800 text-xs text-blue-800 dark:text-blue-300">
               <strong>💡 提示：</strong>
               <ul class="list-disc list-inside mt-2 space-y-1">
-                <li><code>&lt;header&gt;</code> 通常包含 Logo 和导航</li>
-                <li><code>&lt;main&gt;</code> 是页面的核心内容</li>
-                <li><code>&lt;aside&gt;</code> 是与主要内容相关但独立的部分</li>
-                <li><code>&lt;nav&gt;</code> 用于主要导航链接</li>
+                <li><code class="bg-blue-100/70 dark:bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-200/70 dark:border-blue-800/40 font-mono text-[11px]">&lt;header&gt;</code> 通常包含 Logo 和导航</li>
+                <li><code class="bg-blue-100/70 dark:bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-200/70 dark:border-blue-800/40 font-mono text-[11px]">&lt;main&gt;</code> 是页面的核心内容</li>
+                <li><code class="bg-blue-100/70 dark:bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-200/70 dark:border-blue-800/40 font-mono text-[11px]">&lt;aside&gt;</code> 是与主要内容相关但独立的部分</li>
+                <li><code class="bg-blue-100/70 dark:bg-blue-900/30 px-1.5 py-0.5 rounded border border-blue-200/70 dark:border-blue-800/40 font-mono text-[11px]">&lt;nav&gt;</code> 用于主要导航链接</li>
               </ul>
             </div>
           </div>

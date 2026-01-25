@@ -51,7 +51,7 @@ import { computed, ref } from 'vue'
 const props = defineProps<{ lang: 'en' | 'zh' }>()
 const isZh = computed(() => props.lang === 'zh')
 
-const modes = computed(() => [
+const modes = computed<{ id: 'development' | 'production'; label: string }[]>(() => [
   { id: 'development', label: isZh.value ? '开发模式' : 'Development' },
   { id: 'production', label: isZh.value ? '生产模式' : 'Production' }
 ])

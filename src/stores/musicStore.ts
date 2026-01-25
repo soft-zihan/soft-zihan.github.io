@@ -25,7 +25,7 @@ export const useMusicStore = defineStore('music', () => {
   const duration = ref(0)
   const volume = ref(0.7)
   const isMuted = ref(false)
-  const playMode = ref<'sequence' | 'single' | 'shuffle'>('sequence') // Removed 'loop'
+  const playMode = ref<'sequence' | 'loop' | 'single' | 'shuffle'>('sequence')
   const showMusicPlayer = ref(false)
   const lyrics = ref<LyricLine[]>([])
   const currentLyricIndex = ref(-1)
@@ -137,7 +137,7 @@ export const useMusicStore = defineStore('music', () => {
   }
   
   function cyclePlayMode() {
-    const modes: typeof playMode.value[] = ['sequence', 'single', 'shuffle'] // Removed 'loop'
+    const modes: typeof playMode.value[] = ['sequence', 'loop', 'single', 'shuffle']
     const currentIdx = modes.indexOf(playMode.value)
     playMode.value = modes[(currentIdx + 1) % modes.length]
   }

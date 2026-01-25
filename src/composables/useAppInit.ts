@@ -2,7 +2,6 @@ import { onMounted, nextTick, type Ref } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import { useArticleStore } from '../stores/articleStore';
 import { useMusicStore } from '../stores/musicStore';
-import { useSearch } from './useSearch';
 import { usePoem } from './usePoem';
 import { useFilteredFiles } from './useFilteredFiles';
 import { fetchFileContent, findNodeByPath } from '../utils/fileUtils';
@@ -12,15 +11,18 @@ import type { FileNode } from '../types';
 export function useAppInit(
   lang: Ref<string>,
   loadRandomPoem: () => void,
-  openFile: (file: FileNode) => Promise<void>,
-  openFolder: (folder: FileNode) => void,
+  openFile: (file: FileNode, options?: { syncUrl?: boolean }) => Promise<void>,
+  openFolder: (folder: FileNode, options?: { syncUrl?: boolean }) => void,
   openCodeByPath: (path: string) => Promise<void>,
-  openLabDashboard: (tab?: string) => void
+  openLabDashboard: (tab?: string, options?: { syncUrl?: boolean }) => void,
+  searchApi: {
+    initSearchIndex: (fs: FileNode[], lang: 'en' | 'zh') => Promise<void>
+    setFetchFunction: (fn: (file: FileNode) => Promise<string>) => void
+  }
 ) {
   const appStore = useAppStore();
   const articleStore = useArticleStore();
   const musicStore = useMusicStore();
-  const { initSearchIndex, setFetchFunction } = useSearch();
   const { collectAllTags } = useFilteredFiles();
 
   const initFileSystem = async () => {
@@ -43,7 +45,7 @@ export function useAppInit(
 
         // Lab Route
         if (lab === 'dashboard') {
-          openLabDashboard(tab || undefined);
+          openLabDashboard(tab || undefined, { syncUrl: false });
         }
 
         // File/Folder Route
@@ -54,8 +56,8 @@ export function useAppInit(
           if (node) {
             appStore.viewMode = 'files';
 
-            if (node.type === NodeType.FILE) openFile(node);
-            else openFolder(node);
+            if (node.type === NodeType.FILE) openFile(node, { syncUrl: false });
+            else openFolder(node, { syncUrl: false });
           } else {
             console.warn("Path not found in file system:", targetPath);
           }
@@ -70,9 +72,11 @@ export function useAppInit(
       appStore.loading = false;
 
       if (appStore.fileSystem.length > 0) {
-        const root = appStore.fileSystem.find((node: FileNode) => node.name === lang.value);
-        const currentLangRoot = root ? root.children : [];
-        await initSearchIndex(appStore.fileSystem, lang.value);
+        const root = appStore.fileSystem.find((node: FileNode) => node.type === NodeType.DIRECTORY && node.name === lang.value);
+        const currentLangRoot = root?.children?.length
+          ? root.children
+          : appStore.fileSystem.filter((node: FileNode) => !(node.type === NodeType.DIRECTORY && node.path === 'source'));
+        await searchApi.initSearchIndex(appStore.fileSystem, lang.value as 'en' | 'zh');
         collectAllTags(currentLangRoot || [], articleStore.setAvailableTags);
       }
     }
@@ -81,7 +85,7 @@ export function useAppInit(
   onMounted(async () => {
     loadRandomPoem();
     musicStore.loadPlaylist();
-    setFetchFunction(fetchFileContent);
+    searchApi.setFetchFunction(fetchFileContent);
     await initFileSystem();
   });
 }

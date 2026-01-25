@@ -64,7 +64,7 @@
       <div class="flex flex-col gap-4">
          <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest">Page View</h4>
          <div class="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 border-dashed rounded-xl flex items-center justify-center relative overflow-hidden min-h-[240px]">
-            <div class="absolute top-2 right-2 text-[10px] text-gray-400">#app-container</div>
+            <div class="absolute top-2 right-2 text-[10px] font-mono px-2 py-1 rounded bg-white/70 dark:bg-gray-900/60 border border-gray-200/60 dark:border-gray-700/60 text-gray-600 dark:text-gray-300">#app-container</div>
             
             <!-- The Visual Component -->
             <transition name="pop">

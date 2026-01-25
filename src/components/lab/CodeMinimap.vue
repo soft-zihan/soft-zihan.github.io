@@ -38,6 +38,7 @@ const props = defineProps<{
 
 const minimapContainer = ref<HTMLElement | null>(null)
 let isDragging = false
+const tick = ref(0)
 
 const scale = computed(() => {
   const totalLines = props.lines.length
@@ -46,7 +47,8 @@ const scale = computed(() => {
   return 0.6
 })
 
-const viewportStyle = computed(() => {
+const viewportStyleReactive = computed(() => {
+  tick.value
   if (!props.codeContainer) return {}
   const container = props.codeContainer
   const scrollTop = container.scrollTop
@@ -67,47 +69,32 @@ const viewportStyle = computed(() => {
   }
 })
 
-// Force update when container scrolls
-const update = () => {
-  // Trigger reactivity by accessing a dummy ref if needed, 
-  // but here viewportStyle depends on props.codeContainer properties which are not reactive by themselves unless we listen to scroll.
-  // The parent should trigger update or we listen here.
-}
-
-// We need to listen to scroll event on codeContainer
-// But we can't easily attach listener to prop element in setup unless we watch it.
-watch(() => props.codeContainer, (el, oldEl) => {
-  if (oldEl) oldEl.removeEventListener('scroll', update)
-  if (el) el.addEventListener('scroll', update)
-}, { immediate: true })
-
-onUnmounted(() => {
-  if (props.codeContainer) {
-    props.codeContainer.removeEventListener('scroll', update)
-  }
-})
-
-// Helper to force re-evaluation of computed properties that depend on DOM
-const tick = ref(0)
 const forceUpdate = () => {
   tick.value++
 }
 
-// Override computed to depend on tick
-const viewportStyleReactive = computed(() => {
-  const _ = tick.value // dependency
-  return viewportStyle.value
-})
-
-// Re-implement update to increment tick
 const handleScroll = () => {
   forceUpdate()
 }
 
 watch(() => props.codeContainer, (el, oldEl) => {
   if (oldEl) oldEl.removeEventListener('scroll', handleScroll)
-  if (el) el.addEventListener('scroll', handleScroll)
+  if (el) el.addEventListener('scroll', handleScroll, { passive: true })
+  forceUpdate()
 }, { immediate: true })
+
+watch(() => props.lines.length, () => {
+  forceUpdate()
+})
+
+onMounted(() => {
+  window.addEventListener('resize', forceUpdate, { passive: true })
+  forceUpdate()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', forceUpdate)
+})
 
 
 const handleClick = (e: MouseEvent) => {

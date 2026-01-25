@@ -15,12 +15,28 @@ export function useKeyboardShortcuts() {
     
     // Escape to close modals
     if (e.key === 'Escape') {
-      appStore.showSearch = false;
-      musicStore.showMusicPlayer = false;
-      appStore.showWriteEditor = false;
-      appStore.sidebarOpen = false;
-      appStore.showSettings = false;
-      appStore.showDownloadModal = false;
+      const hasOverlay =
+        appStore.showSearch ||
+        appStore.showSettings ||
+        appStore.showDownloadModal ||
+        appStore.showWriteEditor ||
+        musicStore.showMusicPlayer
+
+      if (hasOverlay) {
+        appStore.showSearch = false;
+        musicStore.showMusicPlayer = false;
+        appStore.showWriteEditor = false;
+        appStore.showSettings = false;
+        appStore.showDownloadModal = false;
+        return
+      }
+
+      if (appStore.rightSidebarOpen) {
+        appStore.rightSidebarOpen = false
+        return
+      }
+
+      appStore.toggleSidebar()
     }
   };
 

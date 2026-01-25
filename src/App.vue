@@ -58,7 +58,6 @@
       :get-article-views="getArticleViews"
       :get-article-comments="getArticleComments"
       :on-content-click="handleContentClickEvent"
-      :markdown-viewer-ref="markdownViewerRef"
       @update:labDashboardTab="handleLabTabChange"
       @tab-change="handleLabTabChange"
       @select-tool="selectTool"
@@ -67,6 +66,7 @@
       @update-comment-count="handleCommentCountUpdate"
       @load-random-poem="loadRandomPoem"
       @scroll-container-change="handleScrollContainerChange"
+      @markdown-viewer-change="handleMarkdownViewerChange"
       @open-search="appStore.showSearch = true; if (layoutRef?.isMobile) appStore.sidebarOpen = false; appStore.setRightSidebarOpen(false)"
       @open-settings="appStore.showSettings = true; if (layoutRef?.isMobile) appStore.sidebarOpen = false; appStore.setRightSidebarOpen(false)"
       @open-music="musicStore.showMusicPlayer = true; if (layoutRef?.isMobile) appStore.sidebarOpen = false; appStore.setRightSidebarOpen(false)"
@@ -84,6 +84,7 @@
         :right-panel="dualColumnRight"
         :lab-dashboard-tab="labDashboardTab"
         :lab-folder="labFolder"
+        :open-note-path="dualColumnOpenNotePath"
         @update:left-panel="dualColumnLeft = $event"
         @update:right-panel="dualColumnRight = $event"
         @tab-change="handleLabTabChange"
@@ -179,6 +180,8 @@ import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts';
 import { useAppInit } from './composables/useAppInit';
 import { useTheme } from './composables/useTheme';
 import { useCodeOpener } from './composables/useCodeOpener';
+import { useAppSearchIntegration } from './composables/useAppSearchIntegration';
+import { LAB_TABS } from './labs/labCatalog'
 
 // =====================
 // Stores
@@ -246,6 +249,16 @@ const { filteredFileSystem, filteredFlatFiles, labFolder, collectAllTags } = use
 
 useKeyboardShortcuts();
 
+const { handleSearchSelect } = useAppSearchIntegration({
+  appStore,
+  lang: lang as any,
+  t: t as any,
+  openFile,
+  initSearchIndex,
+  updateLanguage,
+  showToast
+})
+
 // =====================
 // Computed
 // =====================
@@ -303,6 +316,28 @@ const handleThemePanelChange = (open: boolean) => {
 const dualColumnMode = ref(false);
 const dualColumnLeft = ref<'notes' | 'lab' | 'source'>('notes');
 const dualColumnRight = ref<'notes' | 'lab' | 'source'>('lab');
+const dualColumnOpenNotePath = ref<string | null>(null);
+
+const handleOpenLabNoteEvent = (evt: Event) => {
+  const e = evt as CustomEvent<{ path?: string }>
+  const path = e.detail?.path
+  if (!path) return
+  appStore.viewMode = 'lab'
+  appStore.currentTool = 'dashboard'
+  dualColumnMode.value = true
+  dualColumnLeft.value = 'notes'
+  dualColumnRight.value = 'lab'
+  dualColumnOpenNotePath.value = path
+}
+
+const handleOpenLabSourceEvent = () => {
+  appStore.viewMode = 'lab'
+  appStore.currentTool = 'dashboard'
+  dualColumnMode.value = true
+  dualColumnLeft.value = 'lab'
+  dualColumnRight.value = 'source'
+  dualColumnOpenNotePath.value = null
+}
 
 const layoutRef = ref();
 
@@ -313,23 +348,18 @@ const selectTool = (tool: string) => {
   dualColumnMode.value = false;
 };
 
-const labDashboardTab = ref<string>('project-builder');
+const labDashboardTab = ref<string>('foundation');
 
 // Lab tabs
 const labTabs = computed(() => {
   const isZh = lang.value === 'zh'
-  return [
-    { id: 'project-builder', shortLabel: isZh ? 'Tlias 主线' : 'Tlias Path', icon: '🏗️', noteNum: 0, tag: 'Tlias' },
-    { id: 'foundation', shortLabel: isZh ? '网页基础' : 'Foundation', icon: '🧱', noteNum: 1, disabled: !learningStore.canAccessStage('foundation') },
-    { id: 'js-basics', shortLabel: isZh ? 'JS 基础' : 'JS Basics', icon: '⚡', noteNum: 2, disabled: !learningStore.canAccessStage('js-basics') },
-    { id: 'css-layout', shortLabel: isZh ? 'CSS 布局' : 'CSS Layout', icon: '🎨', noteNum: 1, disabled: !learningStore.canAccessStage('css-layout') },
-    { id: 'js-advanced', shortLabel: isZh ? 'JS 进阶/TS' : 'JS Adv/TS', icon: '🛡️', noteNum: 4, disabled: !learningStore.canAccessStage('js-advanced') },
-    { id: 'engineering', shortLabel: isZh ? '工程化' : 'Engineering', icon: '🚀', noteNum: 4, disabled: !learningStore.canAccessStage('engineering') },
-    { id: 'vue-core', shortLabel: isZh ? 'Vue 核心' : 'Vue Core', icon: '🥝', noteNum: 3, disabled: !learningStore.canAccessStage('vue-core') },
-    { id: 'vue-advanced', shortLabel: isZh ? 'Vue 进阶' : 'Vue Adv', icon: '🧩', noteNum: 4, disabled: !learningStore.canAccessStage('vue-advanced') },
-    { id: 'challenge', shortLabel: isZh ? '挑战' : 'Challenge', icon: '🏆', noteNum: 0, disabled: !learningStore.canAccessStage('challenge') },
-    { id: 'extensions', shortLabel: isZh ? '扩展' : 'Extensions', icon: '✨', noteNum: 0, disabled: !learningStore.canAccessStage('extensions') },
-  ]
+  return LAB_TABS.map(tab => ({
+    id: tab.id,
+    shortLabel: isZh ? tab.shortLabelZh : tab.shortLabelEn,
+    icon: tab.icon,
+    noteNum: tab.noteNum,
+    disabled: !learningStore.canAccessStage(tab.id as any)
+  }))
 })
 
 const handleLabTabChange = (tab: string) => {
@@ -343,14 +373,69 @@ const handleScrollContainerChange = (el: HTMLElement | null) => {
   scrollContainer.value = el;
 };
 
-const openLabDashboard = (tab?: string) => {
+const handleMarkdownViewerChange = (el: HTMLElement | null) => {
+  markdownViewerRef.value = el
+}
+
+const openLabDashboard = (tab?: string, options?: { syncUrl?: boolean }) => {
+  const safeTab = tab ? tab.split('#')[0] : undefined
   appStore.viewMode = 'lab';
   appStore.currentTool = 'dashboard';
   appStore.currentFile = null;
   appStore.currentFolder = null;
-  if (tab) labDashboardTab.value = tab;
-  updateLabUrl(tab);
+  if (safeTab) labDashboardTab.value = safeTab;
+  if (options?.syncUrl !== false) updateLabUrl(safeTab);
 };
+
+const applyUrlState = async () => {
+  if (!appStore.fileSystem || appStore.fileSystem.length === 0) return
+
+  const params = new URLSearchParams(window.location.search)
+  const targetPath = params.get('path')
+  const sourcePath = params.get('source')
+  const lab = params.get('lab')
+  const tab = params.get('tab')
+
+  if (sourcePath) {
+    try {
+      await openCodeByPath(sourcePath, undefined, { syncUrl: false })
+    } catch {}
+  }
+
+  if (lab === 'dashboard') {
+    dualColumnMode.value = false
+    dualColumnOpenNotePath.value = null
+    openLabDashboard(tab || undefined, { syncUrl: false })
+    return
+  }
+
+  if (targetPath) {
+    const decodedTargetPath = decodeURIComponent(targetPath)
+    const node =
+      findNodeByPath(appStore.fileSystem, decodedTargetPath) || findNodeByPath(appStore.fileSystem, targetPath)
+    if (node) {
+      dualColumnMode.value = false
+      dualColumnOpenNotePath.value = null
+      appStore.viewMode = 'files'
+      if (node.type === NodeType.FILE) await openFile(node, { syncUrl: false })
+      else openFolder(node, { syncUrl: false })
+    }
+    return
+  }
+
+  dualColumnMode.value = false
+  dualColumnOpenNotePath.value = null
+  appStore.currentFile = null
+  appStore.currentFolder = null
+  appStore.currentTool = null
+  appStore.viewMode = 'latest'
+  hideSelectionMenu()
+  loadRandomPoem()
+}
+
+const handlePopState = () => {
+  void applyUrlState()
+}
 
 const navigateToBreadcrumb = (path: string) => {
   const node = findNodeByPath(appStore.fileSystem, path);
@@ -448,18 +533,6 @@ const downloadSource = () => {
   }
 };
 
-const handleSearchSelect = (result: any) => {
-  appStore.showSearch = false;
-  appStore.sidebarOpen = false;
-
-  const node = findNodeByPath(appStore.fileSystem, result.path);
-  if (node && node.type === NodeType.FILE) {
-    openFile(node);
-  } else {
-    showToast(t.value.file_not_found);
-  }
-};
-
 const handleCommentCountUpdate = (payload: { path: string; count: number }) => {
   commentCounts.value[payload.path] = payload.count;
 };
@@ -511,7 +584,8 @@ useAppInit(
   openFile,
   openFolder,
   openCodeByPath,
-  openLabDashboard
+  openLabDashboard,
+  { initSearchIndex, setFetchFunction }
 );
 
 // =====================
@@ -521,11 +595,17 @@ onMounted(async () => {
   document.addEventListener('selectionchange', handleSelectionChange);
   // 捕获阶段拦截内部链接点击
   document.addEventListener('click', handleLinkCapture, { capture: true });
+  window.addEventListener('sakura:open-lab-note', handleOpenLabNoteEvent as EventListener);
+  window.addEventListener('sakura:open-lab-source', handleOpenLabSourceEvent as EventListener);
+  window.addEventListener('popstate', handlePopState);
 });
 
 onUnmounted(() => {
   document.removeEventListener('selectionchange', handleSelectionChange);
   document.removeEventListener('click', handleLinkCapture, { capture: true });
+  window.removeEventListener('sakura:open-lab-note', handleOpenLabNoteEvent as EventListener);
+  window.removeEventListener('sakura:open-lab-source', handleOpenLabSourceEvent as EventListener);
+  window.removeEventListener('popstate', handlePopState);
 });
 </script>
 
