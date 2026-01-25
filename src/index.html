@@ -142,7 +142,7 @@
 
       .mask-linear { mask-image: linear-gradient(to right, black 85%, transparent 100%); -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); }
       
-      .markdown-body { color: #374151; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 1.02em; line-height: 1.85; }
+      .markdown-body { color: #374151; font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 1em; line-height: var(--reader-line-height, 1.85); }
       .dark .markdown-body { color: #d1d5db; }
       
       .font-serif .markdown-body { font-family: 'Songti SC', 'Noto Serif SC', serif; }
@@ -150,24 +150,24 @@
       
       /* Ensure scroll margin for anchors */
       .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 { scroll-margin-top: 100px; position: relative; } 
-      .markdown-body h1 { font-size: 2.2em; font-weight: 800; margin-bottom: 1em; color: #88133b; border-bottom: 2px solid #ffe4e9; padding-bottom: 0.3em; letter-spacing: -0.025em; }
+      .markdown-body h1 { font-size: var(--reader-h1-font-size, 2.2em); font-weight: 800; margin-bottom: 1em; color: #88133b; border-bottom: 2px solid #ffe4e9; padding-bottom: 0.3em; letter-spacing: -0.025em; }
       .dark .markdown-body h1 { color: #fecdd7; border-bottom-color: #88133b; }
 
-      .markdown-body h2 { font-size: 1.6em; font-weight: 700; margin-top: 1.5em; margin-bottom: 0.8em; color: #9f123f; display: flex; align-items: center; }
+      .markdown-body h2 { font-size: var(--reader-h2-font-size, 1.6em); font-weight: 700; margin-top: 1.5em; margin-bottom: 0.8em; color: #9f123f; display: flex; align-items: center; }
       .dark .markdown-body h2 { color: #fda4b8; }
       .markdown-body h2::before { content: '🌸'; margin-right: 12px; font-size: 0.8em; animation: float 3s ease-in-out infinite; opacity: 0.8; }
       
-      .markdown-body h3 { font-size: 1.3em; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.6em; color: #be1245; }
+      .markdown-body h3 { font-size: var(--reader-h3-font-size, 1.3em); font-weight: 600; margin-top: 1.5em; margin-bottom: 0.6em; color: #be1245; }
       .dark .markdown-body h3 { color: #fc7096; }
 
-      .markdown-body h4 { font-size: 1.1em; font-weight: 600; margin-top: 1.4em; margin-bottom: 0.5em; color: #9f123f; }
+      .markdown-body h4 { font-size: var(--reader-h4-font-size, 1.1em); font-weight: 600; margin-top: 1.4em; margin-bottom: 0.5em; color: #9f123f; }
       .dark .markdown-body h4 { color: #f9a8d4; }
-      .markdown-body h5 { font-size: 1em; font-weight: 600; margin-top: 1.2em; margin-bottom: 0.4em; color: #831843; }
+      .markdown-body h5 { font-size: var(--reader-h5-font-size, 1em); font-weight: 600; margin-top: 1.2em; margin-bottom: 0.4em; color: #831843; }
       .dark .markdown-body h5 { color: #fbcfe8; }
-      .markdown-body h6 { font-size: 0.95em; font-weight: 600; margin-top: 1em; margin-bottom: 0.4em; color: #6b1236; text-transform: uppercase; letter-spacing: 0.04em; }
+      .markdown-body h6 { font-size: var(--reader-h6-font-size, 0.95em); font-weight: 600; margin-top: 1em; margin-bottom: 0.4em; color: #6b1236; text-transform: uppercase; letter-spacing: 0.04em; }
       .dark .markdown-body h6 { color: #fce7f3; }
 
-      .markdown-body p { margin-bottom: 1.6em; line-height: 1.9; }
+      .markdown-body p { margin-bottom: var(--reader-paragraph-gap, 1.6em); line-height: var(--reader-paragraph-line-height, 1.9); }
       .markdown-body p strong { color: #9f123f; font-weight: 700; }
       .dark .markdown-body p strong { color: #fda4b8; }
       .markdown-body p em { color: #be185d; }
@@ -188,14 +188,14 @@
       .markdown-body blockquote { border-left: 4px solid #fda4b8; background: linear-gradient(to right, #fff0f5, transparent); padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; color: #be1245; margin: 2em 0; font-style: italic; }
       .dark .markdown-body blockquote { border-left-color: #be1245; background: linear-gradient(to right, #374151, transparent); color: #fecdd7; }
 
-      .markdown-body code { background: #fff0f5; color: #d61f69; padding: 0.2em 0.5em; border-radius: 6px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.9em; border: 1px solid #fecdd7; }
+      .markdown-body code { background: #fff0f5; color: #d61f69; padding: 0.2em 0.5em; border-radius: 6px; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: var(--reader-code-font-size, 0.9em); border: 1px solid #fecdd7; }
       .dark .markdown-body code { background: #374151; color: #fda4b8; border-color: #4b5563; }
 
-      .markdown-body pre { background: #1f2937; color: #e5e7eb; padding: 3.5em 1.5em 1.5em 1.5em; border-radius: 16px; overflow-x: auto; margin: 2em 0; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2); position: relative; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; line-height: 1.5; }
+      .markdown-body pre { background: #1f2937; color: #e5e7eb; padding: 3.5em 1.5em 1.5em 1.5em; border-radius: 16px; overflow-x: auto; margin: 2em 0; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2); position: relative; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; line-height: var(--reader-code-line-height, 1.5); }
       .dark .markdown-body pre { background: #000000; border: 1px solid #374151; }
       
       .markdown-body pre::before { content: ''; position: absolute; top: 16px; left: 16px; width: 12px; height: 12px; background: #ff5f56; border-radius: 50%; box-shadow: 20px 0 0 #ffbd2e, 40px 0 0 #27c93f; }
-      .markdown-body pre code { background: transparent; color: inherit; padding: 0; border: none; font-size: 14px; }
+      .markdown-body pre code { background: transparent; color: inherit; padding: 0; border: none; font-size: var(--reader-pre-code-font-size, 14px); }
       .markdown-body pre.hljs { background: #1f2937; border: 1px solid #374151; }
       .hljs { color: #e5e7eb; }
       .hljs-comment { color: #9ca3af; font-style: italic; }

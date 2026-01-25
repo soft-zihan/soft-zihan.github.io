@@ -48,20 +48,21 @@ export function useFilteredFiles() {
   });
 
   const labFolder = computed(() => {
-    const targetName = appStore.lang === 'zh' ? 'VUE学习笔记' : 'VUE Learning';
-    const findFolderByName = (nodes: FileNode[]): FileNode | null => {
+    const preferredName = appStore.lang === 'zh' ? 'VUE学习笔记' : 'VUE Learning';
+    const fallbackName = appStore.lang === 'zh' ? 'VUE Learning' : 'VUE学习笔记';
+    const findFolderByName = (nodes: FileNode[], name: string): FileNode | null => {
       for (const node of nodes) {
-        if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
+        if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === name.toLowerCase()) {
           return node;
         }
         if (node.children) {
-          const found = findFolderByName(node.children);
+          const found = findFolderByName(node.children, name);
           if (found) return found;
         }
       }
       return null;
     };
-    return findFolderByName(appStore.fileSystem);
+    return findFolderByName(appStore.fileSystem, preferredName) || findFolderByName(appStore.fileSystem, fallbackName);
   });
   
   return {

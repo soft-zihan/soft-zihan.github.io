@@ -179,6 +179,7 @@ import { useFilteredFiles } from './composables/useFilteredFiles';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts';
 import { useAppInit } from './composables/useAppInit';
 import { useTheme } from './composables/useTheme';
+import { useTypography } from './composables/useTypography';
 import { useCodeOpener } from './composables/useCodeOpener';
 import { useAppSearchIntegration } from './composables/useAppSearchIntegration';
 import { LAB_TABS } from './labs/labCatalog'
@@ -238,8 +239,10 @@ const {
 // Composables Initialization
 // =====================
 const { toggleTheme, initTheme } = useTheme();
+const { initTypography } = useTypography();
 const { initCodeOpener, openCodeByPath } = useCodeOpener();
 initTheme();
+initTypography();
 initCodeOpener();
 
 const scrollContainer = ref<HTMLElement | null>(null);

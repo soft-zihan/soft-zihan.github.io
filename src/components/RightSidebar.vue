@@ -14,6 +14,7 @@
         :is-pdf="isPdf"
         :view-mode="viewMode"
         :dual-column-mode="dualColumnMode"
+        :show-dual-column-toggle="false"
         :is-playing="musicStore.isPlaying"
         :download-toast="true"
         @update:isRawMode="emit('update:isRawMode', $event)"

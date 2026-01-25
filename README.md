@@ -46,7 +46,7 @@
 | **Dynamic Sakura Background**    | Draggable petal system with physics effects, grid stacking, and mobile touch optimization.       |
 | **Responsive Design**            | Perfectly adapted for both desktop and mobile devices.                                           |
 | **Multilingual Support**         | Built-in Chinese/English (i18n) switching; preserves current tab and Lab position when toggling. |
-| **Backend-less Personalization** | Uses `localStorage` to save preferences like fonts, font size, themes, and petal speed.        |
+| **Backend-less Personalization** | Uses `localStorage` to save preferences like fonts, reader density, theme, and petal speed.      |
 
 ### 📚 Content System
 
@@ -73,7 +73,7 @@
 | :------------------------------- | :--------------------------------------------------------------------- |
 | **7-Stage Path**           | A complete learning roadmap from Web basics to advanced Vue 3.         |
 | **Interactive Components** | Visual teaching components with real-time code demonstrations.         |
-| **Source Viewer**          | View the source code of the site's own components to learn by example. |
+| **Source Viewer**          | View project source with preset/user notes; file intros follow UI language. |
 
 ### 🔐 Security Features
 
@@ -140,6 +140,11 @@ npm run test -- --run
 
 ```
 sakura-notes/
+├── 📁 scripts/              # Build prep scripts (generate data into public/)
+│   ├── generate-tree.ts
+│   ├── generate-raw.ts
+│   ├── generate-music.ts
+│   └── generate-wallpapers.ts
 ├── 📁 src/                  # Source code
 │   ├── 📄 main.ts           # Vue app mount entry
 │   ├── 📄 App.vue           # Root component (Layout & State)
@@ -188,6 +193,7 @@ sakura-notes/
 │   │
 │   ├── 📁 utils/            # Utility functions
 │   │   ├── fileUtils.ts
+│   │   ├── i18nText.ts
 │   │   └── sanitize.ts
 │
 ├── 📁 public/              # Static assets (generated data)
@@ -195,7 +201,9 @@ sakura-notes/
 │   │   ├── files.json
 │   │   ├── music.json
 │   │   ├── wallpapers.json
-│   │   └── source-notes-preset.json
+│   │   ├── source-notes-preset.zh.json
+│   │   └── source-notes-preset.en.json
+│   ├── 📁 raw/              # Generated raw source files for Source Viewer
 │   └── 📁 notes/
 │
 ├── 📄 vite.config.ts      # Vite build configuration
@@ -224,8 +232,8 @@ sakura-notes/
 ```bash
 npm run build
 # This triggers:
-# 1. scripts/generate-tree.ts         → Scans notes/ to create public/data/files.json
-# 2. scripts/generate-raw.ts          → Generates source files for Source Viewer (/public/raw)
+# 1. scripts/generate-tree.ts         → Mirrors notes/, generates files.json, and exports source files into /public/raw
+# 2. scripts/generate-raw.ts          → Legacy raw exporter (kept for compatibility; generate-tree already exports raw files)
 # 3. scripts/generate-music.ts        → Scans public/music/ for music.json
 # 4. scripts/generate-wallpapers.ts   → Scans wallpapers to create wallpapers.json
 # 5. vite build                       → Bundles the Vue application
@@ -339,11 +347,12 @@ This section explains the critical paths that make the project work as a fully s
 
 - **Goal**: Display this project’s own Vue components / utilities as readable source code in the Learning Lab, with “preset notes” that guide the reader.
 - **How**:
-  - A build-prep script exports selected source files into `public/raw/` (so production doesn’t need direct access to `src/`).
-  - The frontend loads these raw text files and overlays preset notes for navigation and explanations.
-- **Key script**: `scripts/generate-raw.ts`
+  - A build-prep script generates a “Project Source Code” tree and exports source files into `public/raw/` (so production doesn’t need direct access to `src/`).
+  - The frontend loads these raw text files and overlays preset notes (and user notes) for navigation and explanations.
+- **Key script**: `scripts/generate-tree.ts`
 - **Key component**: `src/components/lab/SourceCodeViewer.vue`
-- **Preset notes data**: `public/data/source-notes-preset.json`
+- **Preset notes data**: `public/data/source-notes-preset.zh.json` and `public/data/source-notes-preset.en.json` (optional `match/matchRegex` anchors reduce drift when code changes)
+- **Note**: `src/utils/i18nText.ts` is not the UI i18n dictionary (that lives in `src/locales/*`). It only helps anchoring preset notes to code lines.
 
 ### 3) Markdown rendering: ToC, code highlighting, and safety
 

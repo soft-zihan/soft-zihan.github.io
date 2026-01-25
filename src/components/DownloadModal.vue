@@ -177,6 +177,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useArticleStore } from '../stores/articleStore'
 import JSZip from 'jszip'
+import { buildPresetNoteMap } from '../utils/i18nText'
 
 const props = defineProps<{
   lang: 'zh' | 'en'
@@ -469,13 +470,12 @@ const toRawFilePath = (filePath: string): string => {
   return filePath.replace(/\//g, '_') + '.txt'
 }
 
-// User notes localStorage key (same as SourceCodeViewer)
-const USER_NOTES_KEY = 'sakura_source_code_notes_user'
+const getUserNotesKey = () => `sakura_source_code_notes_user_${props.lang}`
 
 // Load user notes from localStorage
 const loadUserNotes = (): Record<string, Array<{line: number, content: string}>> => {
   try {
-    const saved = localStorage.getItem(USER_NOTES_KEY)
+    const saved = localStorage.getItem(getUserNotesKey())
     if (saved) {
       return JSON.parse(saved)
     }
@@ -553,14 +553,14 @@ const downloadSourceCodeWithNotes = async (withNotes: boolean) => {
     }
 
     // Load preset notes for embedding (only if withNotes is true)
-    let presetNotes: Record<string, Array<{line: number, content: string}>> = {}
+    let presetNotes: Record<string, Array<{ line: number; content: string; match?: string; matchRegex?: string; occurrence?: number; offset?: number }>> = {}
     let userNotes: Record<string, Array<{line: number, content: string}>> = {}
     
     if (withNotes) {
       // Load preset notes from server
       try {
         const baseUrl = (import.meta as any).env?.BASE_URL || './'
-        const notesRes = await fetch(`${baseUrl}data/source-notes-preset.json`)
+        const notesRes = await fetch(`${baseUrl}data/source-notes-preset.${props.lang}.json`)
         if (notesRes.ok) {
           const data = await notesRes.json()
           presetNotes = data.notes || {}
@@ -597,8 +597,9 @@ const downloadSourceCodeWithNotes = async (withNotes: boolean) => {
             
             // Combine both with different markers
             type NoteWithType = { line: number, content: string, type: 'preset' | 'user' }
+            const resolvedPresetMap = buildPresetNoteMap(filePresetNotes as any, lines)
             const allNotes: NoteWithType[] = [
-              ...filePresetNotes.map(n => ({ ...n, type: 'preset' as const })),
+              ...Array.from(resolvedPresetMap.entries()).map(([line, content]) => ({ line, content, type: 'preset' as const })),
               ...fileUserNotes.map(n => ({ ...n, type: 'user' as const }))
             ]
             

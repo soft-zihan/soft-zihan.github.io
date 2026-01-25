@@ -57,6 +57,26 @@
               :style="appStore.userSettings.fontSize === 'large' ? primaryButtonStyle : undefined"
             >A++</button>
           </div>
+          <div class="flex gap-2 mt-2">
+            <button
+              @click="appStore.userSettings.readerDensity = 'compact'"
+              class="flex-1 py-2 border rounded-xl text-xs transition-colors"
+              :class="appStore.userSettings.readerDensity === 'compact' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
+              :style="appStore.userSettings.readerDensity === 'compact' ? primaryButtonStyle : undefined"
+            >{{ lang === 'zh' ? '紧凑' : 'Compact' }}</button>
+            <button
+              @click="appStore.userSettings.readerDensity = 'normal'"
+              class="flex-1 py-2 border rounded-xl text-xs transition-colors"
+              :class="appStore.userSettings.readerDensity === 'normal' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
+              :style="appStore.userSettings.readerDensity === 'normal' ? primaryButtonStyle : undefined"
+            >{{ lang === 'zh' ? '标准' : 'Normal' }}</button>
+            <button
+              @click="appStore.userSettings.readerDensity = 'loose'"
+              class="flex-1 py-2 border rounded-xl text-xs transition-colors"
+              :class="appStore.userSettings.readerDensity === 'loose' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
+              :style="appStore.userSettings.readerDensity === 'loose' ? primaryButtonStyle : undefined"
+            >{{ lang === 'zh' ? '宽松' : 'Loose' }}</button>
+          </div>
         </div>
 
         <div class="mb-4">
@@ -131,12 +151,6 @@
               :class="appStore.userSettings.articleStyle === 'classic' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
               :style="appStore.userSettings.articleStyle === 'classic' ? primaryButtonStyle : undefined"
             >{{ lang === 'zh' ? '经典' : 'Classic' }}</button>
-            <button
-              @click="appStore.userSettings.articleStyle = 'compact'"
-              class="flex-1 py-2 border rounded-xl text-xs transition-colors"
-              :class="appStore.userSettings.articleStyle === 'compact' ? '' : 'border-gray-200 dark:border-gray-700 text-gray-500'"
-              :style="appStore.userSettings.articleStyle === 'compact' ? primaryButtonStyle : undefined"
-            >{{ lang === 'zh' ? '紧凑' : 'Compact' }}</button>
             <button
               @click="appStore.userSettings.articleStyle = 'lined'"
               class="flex-1 py-2 border rounded-xl text-xs transition-colors"

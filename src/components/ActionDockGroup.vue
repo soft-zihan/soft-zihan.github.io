@@ -10,7 +10,7 @@
     :dual-column-mode="dualColumnMode"
     :is-playing="isPlaying"
     :show-file-actions="true"
-    :show-dual-column-toggle="true"
+    :show-dual-column-toggle="showDualColumnToggle"
     :show-search="true"
     :show-wallpaper-actions="true"
     :show-collection-dropdown="true"
@@ -56,6 +56,7 @@ const props = withDefaults(defineProps<{
   dualColumnMode?: boolean;
   isPlaying?: boolean;
   downloadToast?: boolean;
+  showDualColumnToggle?: boolean;
 }>(), {
   currentFile: null,
   isRawMode: false,
@@ -63,7 +64,8 @@ const props = withDefaults(defineProps<{
   viewMode: '',
   dualColumnMode: false,
   isPlaying: false,
-  downloadToast: false
+  downloadToast: false,
+  showDualColumnToggle: true
 });
 
 const emit = defineEmits([

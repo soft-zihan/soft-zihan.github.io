@@ -100,7 +100,7 @@
 
     <NextStageGuide
       :is-zh="isZh"
-      :next-text="isZh ? '你已经理解了网页的基本结构与样式！接下来深入学习 CSS 布局。' : 'You understand web structure and basics! Next, dive into CSS layout.'"
+      :next-text="isZh ? '你已经理解了网页的基本结构！接下来深入学习 CSS 布局。' : 'You understand web structure! Next, dive into CSS layout.'"
       @next="emit('navigate', 'css-layout')"
     />
   </div>

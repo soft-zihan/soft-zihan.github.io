@@ -37,20 +37,21 @@ export function useFile(fileSystem: Ref<FileNode[]>, lang: Ref<'en' | 'zh'>) {
   })
 
   const labFolder = computed(() => {
-    const targetName = lang.value === 'zh' ? 'VUE学习笔记' : 'VUE Learning'
-    const findFolderByName = (nodes: FileNode[]): FileNode | null => {
+    const preferredName = lang.value === 'zh' ? 'VUE学习笔记' : 'VUE Learning'
+    const fallbackName = lang.value === 'zh' ? 'VUE Learning' : 'VUE学习笔记'
+    const findFolderByName = (nodes: FileNode[], name: string): FileNode | null => {
       for (const node of nodes) {
-        if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === targetName.toLowerCase()) {
+        if (node.type === NodeType.DIRECTORY && node.name.toLowerCase() === name.toLowerCase()) {
           return node
         }
         if (node.children) {
-          const found = findFolderByName(node.children)
+          const found = findFolderByName(node.children, name)
           if (found) return found
         }
       }
       return null
     }
-    return findFolderByName(fileSystem.value || [])
+    return findFolderByName(fileSystem.value || [], preferredName) || findFolderByName(fileSystem.value || [], fallbackName)
   })
 
   const currentPath = computed(() => currentFile.value?.path || currentFolder.value?.path || '')

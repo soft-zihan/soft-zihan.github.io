@@ -44,11 +44,12 @@ export const useAppStore = defineStore('app', () => {
   const userSettings = ref({
     fontSize: 'normal' as 'small' | 'normal' | 'large',
     fontFamily: 'sans' as 'sans' | 'serif' | 'kaiti',
+    readerDensity: 'normal' as 'compact' | 'normal' | 'loose',
     petalSpeed: 'slow' as 'off' | 'slow' | 'fast',
     bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide',
     petalLayer: 'back' as 'front' | 'back',
     themeColor: 'sakura' as ThemeColorId,
-    articleStyle: 'classic' as 'classic' | 'clean' | 'compact' | 'lined' | 'grid',
+    articleStyle: 'classic' as 'classic' | 'lined' | 'grid',
     articleSortMode: 'date' as 'date' | 'tree',
     articleBackgroundColorLight: '',
     articleBackgroundColorDark: '',
@@ -57,17 +58,6 @@ export const useAppStore = defineStore('app', () => {
     autoChangeTimer: 0,
     musicPlayer: 'new' as 'new' | 'old' | 'off'
   })
-
-  const legacyArticleBackgroundColor = (userSettings.value as { articleBackgroundColor?: string }).articleBackgroundColor
-  if (legacyArticleBackgroundColor) {
-    if (!userSettings.value.articleBackgroundColorLight) {
-      userSettings.value.articleBackgroundColorLight = legacyArticleBackgroundColor
-    }
-    if (!userSettings.value.articleBackgroundColorDark) {
-      userSettings.value.articleBackgroundColorDark = legacyArticleBackgroundColor
-    }
-    delete (userSettings.value as { articleBackgroundColor?: string }).articleBackgroundColor
-  }
   
   // UI State
   const showParticles = ref(true)

@@ -2,6 +2,7 @@
   <div class="flex h-full min-h-[600px] bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-xl">
     <!-- Left: File Tree (collapsible in compact mode) -->
     <div 
+      v-if="!isMobile"
       class="flex-shrink-0 border-r border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800/50 transition-all duration-300"
       :class="fileTreeVisible ? 'w-64' : (compact ? 'w-10' : 'w-64')"
     >
@@ -33,6 +34,15 @@
     <div class="flex-1 flex flex-col min-w-0">
       <!-- File Tab Bar -->
       <div class="flex items-center gap-2 px-4 py-2 border-b overflow-x-auto" :class="isDark ? 'bg-[#252526] border-gray-700' : 'bg-gray-100 border-gray-300'">
+        <button
+          v-if="isMobile"
+          @click="mobileFileTreeOpen = true"
+          class="text-xs px-2 py-1 rounded transition-colors flex items-center gap-1"
+          :class="isDark ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'"
+        >
+          <span>📁</span>
+          {{ isZh ? '文件' : 'Files' }}
+        </button>
         <div v-if="selectedFile" class="flex items-center gap-2 px-3 py-1.5 rounded text-sm" :class="isDark ? 'bg-[#1e1e1e]' : 'bg-white shadow-sm'">
           <span>{{ getFileIcon(selectedFile.name) }}</span>
           <span class="font-mono text-xs" :class="isDark ? 'text-gray-300' : 'text-gray-700'">{{ selectedFile.name }}</span>
@@ -187,7 +197,7 @@
 
         <!-- Right: Minimap (hidden in compact mode) -->
         <CodeMinimap 
-          v-if="!compact && selectedFile && fileContent && fileLines.length > 20"
+          v-if="!isMobile && !compact && selectedFile && fileContent && fileLines.length > 20"
           :lines="fileLines"
           :code-container="codeContainer"
           :has-note="hasNonEmptyNoteAtLine"
@@ -210,6 +220,27 @@
       </div>
     </div>
   </div>
+
+  <Teleport to="body">
+    <div v-if="isMobile && mobileFileTreeOpen" class="fixed inset-0 z-[180]">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="mobileFileTreeOpen = false"></div>
+      <div class="absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col">
+        <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <div class="text-sm font-bold text-gray-700 dark:text-gray-200 flex items-center gap-2">
+            <span>📁</span> {{ isZh ? '项目结构' : 'Project' }}
+          </div>
+          <button @click="mobileFileTreeOpen = false" class="text-gray-400 hover:text-[var(--primary-500)]">✕</button>
+        </div>
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
+          <SourceFileTree 
+            :nodes="projectTree" 
+            :selected-path="selectedFile?.path"
+            @select="selectFile"
+          />
+        </div>
+      </div>
+    </div>
+  </Teleport>
   
   <!-- Submit Result Toast -->
   <Teleport to="body">
@@ -226,7 +257,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import hljs from 'highlight.js/lib/core'
 import typescript from 'highlight.js/lib/languages/typescript'
 import javascript from 'highlight.js/lib/languages/javascript'
@@ -239,6 +270,7 @@ import java from 'highlight.js/lib/languages/java'
 import { useGitHubPublish } from '../../composables/useGitHubPublish'
 import { useAppStore } from '../../stores/appStore'
 import { sanitizeHtml } from '../../utils/sanitize'
+import { buildPresetNoteMap } from '../../utils/i18nText'
 
 // Register languages
 hljs.registerLanguage('typescript', typescript)
@@ -267,6 +299,10 @@ interface SourceFile {
 interface CodeNote {
   line: number
   content: string
+  match?: string
+  matchRegex?: string
+  occurrence?: number
+  offset?: number
 }
 
 interface FileNotes {
@@ -299,6 +335,13 @@ const props = defineProps<{
 const isZh = computed(() => props.lang === 'zh')
 const compact = computed(() => props.compact || false)
 
+const isMobile = ref(false)
+const mobileFileTreeOpen = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+  if (!isMobile.value) mobileFileTreeOpen.value = false
+}
+
 // App Store for theme
 const appStore = useAppStore()
 const isDark = computed(() => appStore.isDark)
@@ -330,6 +373,8 @@ const projectTree = ref<SourceFile[]>([
 
 // ... existing onMounted ...
 onMounted(async () => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   hasToken.value = checkHasToken()
   
   await loadPresetNotes()
@@ -354,6 +399,17 @@ onMounted(async () => {
   }
 })
 
+watch(() => props.lang, async () => {
+  await loadPresetNotes()
+  loadUserNotes()
+  loadCollapsedState()
+  loadFoldedState()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
 const selectedFile = ref<SourceFile | null>(null)
 const fileContent = ref<string>('')
 const showNotes = ref(true)
@@ -372,11 +428,15 @@ watch(() => props.compact, (isCompact: boolean | undefined) => {
 const draggingNoteLine = ref<number | null>(null)
 const dragOverLine = ref<number | null>(null)
 
-// Notes storage keys
-const USER_NOTES_KEY = 'sakura_source_code_notes_user'
-const COLLAPSED_KEY = 'sakura_source_code_notes_collapsed'
-const FOLDED_KEY = 'sakura_source_code_folded'
-const PRESET_VERSION_KEY = 'sakura_source_code_notes_preset_version'
+const getUserNotesKey = () => `sakura_source_code_notes_user_${props.lang}`
+const getCollapsedKey = () => `sakura_source_code_notes_collapsed_${props.lang}`
+const getFoldedKey = () => `sakura_source_code_folded_${props.lang}`
+const getPresetVersionKey = () => `sakura_source_code_notes_preset_version_${props.lang}`
+
+const getPresetNotesUrl = () => {
+  const baseUrl = (import.meta as any).env?.BASE_URL || '/'
+  return `${baseUrl}data/source-notes-preset.${props.lang}.json`
+}
 
 // Preset notes (from server)
 const presetNotes = ref<FileNotes>({})
@@ -394,14 +454,12 @@ const foldedState = ref<FoldedState>({})
 // Load preset notes from server or local import
 const loadPresetNotes = async () => {
   try {
-    const baseUrl = (import.meta as any).env?.BASE_URL || '/'
-    const res = await fetch(`${baseUrl}data/source-notes-preset.json`)
+    const res = await fetch(getPresetNotesUrl())
     if (!res.ok) return
     const data: any = await res.json()
     
     if (data) {
       const serverVersion = data.version || '1.0.0'
-      const localVersion = localStorage.getItem(PRESET_VERSION_KEY)
       
       // Store preset notes and intros
       presetNotes.value = {}
@@ -418,7 +476,7 @@ const loadPresetNotes = async () => {
       }
       
       // Update version marker
-      localStorage.setItem(PRESET_VERSION_KEY, serverVersion)
+      localStorage.setItem(getPresetVersionKey(), serverVersion)
     }
   } catch (e) {
     console.error('Failed to load preset notes:', e)
@@ -427,7 +485,7 @@ const loadPresetNotes = async () => {
 
 // Load user notes from localStorage
 const loadUserNotes = () => {
-  const saved = localStorage.getItem(USER_NOTES_KEY)
+  const saved = localStorage.getItem(getUserNotesKey())
   if (saved) {
     try {
       userNotes.value = JSON.parse(saved)
@@ -439,7 +497,7 @@ const loadUserNotes = () => {
 
 // Load collapsed state from localStorage
 const loadCollapsedState = () => {
-  const saved = localStorage.getItem(COLLAPSED_KEY)
+  const saved = localStorage.getItem(getCollapsedKey())
   if (saved) {
     try {
       collapsedState.value = JSON.parse(saved)
@@ -451,7 +509,7 @@ const loadCollapsedState = () => {
 
 // Load folded state from localStorage
 const loadFoldedState = () => {
-  const saved = localStorage.getItem(FOLDED_KEY)
+  const saved = localStorage.getItem(getFoldedKey())
   if (saved) {
     try {
       foldedState.value = JSON.parse(saved)
@@ -463,17 +521,17 @@ const loadFoldedState = () => {
 
 // Save user notes
 const saveUserNotes = () => {
-  localStorage.setItem(USER_NOTES_KEY, JSON.stringify(userNotes.value))
+  localStorage.setItem(getUserNotesKey(), JSON.stringify(userNotes.value))
 }
 
 // Save collapsed state
 const saveCollapsedState = () => {
-  localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsedState.value))
+  localStorage.setItem(getCollapsedKey(), JSON.stringify(collapsedState.value))
 }
 
 // Save folded state
 const saveFoldedState = () => {
-  localStorage.setItem(FOLDED_KEY, JSON.stringify(foldedState.value))
+  localStorage.setItem(getFoldedKey(), JSON.stringify(foldedState.value))
 }
 
 // Current file intro
@@ -825,9 +883,7 @@ const getIndentGuideClass = (level: number): string => {
 }
 
 const presetNoteContentByLine = computed(() => {
-  const map = new Map<number, string>()
-  for (const n of currentPresetNotes.value) map.set(n.line, n.content)
-  return map
+  return buildPresetNoteMap(currentPresetNotes.value as any, fileLines.value)
 })
 
 const userNoteContentByLine = computed(() => {
@@ -838,8 +894,8 @@ const userNoteContentByLine = computed(() => {
 
 const presetNonEmptyLineSet = computed(() => {
   const set = new Set<number>()
-  for (const n of currentPresetNotes.value) {
-    if (n.content.trim()) set.add(n.line)
+  for (const [line, content] of presetNoteContentByLine.value.entries()) {
+    if (content.trim()) set.add(line)
   }
   return set
 })
@@ -1102,6 +1158,7 @@ const getFileIcon = (name: string) => {
 const selectFile = async (file: SourceFile) => {
   if (file.type !== 'file') return
   selectedFile.value = file
+  if (isMobile.value) mobileFileTreeOpen.value = false
   
   try {
     const rawFileName = file.path.replace(/\//g, '_') + '.txt'
@@ -1180,7 +1237,7 @@ const submitNotesToGitHub = async () => {
     
     const result = await uploadFile(
       { owner: repoOwner, repo: repoName, branch: 'main', token },
-      'public/data/source-notes-preset.json',
+      `public/data/source-notes-preset.${props.lang}.json`,
       content,
       `docs: add source code notes by ${authorName}`
     )

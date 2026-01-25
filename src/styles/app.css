@@ -15,29 +15,6 @@ body {
   background: var(--primary-900-30);
 }
 
-.article-style-compact {
-  padding: 1.5rem;
-}
-
-@media (min-width: 768px) {
-  .article-style-compact {
-    padding: 2rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .article-style-compact {
-    padding: 2.5rem;
-  }
-}
-
-.article-style-compact #markdown-viewer p,
-.article-style-compact #markdown-viewer ul,
-.article-style-compact #markdown-viewer ol {
-  margin-top: 0.6em;
-  margin-bottom: 0.6em;
-}
-
 /* Dynamic Title Colors */
 .markdown-body h1,
 .markdown-body h2,
@@ -59,14 +36,6 @@ body {
 
 .font-kaiti {
   font-family: "KaiTi", "STKaiti", "楷体", "Microsoft YaHei", serif;
-}
-
-.article-style-compact #markdown-viewer h1,
-.article-style-compact #markdown-viewer h2,
-.article-style-compact #markdown-viewer h3,
-.article-style-compact #markdown-viewer h4 {
-  margin-top: 1.2em;
-  margin-bottom: 0.6em;
 }
 
 .article-style-lined {

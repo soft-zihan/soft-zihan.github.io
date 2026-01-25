@@ -203,7 +203,8 @@
 
     <div
       v-if="!file.isSource && !isRawMode"
-      class="fixed bottom-4 right-4 xl:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
+      class="fixed bottom-4 xl:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
+      :class="floatingNavRightClass"
     >
       <button
         type="button"
@@ -347,6 +348,25 @@ const appStore = useAppStore();
 const articleStore = useArticleStore();
 const markdownViewerRef = ref<HTMLElement | null>(null)
 const localScrollContainerRef = ref<HTMLElement | null>(null)
+
+const isMobile = ref(false)
+const checkMobile = () => {
+  isMobile.value = window.innerWidth < 768
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
+const floatingNavRightClass = computed(() => {
+  if (isMobile.value && appStore.rightSidebarOpen) return 'right-[calc(1rem+3rem)]'
+  return 'right-4'
+})
 
 const currentFile = toRef(props, 'file');
 const isRawMode = toRef(props, 'isRawMode');

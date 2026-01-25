@@ -234,6 +234,17 @@ if (srcTree.length > 0) {
     });
 }
 
+// Scan scripts folder
+const scriptsTree = scanDirectory(path.join(rootDir, 'scripts'), 'scripts', true);
+if (scriptsTree.length > 0) {
+    sourceTree.push({
+        name: 'scripts',
+        path: 'scripts',
+        type: 'directory',
+        children: scriptsTree
+    });
+}
+
 // 3. Combine Trees
 // "zh" and "en" from notes are root nodes. "Project Source Code" is a root node.
 const combinedTree: FileNode[] = [...notesTree, {
