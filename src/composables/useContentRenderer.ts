@@ -314,7 +314,16 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
   const scrollToHeader = (id: string) => {
     const el = document.getElementById(id)
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      const container = scrollContainer?.value || null
+      if (container) {
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const top = elRect.top - containerRect.top + container.scrollTop
+        const targetTop = Math.max(0, top - 80)
+        container.scrollTo({ top: targetTop, behavior: 'smooth' })
+      } else {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
       activeHeaderId.value = id
       nextTick(() => {
         updateActiveHeader()

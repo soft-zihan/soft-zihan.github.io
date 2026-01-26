@@ -540,10 +540,20 @@ const handleCommentCountUpdate = (payload: { path: string; count: number }) => {
   commentCounts.value[payload.path] = payload.count;
 };
 
+const hashStringToUint32 = (input: string): number => {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+};
+
 const getArticleViews = (path: string): number => {
-  const likes = articleStore.getLikes(path);
-  const baseViews = likes * (5 + Math.random() * 5);
-  return Math.max(1, Math.round(baseViews));
+  const hash = hashStringToUint32(`views:${path}`);
+  const minViews = 80;
+  const maxViews = 3200;
+  return minViews + (hash % (maxViews - minViews + 1));
 };
 
 const getArticleComments = (path: string): number => {

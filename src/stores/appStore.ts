@@ -44,7 +44,7 @@ export const useAppStore = defineStore('app', () => {
   const userSettings = ref({
     fontSize: 'normal' as 'small' | 'normal' | 'large',
     fontFamily: 'sans' as 'sans' | 'serif' | 'kaiti',
-    readerDensity: 'normal' as 'compact' | 'normal' | 'loose',
+    readerDensity: 'compact' as 'compact' | 'normal' | 'loose',
     petalSpeed: 'slow' as 'off' | 'slow' | 'fast',
     bannerMode: 'normal' as 'normal' | 'fullscreen' | 'background' | 'hide',
     petalLayer: 'back' as 'front' | 'back',

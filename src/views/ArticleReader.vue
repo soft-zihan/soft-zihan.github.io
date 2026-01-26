@@ -1,14 +1,24 @@
 <template>
-  <div class="flex-1 flex overflow-hidden z-10 relative">
-    <div 
-      ref="localScrollContainerRef"
-      class="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 lg:p-8 w-full"
+  <div class="flex-1 overflow-hidden z-10 relative">
+    <div
+      v-if="isMobile"
+      ref="mobilePagerRef"
+      class="flex h-full overflow-x-auto overflow-y-hidden"
+      style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"
+      @scroll.passive="handleMobilePagerScroll"
     >
-      <div 
-         class="w-full mx-auto bg-white/85 dark:bg-gray-900/85 p-8 md:p-12 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
-         :class="[fontSizeClass, articleStyleClass, appStore.sidebarOpen ? 'max-w-4xl xl:max-w-5xl' : 'max-w-5xl xl:max-w-7xl']"
-         :style="articleContainerStyle"
-      >
+      <div class="flex h-full">
+        <div
+          ref="localScrollContainerRef"
+          class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar w-full basis-full shrink-0"
+          style="scroll-snap-align: start;"
+          :style="{ padding: 'var(--reader-page-padding, 1.5rem)' }"
+        >
+          <div 
+             class="w-full mx-auto bg-white/85 dark:bg-gray-900/85 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
+             :class="[fontSizeClass, articleStyleClass]"
+             :style="[{ padding: 'var(--reader-card-padding, 2.5rem)' }, articleContainerStyle]"
+          >
          <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-20 rounded-[2rem] backdrop-blur-sm">
            <div class="flex flex-col items-center gap-4">
               <div class="animate-spin text-4xl">🌸</div>
@@ -16,92 +26,33 @@
            </div>
          </div>
 
-         <!-- Header with Like/Favorite buttons -->
-         <div class="mb-8 border-b border-gray-100 dark:border-gray-700 pb-6 bg-black/5 dark:bg-black/30 rounded-xl p-6 backdrop-blur-sm">
-             <div class="flex justify-between items-start gap-4">
-               <div class="flex flex-wrap items-center gap-3 flex-1">
-                 <span v-if="currentAuthorName || currentAuthorUrl" class="text-sm text-gray-400 flex items-center gap-1">
-                   <span>👤</span>
-                    <a
-                     v-if="currentAuthorUrl"
-                     :href="currentAuthorUrl"
-                     target="_blank"
-                     rel="noopener"
-                     class="hover:underline"
-                     :style="authorLinkStyle"
-                   >
-                     {{ currentAuthorName || currentAuthorUrl }}
-                   </a>
-                   <span v-else>{{ currentAuthorName }}</span>
-                 </span>
-               </div>
-               <span v-if="file.isSource" class="bg-gray-100 dark:bg-gray-700 text-gray-500 px-3 py-1 rounded text-xs font-mono">Read Only</span>
-             </div>
-             <!-- Article Actions -->
-             <div class="flex items-center gap-4 mt-4 flex-wrap" v-if="!file.isSource">
-               <button 
-                 @click="handleLike"
-                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all"
-                 :class="articleStore.isLiked(file.path) ? 'bg-red-50 dark:bg-red-900/30 text-red-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-red-50'"
-               >
-                 <span>{{ articleStore.isLiked(file.path) ? '❤️' : '🤍' }}</span>
-                 <span class="font-bold">{{ articleStore.getLikes(file.path) }}</span>
-               </button>
-               <button 
-                 @click="articleStore.toggleFavorite(file.path)"
-                 class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-all"
-                 :class="articleStore.isFavorite(file.path) ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 hover:bg-amber-50'"
-               >
-                 <span>{{ articleStore.isFavorite(file.path) ? '⭐' : '☆' }}</span>
-                 <span>{{ t.favorite }}</span>
-               </button>
-               
-               <div class="flex items-center gap-2 px-2 py-1 bg-gray-50 dark:bg-gray-800 rounded-full border border-gray-100 dark:border-gray-700">
-                  <input 
-                    type="color" 
-                    v-model="articleBackgroundColor"
-                    class="w-5 h-5 rounded-full overflow-hidden cursor-pointer border-0 p-0 bg-transparent"
-                    :title="lang === 'zh' ? '文章背景色' : 'Article Background Color'"
-                  />
-                  <button 
-                    v-if="articleBackgroundColor"
-                    @click="resetArticleBackgroundColor"
-                    class="text-xs text-gray-400 hover:text-red-500"
-                    title="Reset"
-                  >✕</button>
-               </div>
-
-              <span class="text-xs text-gray-400 flex items-center gap-1">
-                <span class="text-sm">🧑‍🎓</span>
-                {{ getArticleViews(file.path) }} {{ lang === 'zh' ? '人阅读' : 'views' }}
-              </span>
-             <span class="text-xs text-gray-400 flex items-center gap-1">
-               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h6m-6 8l-4-4V4a2 2 0 012-2h12a2 2 0 01-2 2H7z"/>
-               </svg>
-               {{ getArticleComments(file.path) }} {{ lang === 'zh' ? '条评论' : 'comments' }}
-             </span>
-               <span class="text-xs text-gray-400">
-                📝 {{ currentWordCount }} {{ t.words }}
-               </span>
-               <span class="text-xs text-gray-400 flex items-center gap-1">
-                 🕐 {{ t.updated }}: {{ formatDate(file.lastModified) }}
-               </span>
-               <span v-if="currentTags.length" class="text-xs text-gray-400 flex items-center gap-1">
-                 🏷️
-                 <span class="flex flex-wrap gap-1.5">
-                  <span
-                    v-for="tag in currentTags"
-                    :key="tag"
-                    class="text-[10px] px-2 py-0.5 rounded-full"
-                    :style="tagBadgeStyle"
-                  >
-                     {{ tag }}
-                   </span>
-                 </span>
-               </span>
-             </div>
-         </div>
+         <ArticleInfoBar
+           :lang="lang"
+           :is-source="file.isSource"
+           :author-name="currentAuthorName"
+           :author-url="currentAuthorUrl"
+           :author-link-style="authorLinkStyle"
+           :liked="articleStore.isLiked(file.path)"
+           :likes="articleStore.getLikes(file.path)"
+           :on-like="handleLike"
+           :favorite="articleStore.isFavorite(file.path)"
+           :favorite-text="t.favorite"
+           :on-toggle-favorite="() => articleStore.toggleFavorite(file.path)"
+           v-model:backgroundColor="articleBackgroundColor"
+           :on-reset-background-color="resetArticleBackgroundColor"
+           :views="getArticleViews(file.path)"
+           :views-label="lang === 'zh' ? '人阅读' : 'views'"
+           :comments="getArticleComments(file.path)"
+           :comments-label="lang === 'zh' ? '条评论' : 'comments'"
+           :word-count="currentWordCount"
+           :words-label="t.words"
+           :updated-label="t.updated"
+           :updated-date="formatDate(file.lastModified)"
+           :tags="currentTags"
+           :tag-badge-style="tagBadgeStyle"
+           :show-toc-button="toc.length > 0"
+           :on-open-toc="() => scrollToTocPage()"
+         />
 
         <!-- Markdown Content -->
         <div 
@@ -200,9 +151,271 @@
         </div>
       </div>
     </div>
+        <div
+          class="h-full overflow-y-auto p-4 w-full basis-full shrink-0 bg-white/20 dark:bg-gray-900/20 backdrop-blur-md"
+          style="scroll-snap-align: start;"
+        >
+          <div class="max-w-md mx-auto bg-white/85 dark:bg-gray-900/85 p-4 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] backdrop-blur-xl transition-all duration-300">
+            <div class="flex items-center justify-between mb-6">
+              <button
+                type="button"
+                class="px-3 py-2 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-white/60 dark:border-gray-700/60 text-sm text-gray-700 dark:text-gray-200"
+                @click="scrollToArticlePage()"
+              >
+                ← {{ lang === 'zh' ? '返回' : 'Back' }}
+              </button>
+              <div class="text-sm font-bold flex items-center gap-2" :style="tocTitleStyle">
+                <span>📑</span>
+                <span>{{ t.on_this_page }}</span>
+              </div>
+              <div class="w-[72px]"></div>
+            </div>
+
+            <div v-if="toc.length > 0">
+              <nav
+                class="space-y-1 relative border-l-2 pl-4 cursor-pointer select-none"
+                :style="tocBorderStyle"
+              >
+                <div
+                  class="absolute left-[-2px] w-[2px] transition-all duration-300"
+                  :style="{
+                    top: activeIndicatorTop + 'px',
+                    height: activeIndicatorHeight + 'px',
+                    ...tocIndicatorStyle
+                  }"
+                  v-if="activeHeaderId"
+                ></div>
+                <a
+                  v-for="item in toc"
+                  :key="item.id"
+                  :href="`#${item.id}`"
+                  class="block text-sm py-1.5 transition-all duration-200 leading-tight pr-2"
+                  :class="[
+                    item.level === 1 ? 'font-bold mb-2 mt-4' : 'font-normal',
+                    item.level > 1 ? `ml-${(item.level-1)*3} text-xs` : '',
+                    activeHeaderId === item.id ? 'translate-x-1 font-medium scale-105 origin-left' : ''
+                  ]"
+                  :style="getTocItemStyle(item)"
+                  @click.prevent="handleMobileTocClick(item.id)"
+                >
+                  {{ item.text }}
+                </a>
+              </nav>
+            </div>
+
+            <div v-else class="text-sm text-gray-500 dark:text-gray-400">
+              {{ lang === 'zh' ? '暂无目录' : 'No TOC' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="flex h-full">
+      <div 
+        ref="localScrollContainerRef"
+        class="flex-1 overflow-y-auto custom-scrollbar w-full"
+        :style="{ padding: 'var(--reader-page-padding, 1.5rem)' }"
+      >
+        <div 
+           class="w-full mx-auto bg-white/85 dark:bg-gray-900/85 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
+           :class="[fontSizeClass, articleStyleClass, appStore.sidebarOpen ? 'max-w-4xl xl:max-w-5xl' : 'max-w-5xl xl:max-w-7xl']"
+           :style="[{ padding: 'var(--reader-card-padding, 2.5rem)' }, articleContainerStyle]"
+        >
+          <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-20 rounded-[2rem] backdrop-blur-sm">
+            <div class="flex flex-col items-center gap-4">
+               <div class="animate-spin text-4xl">🌸</div>
+               <div class="text-sm font-bold animate-pulse" :style="loadingTextStyle">Fetching Content...</div>
+            </div>
+          </div>
+
+          <ArticleInfoBar
+            :lang="lang"
+            :is-source="file.isSource"
+            :author-name="currentAuthorName"
+            :author-url="currentAuthorUrl"
+            :author-link-style="authorLinkStyle"
+            :liked="articleStore.isLiked(file.path)"
+            :likes="articleStore.getLikes(file.path)"
+            :on-like="handleLike"
+            :favorite="articleStore.isFavorite(file.path)"
+            :favorite-text="t.favorite"
+            :on-toggle-favorite="() => articleStore.toggleFavorite(file.path)"
+            v-model:backgroundColor="articleBackgroundColor"
+            :on-reset-background-color="resetArticleBackgroundColor"
+            :views="getArticleViews(file.path)"
+            :views-label="lang === 'zh' ? '人阅读' : 'views'"
+            :comments="getArticleComments(file.path)"
+            :comments-label="lang === 'zh' ? '条评论' : 'comments'"
+            :word-count="currentWordCount"
+            :words-label="t.words"
+            :updated-label="t.updated"
+            :updated-date="formatDate(file.lastModified)"
+            :tags="currentTags"
+            :tag-badge-style="tagBadgeStyle"
+            :show-toc-button="false"
+            :on-open-toc="() => {}"
+          />
+
+         <!-- Markdown Content -->
+         <div 
+           v-if="!file.isSource && !isRawMode"
+           id="markdown-viewer"
+           ref="markdownViewerRef"
+           v-html="renderedHtml" 
+           class="markdown-body"
+           @click="handleContentClickEvent"
+           @mousedown="selectionMenuComposable.lockSelectionMenu()"
+           @mouseup="handleSelectionEvent"
+           @touchend="handleSelectionEvent"
+           @contextmenu="handleSelectionContextMenuEvent"
+         ></div>
+
+         <!-- Source Code / Raw Mode (Editable) -->
+         <div v-else class="relative group">
+            <!-- Edit Mode Toolbar -->
+            <div class="flex items-center justify-between mb-3 bg-[#252526] px-4 py-2 rounded-t-xl border border-gray-700 border-b-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-400 font-mono">{{ isRawMode ? 'Markdown' : 'Source' }}</span>
+                <span v-if="rawEditor.isEditingRaw.value" class="text-xs text-yellow-400 px-2 py-0.5 bg-yellow-900/30 rounded">{{ lang === 'zh' ? '编辑中' : 'Editing' }}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                 <button @click="rawEditor.saveRawContent()" class="text-xs text-green-400 hover:text-green-300 transition-colors" v-if="rawEditor.isEditingRaw.value">
+                   {{ lang === 'zh' ? '保存' : 'Save' }}
+                 </button>
+                 <button @click="rawEditor.isEditingRaw.value ? rawEditor.cancelEditingRaw() : rawEditor.startEditingRaw()" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                   {{ rawEditor.isEditingRaw.value ? (lang === 'zh' ? '取消' : 'Cancel') : (lang === 'zh' ? '编辑' : 'Edit') }}
+                 </button>
+              </div>
+            </div>
+            
+            <textarea 
+              v-if="rawEditor.isEditingRaw.value"
+              v-model="rawEditor.editedRawContent.value"
+              class="w-full h-[600px] bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"
+            ></textarea>
+            <pre v-else class="bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl overflow-x-auto"><code>{{ file.content }}</code></pre>
+         </div>
+
+         <!-- Prev/Next Buttons -->
+         <div v-if="!file.isSource && !isRawMode" class="mt-12 flex justify-between gap-4">
+           <button 
+             v-if="prevFile"
+             @click="navigateTo(prevFile)"
+             class="flex-1 max-w-[45%] text-left p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
+           >
+             <div class="text-xs text-gray-400 mb-1 flex items-center gap-1">
+               <span>←</span>
+               <span>{{ t.previous || (lang === 'zh' ? '上一篇' : 'Previous') }}</span>
+             </div>
+             <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
+               {{ prevFile.name.replace('.md', '') }}
+             </div>
+           </button>
+           <div v-else class="flex-1"></div>
+           <button 
+             v-if="nextFile"
+             @click="navigateTo(nextFile)"
+             class="flex-1 max-w-[45%] text-right p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
+           >
+             <div class="text-xs text-gray-400 mb-1 flex items-center justify-end gap-1">
+               <span>{{ t.next || (lang === 'zh' ? '下一篇' : 'Next') }}</span>
+               <span>→</span>
+             </div>
+             <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
+               {{ nextFile.name.replace('.md', '') }}
+             </div>
+           </button>
+           <div v-else class="flex-1"></div>
+         </div>
+
+         <!-- Giscus Comments -->
+         <GiscusComments 
+           v-if="!file.isSource" 
+           class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800"
+           :key="file.path" 
+           :lang="lang"
+           :is-dark="appStore.isDark"
+           :path="file.path"
+           @update-comment-count="emit('update-comment-count', $event)"
+         />
+         
+         <!-- Selection Menu -->
+         <div 
+           v-show="selectionMenu.show" 
+           class="fixed z-50 flex bg-gray-900/95 text-white rounded-2xl shadow-2xl backdrop-blur-xl transform -translate-x-1/2 -translate-y-full mb-2 p-1.5 gap-0.5 border border-white/10"
+           :style="{ top: selectionMenu.y + 'px', left: selectionMenu.x + 'px' }"
+           @mousedown.prevent
+         >
+           <button @click="applyFormatHandler('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
+             <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
+           </button>
+           <!-- ... other buttons ... -->
+         </div>
+       </div>
+     </div>
+
+      <!-- Right Sidebar (TOC) -->
+      <aside 
+        v-if="!file.isSource && !isRawMode"
+        class="hidden lg:flex w-72 2xl:w-80 flex-col gap-6 p-6 border-l border-white/30 dark:border-gray-700/30 backdrop-blur-md overflow-y-auto custom-scrollbar z-20 lg:static lg:h-auto lg:shadow-none lg:bg-white/20 lg:dark:bg-gray-900/20"
+      >
+
+        <!-- Table of Contents -->
+        <div v-if="toc.length > 0">
+          <h3 class="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" :style="tocTitleStyle">
+            <span>📑</span> {{ t.on_this_page }}
+          </h3>
+          <nav 
+            class="space-y-1 relative border-l-2 pl-4 cursor-pointer select-none" 
+            :style="tocBorderStyle"
+            ref="tocNavRef"
+            @mousedown="handleTocDragStart"
+            @touchstart="handleTocDragStart"
+          >
+             <!-- Active Indicator -->
+            <div 
+              class="absolute left-[-2px] w-[2px] transition-all duration-300"
+              :style="{
+                top: activeIndicatorTop + 'px',
+                height: activeIndicatorHeight + 'px',
+                ...tocIndicatorStyle
+              }"
+              v-if="activeHeaderId"
+            ></div>
+            <a 
+              v-for="item in toc" 
+              :key="item.id"
+              :ref="(el) => setTocItemRef(el, item.id)"
+              :href="`#${item.id}`"
+              class="block text-sm py-1.5 transition-all duration-200 leading-tight pr-2"
+              :class="[
+                item.level === 1 ? 'font-bold mb-2 mt-4' : 'font-normal',
+                item.level > 1 ? `ml-${(item.level-1)*3} text-xs` : '',
+                activeHeaderId === item.id ? 'translate-x-1 font-medium scale-105 origin-left' : ''
+              ]"
+              :style="getTocItemStyle(item)"
+              @click.prevent="scrollToHeader(item.id)"
+            >
+              {{ item.text }}
+            </a>
+          </nav>
+        </div>
+
+        <!-- Decorative / Meta Info -->
+        <div class="mt-auto bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-white/60 dark:border-gray-700 shadow-sm backdrop-blur-sm">
+           <div class="text-[10px] uppercase font-bold mb-2" :style="tocMetaTitleStyle">{{ t.note_details }}</div>
+           <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
+             <div class="flex justify-between"><span>{{ t.words }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentWordCount }}</span></div>
+             <div class="flex justify-between"><span>{{ t.lines }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentLineCount }}</span></div>
+             <div class="flex justify-between"><span>{{ t.format }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ file.isSource ? 'Code' : 'Markdown' }}</span></div>
+           </div>
+        </div>
+      </aside>
+    </div>
 
     <div
-      v-if="!file.isSource && !isRawMode"
+      v-if="!file.isSource && !isRawMode && !(isMobile && isMobileTocPage)"
       class="fixed bottom-4 xl:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
       :class="floatingNavRightClass"
     >
@@ -245,64 +458,6 @@
         ⬆
       </button>
     </div>
-
-    <!-- Right Sidebar (TOC) -->
-    <aside 
-      v-if="!file.isSource && !isRawMode"
-      class="hidden lg:flex w-72 2xl:w-80 flex-col gap-6 p-6 border-l border-white/30 dark:border-gray-700/30 backdrop-blur-md overflow-y-auto custom-scrollbar z-20 lg:static lg:h-auto lg:shadow-none lg:bg-white/20 lg:dark:bg-gray-900/20"
-    >
-
-      <!-- Table of Contents -->
-      <div v-if="toc.length > 0">
-        <h3 class="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2" :style="tocTitleStyle">
-          <span>📑</span> {{ t.on_this_page }}
-        </h3>
-        <nav 
-          class="space-y-1 relative border-l-2 pl-4 cursor-pointer select-none" 
-          :style="tocBorderStyle"
-          ref="tocNavRef"
-          @mousedown="handleTocDragStart"
-          @touchstart="handleTocDragStart"
-        >
-           <!-- Active Indicator -->
-          <div 
-            class="absolute left-[-2px] w-[2px] transition-all duration-300"
-            :style="{
-              top: activeIndicatorTop + 'px',
-              height: activeIndicatorHeight + 'px',
-              ...tocIndicatorStyle
-            }"
-            v-if="activeHeaderId"
-          ></div>
-          <a 
-            v-for="item in toc" 
-            :key="item.id"
-            :ref="(el) => setTocItemRef(el, item.id)"
-            :href="`#${item.id}`"
-            class="block text-sm py-1.5 transition-all duration-200 leading-tight pr-2"
-            :class="[
-              item.level === 1 ? 'font-bold mb-2 mt-4' : 'font-normal',
-              item.level > 1 ? `ml-${(item.level-1)*3} text-xs` : '',
-              activeHeaderId === item.id ? 'translate-x-1 font-medium scale-105 origin-left' : ''
-            ]"
-            :style="getTocItemStyle(item)"
-            @click.prevent="scrollToHeader(item.id)"
-          >
-            {{ item.text }}
-          </a>
-        </nav>
-      </div>
-
-      <!-- Decorative / Meta Info -->
-      <div class="mt-auto bg-white/50 dark:bg-gray-800/50 p-4 rounded-xl border border-white/60 dark:border-gray-700 shadow-sm backdrop-blur-sm">
-         <div class="text-[10px] uppercase font-bold mb-2" :style="tocMetaTitleStyle">{{ t.note_details }}</div>
-         <div class="space-y-2 text-xs text-gray-500 dark:text-gray-400">
-           <div class="flex justify-between"><span>{{ t.words }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentWordCount }}</span></div>
-           <div class="flex justify-between"><span>{{ t.lines }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ currentLineCount }}</span></div>
-           <div class="flex justify-between"><span>{{ t.format }}:</span> <span class="font-mono text-gray-700 dark:text-gray-300">{{ file.isSource ? 'Code' : 'Markdown' }}</span></div>
-         </div>
-      </div>
-    </aside>
   </div>
 </template>
 
@@ -319,6 +474,7 @@ import { useSelectionMenu } from '../composables/useSelectionMenu';
 import { useContentClick } from '../composables/useContentClick';
 import { useSearchJump } from '../composables/useSearchJump';
 import GiscusComments from '../components/GiscusComments.vue';
+import ArticleInfoBar from '../components/ArticleInfoBar.vue';
 
 const props = defineProps<{
   file: FileNode;
@@ -348,10 +504,46 @@ const appStore = useAppStore();
 const articleStore = useArticleStore();
 const markdownViewerRef = ref<HTMLElement | null>(null)
 const localScrollContainerRef = ref<HTMLElement | null>(null)
+const mobilePagerRef = ref<HTMLElement | null>(null)
 
 const isMobile = ref(false)
+const isMobileTocPage = ref(false)
 const checkMobile = () => {
-  isMobile.value = window.innerWidth < 768
+  const nextIsMobile = window.innerWidth < 768
+  if (isMobile.value && !nextIsMobile) {
+    isMobileTocPage.value = false
+  }
+  isMobile.value = nextIsMobile
+  if (nextIsMobile) {
+    nextTick(() => handleMobilePagerScroll())
+  }
+}
+
+const handleMobilePagerScroll = () => {
+  const el = mobilePagerRef.value
+  if (!el) return
+  isMobileTocPage.value = el.scrollLeft > el.clientWidth / 2
+}
+
+const scrollToArticlePage = (behavior: ScrollBehavior = getScrollBehavior()) => {
+  const el = mobilePagerRef.value
+  if (!el) return
+  el.scrollTo({ left: 0, behavior })
+}
+
+const scrollToTocPage = (behavior: ScrollBehavior = getScrollBehavior()) => {
+  const el = mobilePagerRef.value
+  if (!el) return
+  el.scrollTo({ left: el.clientWidth, behavior })
+}
+
+const handleMobileTocClick = (id: string) => {
+  scrollToArticlePage('auto')
+  nextTick(() => {
+    setTimeout(() => {
+      scrollToHeader(id)
+    }, 0)
+  })
 }
 
 onMounted(() => {

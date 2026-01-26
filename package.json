@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "gen-all": "npm run gen-tree && npm run gen-raw && npm run gen-music && npm run gen-wallpapers",
-    "dev": "npm run gen-all && vite",
+    "dev": "npm run gen-all && vite --host 127.0.0.1 --port 3000",
     "build": "npm run gen-all && vite build",
     "preview": "vite preview",
     "gen-tree": "tsx scripts/generate-tree.ts",
