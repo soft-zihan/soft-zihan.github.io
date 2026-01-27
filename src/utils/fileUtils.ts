@@ -47,3 +47,16 @@ export const fetchFileContent = async (file: FileNode): Promise<string> => {
     return `# Error\n${error.message}\nPath: ${file.path}`
   }
 }
+
+export const fetchRenderedHtml = async (file: FileNode): Promise<string> => {
+  const fetchPath = file.renderPath ? `./${file.renderPath}` : ''
+  if (!fetchPath) return ''
+
+  try {
+    const res = await fetch(fetchPath)
+    if (res.ok) return await res.text()
+    return ''
+  } catch {
+    return ''
+  }
+}

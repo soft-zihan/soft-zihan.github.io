@@ -2,6 +2,7 @@ import { ref, type Ref } from 'vue'
 import type { FileNode } from '../types'
 import { useGitHubPublish } from './useGitHubPublish'
 import { buildMetaCommentWithContributors } from './useArticleMeta'
+import { fetchFileContent } from '../utils/fileUtils'
 
 /**
  * Raw 模式编辑 composable
@@ -25,7 +26,13 @@ export function useRawEditor(
   /**
    * 开始编辑
    */
-  const startEditingRaw = () => {
+  const startEditingRaw = async () => {
+    const file = currentFile.value
+    if (!file) return
+    if (!file.content && !file.isSource && !file.path.toLowerCase().endsWith('.pdf')) {
+      const content = await fetchFileContent(file)
+      if (currentFile.value?.path === file.path) currentFile.value.content = content || ''
+    }
     if (currentFile.value?.content) {
       editedRawContent.value = currentFile.value.content
       isEditingRaw.value = true
@@ -141,6 +148,7 @@ export function useRawEditor(
       if (result.success) {
         // 更新本地内容
         currentFile.value.content = finalContent
+        currentFile.value.renderedHtml = ''
         isEditingRaw.value = false
         editedRawContent.value = ''
 

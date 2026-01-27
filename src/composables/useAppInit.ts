@@ -35,40 +35,102 @@ export function useAppInit(
   }
 
   const initFileSystem = async () => {
+    const cacheKey = 'sakura:filesJson:v1'
+    const applyFileSystem = async (nextFs: FileNode[]) => {
+      appStore.fileSystem = nextFs
+
+      const params = new URLSearchParams(window.location.search)
+      const targetPath = params.get('path')
+      const sourcePath = params.get('source')
+      const lab = params.get('lab')
+      const tab = params.get('tab')
+
+      if (sourcePath) {
+        await openCodeByPath(sourcePath)
+      }
+
+      if (lab === 'dashboard') {
+        openLabDashboard(tab || undefined, { syncUrl: false })
+      }
+
+      if (targetPath) {
+        const decodedTargetPath = decodeURIComponent(targetPath)
+        const node = findNodeByPath(appStore.fileSystem, decodedTargetPath) || findNodeByPath(appStore.fileSystem, targetPath)
+
+        if (node) {
+          appStore.viewMode = 'files'
+
+          if (node.type === NodeType.FILE) openFile(node, { syncUrl: false })
+          else openFolder(node, { syncUrl: false })
+        } else {
+          console.warn('Path not found in file system:', targetPath)
+        }
+      }
+    }
+
+    const postInit = async () => {
+      appStore.loading = false
+      await nextTick()
+      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()))
+
+      if (appStore.fileSystem.length > 0) {
+        const root = appStore.fileSystem.find((node: FileNode) => node.type === NodeType.DIRECTORY && node.name === lang.value)
+        const currentLangRoot = root?.children?.length
+          ? root.children
+          : appStore.fileSystem.filter((node: FileNode) => !(node.type === NodeType.DIRECTORY && node.path === 'source'))
+        runWhenIdle(() => {
+          searchApi.initSearchIndex(appStore.fileSystem, lang.value as 'en' | 'zh').catch(() => {})
+        })
+        runWhenIdle(() => {
+          collectAllTags(currentLangRoot || [], articleStore.setAvailableTags)
+        })
+      }
+    }
+
+    let hasApplied = false
     try {
-      const res = await fetch(`./data/files.json?t=${Date.now()}`);
+      const cachedRaw = window.localStorage.getItem(cacheKey)
+      if (cachedRaw) {
+        try {
+          const cachedFs = JSON.parse(cachedRaw)
+          if (Array.isArray(cachedFs)) {
+            await applyFileSystem(cachedFs)
+            hasApplied = true
+            await postInit()
+          }
+        } catch {
+          window.localStorage.removeItem(cacheKey)
+        }
+      }
+    } catch {
+    }
+
+    try {
+      const res = await fetch(`./data/files.json`);
       if (res.ok) {
-        appStore.fileSystem = await res.json();
-        
-        // Handle URL parameters
-        const params = new URLSearchParams(window.location.search);
-        const targetPath = params.get('path');
-        const sourcePath = params.get('source');
-        const lab = params.get('lab');
-        const tab = params.get('tab');
-
-        // Source Code Modal Route
-        if (sourcePath) {
-          await openCodeByPath(sourcePath);
+        const raw = await res.text()
+        try {
+          window.localStorage.setItem(cacheKey, raw)
+        } catch {
         }
 
-        // Lab Route
-        if (lab === 'dashboard') {
-          openLabDashboard(tab || undefined, { syncUrl: false });
-        }
-
-        // File/Folder Route
-        if (targetPath) {
-          const decodedTargetPath = decodeURIComponent(targetPath);
-          const node = findNodeByPath(appStore.fileSystem, decodedTargetPath) || findNodeByPath(appStore.fileSystem, targetPath);
-
-          if (node) {
-            appStore.viewMode = 'files';
-
-            if (node.type === NodeType.FILE) openFile(node, { syncUrl: false });
-            else openFolder(node, { syncUrl: false });
-          } else {
-            console.warn("Path not found in file system:", targetPath);
+        if (!hasApplied) {
+          const nextFs = JSON.parse(raw)
+          await applyFileSystem(nextFs)
+          hasApplied = true
+          await postInit()
+        } else {
+          const cachedRaw = (() => {
+            try {
+              return window.localStorage.getItem(cacheKey)
+            } catch {
+              return null
+            }
+          })()
+          if (cachedRaw !== raw) {
+            const nextFs = JSON.parse(raw)
+            await applyFileSystem(nextFs)
+            await postInit()
           }
         }
       } else {
@@ -76,23 +138,9 @@ export function useAppInit(
       }
     } catch (e) {
       console.error("Failed to load file system", e);
-      appStore.fileSystem = [];
-    } finally {
-      appStore.loading = false;
-      await nextTick();
-      await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-
-      if (appStore.fileSystem.length > 0) {
-        const root = appStore.fileSystem.find((node: FileNode) => node.type === NodeType.DIRECTORY && node.name === lang.value);
-        const currentLangRoot = root?.children?.length
-          ? root.children
-          : appStore.fileSystem.filter((node: FileNode) => !(node.type === NodeType.DIRECTORY && node.path === 'source'));
-        runWhenIdle(() => {
-          searchApi.initSearchIndex(appStore.fileSystem, lang.value as 'en' | 'zh').catch(() => {});
-        });
-        runWhenIdle(() => {
-          collectAllTags(currentLangRoot || [], articleStore.setAvailableTags);
-        });
+      if (!hasApplied) {
+        appStore.fileSystem = []
+        await postInit()
       }
     }
   };

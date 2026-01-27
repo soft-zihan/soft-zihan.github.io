@@ -621,6 +621,15 @@ const { renderedHtml, toc, activeHeaderId, updateRenderedContent, scrollToHeader
 setupMarkedRenderer();
 
 watch(
+  () => props.file?.toc,
+  (preset) => {
+    if (!preset?.length) return
+    articleNavStore.setToc(preset, props.file?.path || null)
+  },
+  { deep: true, immediate: true }
+)
+
+watch(
   toc,
   (nextToc) => {
     articleNavStore.setToc(nextToc, props.file?.path || null);

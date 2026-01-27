@@ -8,6 +8,9 @@ export interface FileNode {
   name: string;
   path: string; // e.g. "notes/tech/vue.md"
   fetchPath?: string; // e.g. "raw/App_vue.txt"
+  renderPath?: string;
+  renderedHtml?: string;
+  renderVersion?: number;
   type: NodeType;
   children?: FileNode[];
   content?: string;
@@ -16,6 +19,8 @@ export interface FileNode {
    * fetching the full markdown upfront. Populated by the file tree generator.
    */
   contentSnippet?: string;
+  excerpt?: string;
+  toc?: TocItem[];
   /** Precomputed stats to avoid recalculating on the client side. */
   wordCount?: number;
   lineCount?: number;

@@ -144,12 +144,13 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
     const renderer = new marked.Renderer()
     renderer.heading = function(text, level, raw) {
       const id = nextUniqueHeadingId(String(raw ?? text))
-      // Collect TOC item directly from renderer to ensure consistency
-      tempToc.push({
-        id,
-        text: normalizeHeadingText(text).trim(),
-        level
-      })
+      if (!currentFile.value?.toc?.length) {
+        tempToc.push({
+          id,
+          text: normalizeHeadingText(text).trim(),
+          level
+        })
+      }
       return `<h${level} id="${id}">${text}</h${level}>`
     }
     renderer.code = function(code, language) {
@@ -192,24 +193,61 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
       return
     }
 
-    if (!currentFile.value?.content) {
-      if (currentFile.value?.path && isPdfPath(currentFile.value.path)) {
-        const href = resolveContentPath(`notes/${currentFile.value.path}`)
-        renderedHtml.value = renderPdfEmbed(href, currentFile.value.name, currentFile.value.name)
-        return
-      }
+    if (!currentFile.value) {
       renderedHtml.value = ''
+      toc.value = []
       return
     }
 
-    // If it's source or raw mode, we don't render md
+    if (currentFile.value.path && isPdfPath(currentFile.value.path)) {
+      const href = resolveContentPath(`notes/${currentFile.value.path}`)
+      renderedHtml.value = renderPdfEmbed(href, currentFile.value.name, currentFile.value.name)
+      return
+    }
+
     if (currentFile.value.isSource || isRawMode.value) return
+
+    const precomputedToc = currentFile.value.toc && currentFile.value.toc.length ? currentFile.value.toc : null
+    if (precomputedToc) toc.value = precomputedToc
+
+    if (currentFile.value.renderedHtml) {
+      const cacheKey = `${currentFile.value.path}|${currentFile.value.lastModified || ''}|${currentFile.value.renderVersion || ''}|${currentFile.value.renderedHtml.length}|rendered-v1`
+      const cached = renderCache.get(cacheKey)
+      if (cached !== undefined) {
+        renderedHtml.value = cached.html
+        toc.value = precomputedToc || cached.toc
+        headerPositionsCache = null
+        nextTick(() => {
+          updateActiveHeader()
+        })
+        return
+      }
+
+      const sanitized = sanitizeHtml(currentFile.value.renderedHtml)
+      renderedHtml.value = sanitized || currentFile.value.renderedHtml
+      renderCache.set(cacheKey, { html: renderedHtml.value, toc: toc.value.slice() })
+      renderCacheKeys.push(cacheKey)
+      if (renderCacheKeys.length > 25) {
+        const keyToDelete = renderCacheKeys.shift()
+        if (keyToDelete) renderCache.delete(keyToDelete)
+      }
+      headerPositionsCache = null
+      nextTick(() => {
+        updateActiveHeader()
+      })
+      return
+    }
+
+    if (!currentFile.value.content) {
+      renderedHtml.value = ''
+      return
+    }
 
     const cacheKey = `${currentFile.value.path}|${currentFile.value.lastModified || ''}|${currentFile.value.content.length}|toc-v2`
     const cached = renderCache.get(cacheKey)
     if (cached !== undefined) {
       renderedHtml.value = cached.html
-      toc.value = cached.toc
+      toc.value = precomputedToc || cached.toc
       // Force position cache invalidation
       headerPositionsCache = null
       nextTick(() => {
@@ -256,10 +294,11 @@ export function useContentRenderer(currentFile: Ref<FileNode | null>, isRawMode:
       const finalHtml = sanitized || parsed
       renderedHtml.value = finalHtml
       
-      // Update TOC from collected items
-      toc.value = [...tempToc]
+      if (!precomputedToc) {
+        toc.value = [...tempToc]
+      }
       
-      renderCache.set(cacheKey, { html: finalHtml, toc: [...tempToc] })
+      renderCache.set(cacheKey, { html: finalHtml, toc: toc.value.slice() })
       renderCacheKeys.push(cacheKey)
       if (renderCacheKeys.length > 25) {
         const keyToDelete = renderCacheKeys.shift()

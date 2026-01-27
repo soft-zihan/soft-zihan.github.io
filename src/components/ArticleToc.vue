@@ -29,6 +29,8 @@
           marginLeft: item.level > 1 ? `${(item.level - 1) * 0.75}rem` : undefined,
           fontSize: item.level > 1 ? '0.75rem' : undefined
         }"
+        @touchstart.stop
+        @touchend.stop
         @click.prevent="$emit('select', item.id)"
       >
         {{ item.text }}
@@ -49,6 +51,8 @@ const props = defineProps<{
   toc: TocItem[]
   activeHeaderId: string
   emptyText?: string
+  autoScroll?: boolean
+  scrollContainer?: HTMLElement | null
 }>()
 
 defineEmits<{
@@ -98,14 +102,44 @@ const getTocItemStyle = (item: TocItem) => ({
         : 'var(--primary-800)'
 })
 
+const getScrollBehavior = () => {
+  return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 'auto' : 'smooth'
+}
+
+const scrollActiveItemIntoView = (el: HTMLElement) => {
+  const container = props.scrollContainer
+  if (!container) return
+
+  const containerRect = container.getBoundingClientRect()
+  const itemRect = el.getBoundingClientRect()
+  const margin = 12
+
+  const itemTop = itemRect.top - containerRect.top + container.scrollTop
+  const itemBottom = itemTop + itemRect.height
+
+  const viewTop = container.scrollTop
+  const viewBottom = viewTop + container.clientHeight
+
+  if (itemTop < viewTop + margin) {
+    container.scrollTo({ top: Math.max(0, itemTop - margin), behavior: getScrollBehavior() })
+    return
+  }
+  if (itemBottom > viewBottom - margin) {
+    container.scrollTo({
+      top: Math.max(0, itemBottom - container.clientHeight + margin),
+      behavior: getScrollBehavior()
+    })
+  }
+}
+
 watch(
   () => props.activeHeaderId,
   async (id) => {
     if (!id) return
+    if (props.autoScroll === false) return
     await nextTick()
     const el = tocItemRefs.value[id]
-    if (el) el.scrollIntoView({ block: 'nearest' })
+    if (el) scrollActiveItemIntoView(el)
   }
 )
 </script>
-

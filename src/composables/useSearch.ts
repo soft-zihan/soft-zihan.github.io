@@ -19,6 +19,7 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     path: string
     name: string
     content: string
+    preview: string
   }
 
   const searchQuery = ref('')
@@ -31,7 +32,8 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
   const isFullIndexReady = ref(false)
   const currentLang = ref<'en' | 'zh'>('zh')
 
-  const indexedDocumentsById = new Map<string, IndexedDocument>()
+  const fileNodeById = new Map<string, FileNode>()
+  const indexCacheFingerprint = ref('')
 
   const hasLanguageRoots = (fs: FileNode[]) => {
     return fs.some((n) => n.type === NodeType.DIRECTORY && (n.name === 'zh' || n.name === 'en'))
@@ -60,25 +62,28 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     return tokens
   }
 
+  const miniSearchOptions = {
+    fields: ['name', 'content'],
+    storeFields: ['name', 'path', 'preview'],
+    tokenize: (text: string) => tokenizeMixed(text),
+    processTerm: (term: string) => (term ? term.toLowerCase() : term),
+    searchOptions: {
+      boost: { name: 2 },
+      fuzzy: 0.2,
+      prefix: true
+    }
+  } as const
+
   const createMiniSearch = () => {
-    return new MiniSearch<IndexedDocument>({
-      fields: ['name', 'content'],
-      storeFields: ['name', 'path', 'content'],
-      tokenize: (text) => tokenizeMixed(text),
-      processTerm: (term) => (term ? term.toLowerCase() : term),
-      searchOptions: {
-        boost: { name: 2 },
-        fuzzy: 0.2,
-        prefix: true
-      }
-    })
+    return new MiniSearch<IndexedDocument>(miniSearchOptions as any)
   }
 
   const flattenFiles = (nodes: FileNode[], filterPrefix: string | null): FileNode[] => {
     const files: FileNode[] = []
     for (const node of nodes) {
       if (node.type === NodeType.FILE && !node.isSource) {
-        if (!filterPrefix || node.path.startsWith(filterPrefix)) files.push(node)
+        const isMarkdown = node.path.toLowerCase().endsWith('.md')
+        if (isMarkdown && (!filterPrefix || node.path.startsWith(filterPrefix))) files.push(node)
       } else if (node.children) {
         files.push(...flattenFiles(node.children, filterPrefix))
       }
@@ -86,9 +91,63 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     return files
   }
 
-  const getIndexContent = (node: FileNode) => {
-    const contentToIndex = (node.content || node.contentSnippet || '').trim()
+  const getIndexContent = (node: FileNode, fullContent?: string) => {
+    const full = (fullContent ?? node.content ?? '').trim()
+    const contentToIndex = (full || node.excerpt || node.contentSnippet || '').trim()
     return `${node.name.replace('.md', '')} ${contentToIndex}`.trim()
+  }
+
+  const getPreviewContent = (node: FileNode) => {
+    return (node.excerpt || node.contentSnippet || '').trim()
+  }
+
+  const computeIndexFingerprint = (fs: FileNode[], langPrefix: string | null) => {
+    const nodes = flattenFiles(fs, langPrefix)
+    let maxModified = 0
+    for (const n of nodes) {
+      if (!n.lastModified) continue
+      const ts = Date.parse(n.lastModified)
+      if (Number.isFinite(ts)) maxModified = Math.max(maxModified, ts)
+    }
+    return `${currentLang.value}:${nodes.length}:${maxModified}`
+  }
+
+  const getIndexCacheKey = (fingerprint: string) => `sakura:searchIndex:v2:${fingerprint}`
+
+  const tryLoadIndexFromCache = (fingerprint: string) => {
+    try {
+      const raw = window.localStorage.getItem(getIndexCacheKey(fingerprint))
+      if (!raw) return false
+      const parsed = JSON.parse(raw)
+      const json = parsed?.indexJson
+      if (!json) return false
+      const loaded = (MiniSearch as any).loadJSON?.(json, miniSearchOptions)
+      if (!loaded) return false
+      searchIndex.value = loaded
+      isFullIndexReady.value = true
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const saveIndexToCache = (fingerprint: string) => {
+    try {
+      const idx = searchIndex.value as any
+      if (!idx || typeof idx.toJSON !== 'function') return
+      const prefix = `sakura:searchIndex:v2:${currentLang.value}:`
+      for (let i = 0; i < window.localStorage.length; i++) {
+        const k = window.localStorage.key(i)
+        if (!k) continue
+        if (k.startsWith(prefix) && k !== getIndexCacheKey(fingerprint)) {
+          window.localStorage.removeItem(k)
+        }
+      }
+      const payload = { indexJson: idx.toJSON() }
+      window.localStorage.setItem(getIndexCacheKey(fingerprint), JSON.stringify(payload))
+    } catch {
+      return
+    }
   }
   
   // Initialize search index - 立即加载当前语言的全部内容
@@ -113,23 +172,38 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
     const langPrefix = buildLanguageFilter(fileSystem.value)
     
     try {
-      const filesToLoad = flattenFiles(fileSystem.value, langPrefix).filter((n) => !n.content)
-      for (const node of filesToLoad) {
-        try {
-          node.content = await fetchFn(node)
-          const updated: IndexedDocument = {
-            id: node.path,
-            name: node.name.replace('.md', ''),
-            path: node.path,
-            content: getIndexContent(node)
+      const filesToLoad = flattenFiles(fileSystem.value, langPrefix)
+      const concurrency = 6
+      let cursor = 0
+
+      const worker = async () => {
+        while (true) {
+          const i = cursor++
+          if (i >= filesToLoad.length) return
+          const node = filesToLoad[i]
+          try {
+            const content = await fetchFn(node)
+            node.content = content
+            const updated: IndexedDocument = {
+              id: node.path,
+              name: node.name.replace('.md', ''),
+              path: node.path,
+              content: getIndexContent(node, content),
+              preview: getPreviewContent(node)
+            }
+            searchIndex.value?.replace(updated)
+          } catch (e) {
+            console.warn(`Failed to load content for ${node.path}:`, e)
           }
-          indexedDocumentsById.set(updated.id, updated)
-          searchIndex.value?.replace(updated)
-        } catch (e) {
-          console.warn(`Failed to load content for ${node.path}:`, e)
         }
       }
+
+      const workers = Array.from({ length: Math.min(concurrency, filesToLoad.length) }, () => worker())
+      await Promise.all(workers)
+
       isFullIndexReady.value = true
+      if (indexCacheFingerprint.value) saveIndexToCache(indexCacheFingerprint.value)
+      if (searchQuery.value.trim()) search(searchQuery.value)
     } finally {
       isLoadingContent.value = false
     }
@@ -137,20 +211,24 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
   
   // Rebuild search index with current file contents
   const rebuildSearchIndex = async () => {
-    indexedDocumentsById.clear()
+    fileNodeById.clear()
 
     const langPrefix = buildLanguageFilter(fileSystem.value)
     const nodes = flattenFiles(fileSystem.value, langPrefix)
     const documents: IndexedDocument[] = nodes.map((node) => {
+      fileNodeById.set(node.path, node)
       const doc: IndexedDocument = {
         id: node.path,
         name: node.name.replace('.md', ''),
         path: node.path,
-        content: getIndexContent(node)
+        content: getIndexContent(node),
+        preview: getPreviewContent(node)
       }
-      indexedDocumentsById.set(doc.id, doc)
       return doc
     })
+
+    indexCacheFingerprint.value = computeIndexFingerprint(fileSystem.value, langPrefix)
+    if (tryLoadIndexFromCache(indexCacheFingerprint.value)) return
 
     const miniSearch = createMiniSearch()
     searchIndex.value = miniSearch
@@ -200,25 +278,33 @@ export function useSearch(fetchFileContentFn?: (file: FileNode) => Promise<strin
       })
       
       searchResults.value = sorted.slice(0, 20).map(r => {
-        const content = r.content || ''
-        const contentLower = content.toLowerCase()
+        const node = fileNodeById.get(r.id)
+        const preview = (r.preview || node?.excerpt || node?.contentSnippet || '').trim()
+        const full = (node?.content || '').trim()
+        const fullLower = full.toLowerCase()
+        const previewLower = preview.toLowerCase()
         
         // Find excerpt around match
         let excerpt = ''
-        const matchIndex = contentLower.indexOf(queryLower)
+        const matchIndexFull = full ? fullLower.indexOf(queryLower) : -1
+        const matchIndexPreview = previewLower.indexOf(queryLower)
+        const useFull = matchIndexFull > -1
+        const sourceText = useFull ? full : preview
+        const sourceLower = useFull ? fullLower : previewLower
+        const matchIndex = useFull ? matchIndexFull : matchIndexPreview
         if (matchIndex > -1) {
           const start = Math.max(0, matchIndex - 50)
-          const end = Math.min(content.length, matchIndex + query.length + 100)
-          excerpt = (start > 0 ? '...' : '') + content.slice(start, end) + (end < content.length ? '...' : '')
+          const end = Math.min(sourceText.length, matchIndex + query.length + 100)
+          excerpt = (start > 0 ? '...' : '') + sourceText.slice(start, end) + (end < sourceText.length ? '...' : '')
         } else {
-          excerpt = content.slice(0, 150) + (content.length > 150 ? '...' : '')
+          excerpt = sourceText.slice(0, 150) + (sourceText.length > 150 ? '...' : '')
         }
         
         return {
           id: r.id,
           path: r.path,
           name: r.name,
-          content: content,
+          content: full || preview,
           excerpt: excerpt,
           score: r.score
         }

@@ -2,7 +2,7 @@
   <Transition name="slide-left">
     <aside
       v-if="isOpen"
-      class="fixed right-0 top-0 bottom-0 z-50 w-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center py-6 gap-6 overflow-y-auto no-scrollbar"
+      class="shrink-0 h-full w-12 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-l border-gray-200 dark:border-gray-700 shadow-2xl flex flex-col items-center py-6 gap-6 overflow-y-auto no-scrollbar"
       @click.stop
     >
       <div class="flex-1"></div>

@@ -1,7 +1,7 @@
 import type { Ref } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import { useRouting } from './useRouting';
-import { fetchFileContent } from '../utils/fileUtils';
+import { fetchFileContent, fetchRenderedHtml } from '../utils/fileUtils';
 import type { FileNode } from '../types';
 import { useSelectionMenu } from './useSelectionMenu';
 
@@ -29,6 +29,41 @@ export function useFileOperations(scrollContainer?: Ref<HTMLElement | null>) {
     if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
 
     hideSelectionMenu();
+
+    const shouldPreferRendered = !file.isSource && !isPdfFile(file) && !!file.renderPath && !appStore.isRawMode
+    if (shouldPreferRendered && !file.renderedHtml) {
+      appStore.contentLoading = true;
+      try {
+        const html = await fetchRenderedHtml(file)
+        if (html) {
+          const ids = (file.toc || []).slice(0, 40).map(i => i.id)
+          const ok = ids.length === 0 || ids.every(id => html.includes(`id="${id}"`))
+          if (ok) {
+            const updatedFile = { ...file, renderedHtml: html };
+            appStore.currentFile = updatedFile;
+            const pathKey = file.path
+            const runWhenIdle = (fn: () => void) => {
+              const w = window as any
+              if (typeof w.requestIdleCallback === 'function') {
+                w.requestIdleCallback(() => fn(), { timeout: 1500 })
+                return
+              }
+              window.setTimeout(fn, 0)
+            }
+            runWhenIdle(async () => {
+              if (appStore.currentFile?.path !== pathKey) return
+              if (appStore.currentFile?.content) return
+              const content = await fetchFileContent(file)
+              if (appStore.currentFile?.path !== pathKey) return
+              appStore.currentFile = { ...(appStore.currentFile as any), content: content || '' }
+            })
+            return
+          }
+        }
+      } finally {
+        appStore.contentLoading = false;
+      }
+    }
 
     if (!file.content && !isPdfFile(file)) {
       appStore.contentLoading = true;

@@ -92,7 +92,7 @@
         <div
           v-if="isMobile"
           ref="mobileShellRef"
-          class="flex h-full w-full overflow-x-auto overflow-y-hidden no-scrollbar overscroll-x-contain"
+          class="flex h-full flex-1 min-w-0 overflow-x-auto overflow-y-hidden no-scrollbar overscroll-x-contain"
           style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"
           @touchstart.passive="handleMobileShellTouchStart"
           @touchend="handleMobileShellTouchEnd"
@@ -138,7 +138,7 @@
               <slot></slot>
             </div>
 
-            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full overflow-y-auto custom-scrollbar" style="scroll-snap-align: start; scroll-snap-stop: always;">
+            <div ref="mobileTocScrollRef" class="h-full w-full basis-full shrink-0 grow-0 max-w-full overflow-y-auto custom-scrollbar" style="scroll-snap-align: start; scroll-snap-stop: always;">
               <div class="p-4">
                 <div class="max-w-md mx-auto bg-white/85 dark:bg-gray-900/85 p-4 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] backdrop-blur-xl transition-all duration-300">
                   <div class="flex items-center justify-between mb-6">
@@ -160,6 +160,8 @@
                     :toc="mobileToc"
                     :active-header-id="mobileActiveHeaderId"
                     :empty-text="lang === 'zh' ? '暂无目录' : 'No TOC'"
+                    :auto-scroll="mobileShellPage === 2"
+                    :scroll-container="mobileTocScrollRef"
                     @select="handleMobileTocSelect"
                   />
                 </div>
@@ -263,9 +265,10 @@ const mobileActiveHeaderId = computed(() => {
 const headerHidden = ref(false);
 const headerRef = ref<InstanceType<typeof AppHeader> | null>(null);
 const lastScrollY = ref(0);
-const isMobile = ref(false);
+const isMobile = ref(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
 const activeScrollContainer = ref<HTMLElement | null>(null);
 const mobileShellRef = ref<HTMLElement | null>(null);
+const mobileTocScrollRef = ref<HTMLElement | null>(null);
 const mobileShellPage = ref(1);
 const mobileShellScrollRaf = ref<number | null>(null);
 const contentScrollRaf = ref<number | null>(null);
@@ -402,6 +405,8 @@ const handleMobileShellTouchEnd = (e: TouchEvent) => {
   if (isTap) return;
   const isVerticalGesture = absDy > absDx * 1.2;
   const deltaScroll = el.scrollLeft - state.startScrollLeft;
+  const absDeltaScroll = Math.abs(deltaScroll);
+  if (absDeltaScroll < 24) return;
   const minSwipe = Math.max(90, Math.floor(width * 0.18));
 
   let targetPage = state.startPage;

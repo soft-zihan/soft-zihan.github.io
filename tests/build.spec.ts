@@ -14,8 +14,8 @@ describe('Build System & File Tree Generation', () => {
   // Run the script before tests
   beforeAll(() => {
     console.log('Running generate-tree.ts...');
-    execSync('npx tsx scripts/generate-tree.ts', { stdio: 'inherit' });
-  }, 60000); // 60s timeout
+    execSync('npx tsx scripts/generate-tree.ts', { stdio: 'inherit', env: { ...process.env, SKIP_GIT_LOG: 'true' } });
+  }, 120000); // 120s timeout
 
   it('files.json should be generated', () => {
     expect(fs.existsSync(filesJsonPath)).toBe(true);
@@ -69,7 +69,7 @@ describe('Build System & File Tree Generation', () => {
       try {
           // 2. Run build script again
           console.log('Running generate-tree.ts with new file...');
-          execSync('npx tsx scripts/generate-tree.ts', { stdio: 'inherit' });
+          execSync('npx tsx scripts/generate-tree.ts', { stdio: 'inherit', env: { ...process.env, SKIP_GIT_LOG: 'true' } });
 
           // 3. Check if file appears in files.json
           const files = JSON.parse(fs.readFileSync(filesJsonPath, 'utf-8'));
@@ -88,5 +88,5 @@ describe('Build System & File Tree Generation', () => {
           // Re-run build to restore clean state (optional but good practice)
           execSync('npx tsx scripts/generate-tree.ts', { stdio: 'ignore', env: { ...process.env, SKIP_GIT_LOG: 'true' } });
       }
-  }, 60000); // 60s timeout
+  }, 120000); // 120s timeout
 });

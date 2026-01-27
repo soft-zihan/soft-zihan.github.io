@@ -145,21 +145,28 @@ const results = ref<SearchResult[]>([])
 const selectedIndex = ref(0)
 const isSearching = ref(false)
 const isLoading = ref(false)
+const searchDebounceTimer = ref<number | null>(null)
 
 const onSearchFocus = () => {
   // 内容已在初始化时加载，无需额外处理
 }
 
 const handleSearch = () => {
-  // 移除防抖，立即执行搜索
-  if (query.value.trim()) {
-    isSearching.value = true
-    results.value = props.searchFn(query.value)
-    isSearching.value = false
-    selectedIndex.value = 0
-  } else {
-    results.value = []
+  if (searchDebounceTimer.value != null) {
+    window.clearTimeout(searchDebounceTimer.value)
+    searchDebounceTimer.value = null
   }
+
+  searchDebounceTimer.value = window.setTimeout(() => {
+    if (query.value.trim()) {
+      isSearching.value = true
+      results.value = props.searchFn(query.value)
+      isSearching.value = false
+      selectedIndex.value = 0
+    } else {
+      results.value = []
+    }
+  }, 120)
 }
 
 const highlightText = (text: string, q: string): string => {
@@ -195,11 +202,23 @@ watch(() => props.showSearchModal, (show) => {
       searchInput.value?.focus()
     })
   } else {
+    if (searchDebounceTimer.value != null) {
+      window.clearTimeout(searchDebounceTimer.value)
+      searchDebounceTimer.value = null
+    }
     query.value = ''
     results.value = []
     selectedIndex.value = 0
   }
 })
+
+watch(
+  () => props.isLoadingContent,
+  (v) => {
+    isLoading.value = !!v
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped>
