@@ -97,7 +97,7 @@
           @scroll.passive="handleMobileShellScroll"
         >
           <div class="flex h-full w-full">
-            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full" style="scroll-snap-align: start;">
+            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full" style="scroll-snap-align: start; scroll-snap-stop: always;">
               <AppSidebar
                 v-if="!appStore.readingMode"
                 class="h-full w-full max-w-full"
@@ -120,23 +120,23 @@
                 :comment-counts="commentCounts"
                 @toggle-lang="appStore.toggleLang"
                 @reset="$emit('reset'); scrollToMobilePage(1)"
-                @logo-click="showToast(t.welcome_title); scrollToMobilePage(1)"
-                @select-tool="$emit('select-tool', $event); scrollToMobilePage(1)"
+                @logo-click="showToast(t.welcome_title); scrollToMobilePage(1, 'auto')"
+                @select-tool="$emit('select-tool', $event); scrollToMobilePage(1, 'auto')"
                 @toggle-folder="$emit('toggle-folder', $event)"
-                @select-file="$emit('select-file', $event); scrollToMobilePage(1)"
-                @select-folder="$emit('select-folder', $event); scrollToMobilePage(1)"
-                @open-search="appStore.showSearch = true; scrollToMobilePage(1)"
-                @toggle-sidebar="scrollToMobilePage(1)"
+                @select-file="$emit('select-file', $event); scrollToMobilePage(1, 'auto')"
+                @select-folder="$emit('select-folder', $event); scrollToMobilePage(1, 'auto')"
+                @open-search="appStore.showSearch = true; scrollToMobilePage(1, 'auto')"
+                @toggle-sidebar="scrollToMobilePage(1, 'auto')"
                 @toggle-right-sidebar="appStore.rightSidebarOpen = !appStore.rightSidebarOpen"
-                @update:activeLabTab="$emit('update:activeLabTab', $event); scrollToMobilePage(1)"
+                @update:activeLabTab="$emit('update:activeLabTab', $event); scrollToMobilePage(1, 'auto')"
               />
             </div>
 
-            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full flex overflow-hidden" style="scroll-snap-align: start;">
+            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full flex overflow-hidden" style="scroll-snap-align: start; scroll-snap-stop: always;">
               <slot></slot>
             </div>
 
-            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full overflow-y-auto custom-scrollbar" style="scroll-snap-align: start;">
+            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full overflow-y-auto custom-scrollbar" style="scroll-snap-align: start; scroll-snap-stop: always;">
               <div class="p-4">
                 <div class="max-w-md mx-auto bg-white/85 dark:bg-gray-900/85 p-4 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] backdrop-blur-xl transition-all duration-300">
                   <div class="flex items-center justify-between mb-6">
@@ -274,24 +274,34 @@ const handleRightSidebarThemePanel = () => {
 
 const handleMobileTocSelect = async (id: string) => {
   if (appStore.rightSidebarOpen) appStore.rightSidebarOpen = false;
+  
+  // 1. First trigger horizontal scroll to the article page
   scrollToMobilePage(1, 'auto');
-  await nextTick();
+  
+  // 2. Wait for the horizontal scroll to effectively complete
   const waitForArticlePage = () => {
     const el = mobileShellRef.value
-    if (!el) return true
+    if (!el) return true // Should not happen, but safe to bail out
+    
     const width = el.clientWidth || 1
+    // Calculate current page index (rounded)
     const page = Math.round(el.scrollLeft / width)
+    
+    // We consider it "arrived" if we are on page 1
     return page === 1
   }
+
   const tryRequest = () => {
     if (waitForArticlePage()) {
-      window.requestAnimationFrame(() => {
-        articleNavStore.requestScrollTo(id);
-      });
+      // Force request scroll
+      articleNavStore.requestScrollTo(id);
       return
     }
+    // Continue polling
     window.requestAnimationFrame(tryRequest)
   }
+
+  // Start polling
   window.requestAnimationFrame(tryRequest)
 };
 
