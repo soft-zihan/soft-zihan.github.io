@@ -30,8 +30,9 @@ fi
 ### 循环 (for)
 ```bash
 # 批量备份 log 文件
-for file in $(ls *.log); do
-    mv "$file" "${file}.bak"
+shopt -s nullglob
+for file in *.log; do
+    mv -- "$file" "${file}.bak"
 done
 ```
 
@@ -58,7 +59,7 @@ set -euo pipefail
 
 # 2. 获取脚本所在目录 (处理路径问题的终极方案)
 # 无论你在哪里运行这个脚本，$CUR_DIR 永远指向脚本所在的文件夹
-CUR_DIR=$(cd $(dirname $0); pwd)
+CUR_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
 # 3. 逻辑开始
 echo "当前脚本路径: $CUR_DIR"
@@ -70,3 +71,5 @@ echo "当前脚本路径: $CUR_DIR"
 ## 3. 实用技巧
 - **调试模式**：`bash -x script.sh`。它会打印出每一行执行的命令，方便找 Bug。
 - **参数默认值**：`NAME=${1:-"World"}`。如果没传第一个参数，就默认 NAME 为 "World"。
+- **质量工具**：推荐用 `shellcheck` 静态检查脚本（能提前发现大部分引号、变量、管道错误）。
+- **清理现场**：用 `trap` 在退出时回收临时文件（避免脚本失败后留下垃圾）。
