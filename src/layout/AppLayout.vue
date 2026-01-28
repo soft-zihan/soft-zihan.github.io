@@ -55,6 +55,7 @@
 
       <!-- Header Component -->
       <AppHeader
+        v-if="!isMobile"
         ref="headerRef"
         :lang="lang"
         :t="t"
@@ -134,8 +135,66 @@
               />
             </div>
 
-            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full flex overflow-hidden" style="scroll-snap-align: start; scroll-snap-stop: always;">
-              <slot></slot>
+            <div class="h-full w-full basis-full shrink-0 grow-0 max-w-full flex flex-col overflow-hidden" style="scroll-snap-align: start; scroll-snap-stop: always;">
+              <AppHeader
+                ref="headerRef"
+                :lang="lang"
+                :t="t"
+                :breadcrumbs="breadcrumbs"
+                :view-mode="appStore.viewMode"
+                :current-tool="appStore.currentTool"
+                :current-file="appStore.currentFile"
+                :show-particles="appStore.showParticles"
+                :is-dark="appStore.isDark"
+                :petal-speed="appStore.userSettings.petalSpeed"
+                :header-hidden="headerHidden"
+                :dual-column-mode="dualColumnMode"
+                :sidebar-open="mobileShellPage === 0"
+                :right-sidebar-open="appStore.rightSidebarOpen"
+                :get-article-views="getArticleViews"
+                v-model:isRawMode="appStore.isRawMode"
+                @reset="$emit('reset')"
+                @navigate="$emit('navigate', $event)"
+                @copy-link="$emit('copy-link')"
+                @download="$emit('download')"
+                @open-settings="appStore.showSettings = true; headerHidden = false"
+                @open-theme-panel="$emit('open-theme-panel', $event)"
+                @open-search="appStore.showSearch = true"
+                @open-music="musicStore.showMusicPlayer = true"
+                @open-write="appStore.showWriteEditor = true"
+                @open-download="appStore.showDownloadModal = true"
+                @toggle-theme="appStore.toggleTheme()"
+                @update:petal-speed="$emit('update:petal-speed', $event)"
+                @toggle-dual-column="$emit('toggle-dual-column')"
+                @toggle-sidebar="handleHeaderToggleSidebar"
+                @toggle-right-sidebar="handleHeaderToggleRightSidebar"
+              />
+
+              <div class="flex-1 flex overflow-hidden min-h-0">
+                <div class="flex-1 min-w-0 min-h-0 overflow-hidden flex">
+                  <slot></slot>
+                </div>
+
+                <RightSidebar 
+                  v-if="appStore.rightSidebarOpen"
+                  :is-open="true"
+                  :lang="lang"
+                  :current-file="appStore.currentFile"
+                  :is-raw-mode="appStore.isRawMode"
+                  :view-mode="appStore.viewMode"
+                  :dual-column-mode="dualColumnMode"
+                  @update:isRawMode="appStore.isRawMode = $event"
+                  @copy-link="$emit('copy-link')"
+                  @download="$emit('download')"
+                  @toggle-dual-column="$emit('toggle-dual-column')"
+                  @open-search="appStore.showSearch = true"
+                  @open-settings="appStore.showSettings = true"
+                  @open-music="musicStore.showMusicPlayer = true"
+                  @open-write="appStore.showWriteEditor = true"
+                  @open-download="appStore.showDownloadModal = true"
+                  @toggle-theme-panel="handleRightSidebarThemePanel"
+                />
+              </div>
             </div>
 
             <div ref="mobileTocScrollRef" class="h-full w-full basis-full shrink-0 grow-0 max-w-full overflow-y-auto custom-scrollbar" style="scroll-snap-align: start; scroll-snap-stop: always;">
@@ -173,26 +232,6 @@
         <div v-else class="flex-1 flex overflow-hidden relative">
           <slot></slot>
         </div>
-
-        <RightSidebar 
-          v-if="isMobile && appStore.rightSidebarOpen"
-          :is-open="true"
-          :lang="lang"
-          :current-file="appStore.currentFile"
-          :is-raw-mode="appStore.isRawMode"
-          :view-mode="appStore.viewMode"
-          :dual-column-mode="dualColumnMode"
-          @update:isRawMode="appStore.isRawMode = $event"
-          @copy-link="$emit('copy-link')"
-          @download="$emit('download')"
-          @toggle-dual-column="$emit('toggle-dual-column')"
-          @open-search="appStore.showSearch = true"
-          @open-settings="appStore.showSettings = true"
-          @open-music="musicStore.showMusicPlayer = true"
-          @open-write="appStore.showWriteEditor = true"
-          @open-download="appStore.showDownloadModal = true"
-          @toggle-theme-panel="handleRightSidebarThemePanel"
-        />
       </div>
     </main>
 
@@ -202,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted, watch, nextTick, defineAsyncComponent } from 'vue';
+import { computed, ref, onMounted, onUnmounted, watch, nextTick, defineAsyncComponent, provide } from 'vue';
 import { useAppStore } from '../stores/appStore';
 import { useMusicStore } from '../stores/musicStore';
 import { useArticleNavStore } from '../stores/articleNavStore';
@@ -272,6 +311,9 @@ const mobileTocScrollRef = ref<HTMLElement | null>(null);
 const mobileShellPage = ref(1);
 const mobileShellScrollRaf = ref<number | null>(null);
 const contentScrollRaf = ref<number | null>(null);
+
+provide('layoutIsMobile', isMobile);
+provide('mobileShellPage', mobileShellPage);
 
 const mobileShellTouch = ref<{
   active: boolean
@@ -351,6 +393,7 @@ const scrollToMobilePage = (page: number, behavior: ScrollBehavior = 'smooth') =
   el.scrollTo({ left: width * page, behavior });
   mobileShellPage.value = page;
   if (page !== 1) headerHidden.value = false;
+  if (page !== 1 && appStore.rightSidebarOpen) appStore.rightSidebarOpen = false;
 };
 
 const handleMobileShellScroll = () => {
@@ -366,6 +409,7 @@ const handleMobileShellScroll = () => {
     if (page !== mobileShellPage.value) {
       mobileShellPage.value = page;
       if (page !== 1) headerHidden.value = false;
+      if (page !== 1 && appStore.rightSidebarOpen) appStore.rightSidebarOpen = false;
     }
   });
 };

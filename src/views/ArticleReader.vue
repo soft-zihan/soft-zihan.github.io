@@ -1,217 +1,6 @@
 <template>
   <div class="flex-1 overflow-hidden z-10 relative">
-    <div
-      v-if="false"
-      ref="mobilePagerRef"
-      class="flex h-full overflow-x-auto overflow-y-hidden"
-      style="scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;"
-      @scroll.passive="handleMobilePagerScroll"
-    >
-      <div class="flex h-full">
-        <div
-          ref="localScrollContainerRef"
-          class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar w-full basis-full shrink-0"
-          style="scroll-snap-align: start;"
-          :style="{ padding: 'var(--reader-page-padding, 1.5rem)' }"
-        >
-          <div 
-             class="w-full mx-auto bg-white/85 dark:bg-gray-900/85 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] animate-fade-in backdrop-blur-xl transition-all duration-300 relative"
-             :class="[fontSizeClass, articleStyleClass]"
-             :style="[{ padding: 'var(--reader-card-padding, 2.5rem)' }, articleContainerStyle]"
-          >
-         <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-gray-900/50 z-20 rounded-[2rem] backdrop-blur-sm">
-           <div class="flex flex-col items-center gap-4">
-              <div class="animate-spin text-4xl">🌸</div>
-              <div class="text-sm font-bold animate-pulse" :style="loadingTextStyle">Fetching Content...</div>
-           </div>
-         </div>
-
-         <ArticleInfoBar
-           :lang="lang"
-           :is-source="!!file.isSource"
-           :author-name="currentAuthorName"
-           :author-url="currentAuthorUrl"
-           :author-link-style="authorLinkStyle"
-           :liked="articleStore.isLiked(file.path)"
-           :likes="articleStore.getLikes(file.path)"
-           :on-like="handleLike"
-           :favorite="articleStore.isFavorite(file.path)"
-           :favorite-text="t.favorite"
-           :on-toggle-favorite="() => articleStore.toggleFavorite(file.path)"
-           v-model:backgroundColor="articleBackgroundColor"
-           :on-reset-background-color="resetArticleBackgroundColor"
-           :views="getArticleViews(file.path)"
-           :views-label="lang === 'zh' ? '人阅读' : 'views'"
-           :comments="getArticleComments(file.path)"
-           :comments-label="lang === 'zh' ? '条评论' : 'comments'"
-           :word-count="currentWordCount"
-           :words-label="t.words"
-           :updated-label="t.updated"
-           :updated-date="formatDate(file.lastModified)"
-           :tags="currentTags"
-           :tag-badge-style="tagBadgeStyle"
-           :show-toc-button="false"
-           :on-open-toc="() => {}"
-         />
-
-        <!-- Markdown Content -->
-        <div 
-          v-if="!file.isSource && !isRawMode"
-          id="markdown-viewer"
-          ref="markdownViewerRef"
-          v-html="renderedHtml" 
-          class="markdown-body"
-          @click="handleContentClickEvent"
-          @mousedown="selectionMenuComposable.lockSelectionMenu()"
-          @mouseup="handleSelectionEvent"
-          @touchend="handleSelectionEvent"
-          @contextmenu="handleSelectionContextMenuEvent"
-        ></div>
-
-        <!-- Source Code / Raw Mode (Editable) -->
-        <div v-else class="relative group">
-           <!-- Edit Mode Toolbar -->
-           <div class="flex items-center justify-between mb-3 bg-[#252526] px-4 py-2 rounded-t-xl border border-gray-700 border-b-0">
-             <div class="flex items-center gap-2">
-               <span class="text-xs text-gray-400 font-mono">{{ isRawMode ? 'Markdown' : 'Source' }}</span>
-               <span v-if="rawEditor.isEditingRaw.value" class="text-xs text-yellow-400 px-2 py-0.5 bg-yellow-900/30 rounded">{{ lang === 'zh' ? '编辑中' : 'Editing' }}</span>
-             </div>
-             <div class="flex items-center gap-2">
-                <button @click="rawEditor.saveRawContent()" class="text-xs text-green-400 hover:text-green-300 transition-colors" v-if="rawEditor.isEditingRaw.value">
-                  {{ lang === 'zh' ? '保存' : 'Save' }}
-                </button>
-                <button @click="rawEditor.isEditingRaw.value ? rawEditor.cancelEditingRaw() : rawEditor.startEditingRaw()" class="text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                  {{ rawEditor.isEditingRaw.value ? (lang === 'zh' ? '取消' : 'Cancel') : (lang === 'zh' ? '编辑' : 'Edit') }}
-                </button>
-             </div>
-           </div>
-           
-           <textarea 
-             v-if="rawEditor.isEditingRaw.value"
-             v-model="rawEditor.editedRawContent.value"
-             class="w-full h-[600px] bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl outline-none focus:ring-2 focus:ring-blue-500/50 resize-y"
-           ></textarea>
-           <pre v-else class="bg-[#1e1e1e] text-gray-300 font-mono text-sm p-4 rounded-b-xl overflow-x-auto"><code>{{ file.content }}</code></pre>
-        </div>
-
-        <!-- Prev/Next Buttons -->
-        <div v-if="!file.isSource && !isRawMode" class="mt-12 flex justify-between gap-4">
-          <button 
-            v-if="prevFile"
-            @click="navigateTo(prevFile)"
-            class="flex-1 max-w-[45%] text-left p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
-          >
-            <div class="text-xs text-gray-400 mb-1 flex items-center gap-1">
-              <span>←</span>
-              <span>{{ t.previous || (lang === 'zh' ? '上一篇' : 'Previous') }}</span>
-            </div>
-            <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
-              {{ (prevFile?.name || '').replace('.md', '') }}
-            </div>
-          </button>
-          <div v-else class="flex-1"></div>
-          <button 
-            v-if="nextFile"
-            @click="navigateTo(nextFile)"
-            class="flex-1 max-w-[45%] text-right p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white/50 dark:bg-gray-800/50 hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-900)]/30 hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-700)] transition-all group"
-          >
-            <div class="text-xs text-gray-400 mb-1 flex items-center justify-end gap-1">
-              <span>{{ t.next || (lang === 'zh' ? '下一篇' : 'Next') }}</span>
-              <span>→</span>
-            </div>
-            <div class="text-sm font-bold text-gray-700 dark:text-gray-200 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] truncate">
-              {{ (nextFile?.name || '').replace('.md', '') }}
-            </div>
-          </button>
-          <div v-else class="flex-1"></div>
-        </div>
-
-        <!-- Giscus Comments -->
-        <GiscusComments 
-          v-if="!file.isSource" 
-          class="mt-16 pt-8 border-t border-gray-100 dark:border-gray-800"
-          :key="file.path" 
-          :lang="lang"
-          :is-dark="appStore.isDark"
-          :path="file.path"
-          @update-comment-count="emit('update-comment-count', $event)"
-        />
-        
-        <!-- Selection Menu -->
-        <div 
-          v-show="selectionMenu.show" 
-          class="fixed z-50 flex bg-gray-900/95 text-white rounded-2xl shadow-2xl backdrop-blur-xl transform -translate-x-1/2 -translate-y-full mb-2 p-1.5 gap-0.5 border border-white/10"
-          :style="{ top: selectionMenu.y + 'px', left: selectionMenu.x + 'px' }"
-          @mousedown.prevent
-        >
-          <button @click="applyFormatHandler('highlight-yellow')" class="p-2 hover:bg-white/20 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all" title="Yellow Highlight">
-            <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block ring-2 ring-yellow-300/50"></span>
-          </button>
-          <!-- ... other buttons ... -->
-        </div>
-      </div>
-    </div>
-        <div
-          class="h-full overflow-y-auto p-4 w-full basis-full shrink-0 bg-white/20 dark:bg-gray-900/20 backdrop-blur-md"
-          style="scroll-snap-align: start;"
-        >
-          <div class="max-w-md mx-auto bg-white/85 dark:bg-gray-900/85 p-4 rounded-[2rem] shadow-[0_18px_60px_rgba(15,23,42,0.18)] border border-white/60 dark:border-gray-700/60 min-h-[calc(100%-2rem)] backdrop-blur-xl transition-all duration-300">
-            <div class="flex items-center justify-between mb-6">
-              <button
-                type="button"
-                class="px-3 py-2 rounded-xl bg-white/60 dark:bg-gray-800/60 border border-white/60 dark:border-gray-700/60 text-sm text-gray-700 dark:text-gray-200"
-                @click="scrollToArticlePage()"
-              >
-                ← {{ lang === 'zh' ? '返回' : 'Back' }}
-              </button>
-              <div class="text-sm font-bold flex items-center gap-2" :style="tocTitleStyle">
-                <span>📑</span>
-                <span>{{ t.on_this_page }}</span>
-              </div>
-              <div class="w-[72px]"></div>
-            </div>
-
-            <div v-if="toc.length > 0">
-              <nav
-                class="space-y-1 relative border-l-2 pl-4 cursor-pointer select-none"
-                :style="tocBorderStyle"
-              >
-                <div
-                  class="absolute left-[-2px] w-[2px] transition-all duration-300"
-                  :style="{
-                    top: activeIndicatorTop + 'px',
-                    height: activeIndicatorHeight + 'px',
-                    ...tocIndicatorStyle
-                  }"
-                  v-if="activeHeaderId"
-                ></div>
-                <a
-                  v-for="item in toc"
-                  :key="item.id"
-                  :href="`#${item.id}`"
-                  class="block text-sm py-1.5 transition-all duration-200 leading-tight pr-2"
-                  :class="[
-                    item.level === 1 ? 'font-bold mb-2 mt-4' : 'font-normal',
-                    item.level > 1 ? `ml-${(item.level-1)*3} text-xs` : '',
-                    activeHeaderId === item.id ? 'translate-x-1 font-medium scale-105 origin-left' : ''
-                  ]"
-                  :style="getTocItemStyle(item)"
-                  @click.prevent="handleMobileTocClick(item.id)"
-                >
-                  {{ item.text }}
-                </a>
-              </nav>
-            </div>
-
-            <div v-else class="text-sm text-gray-500 dark:text-gray-400">
-              {{ lang === 'zh' ? '暂无目录' : 'No TOC' }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div v-else class="flex h-full">
+    <div class="flex h-full">
       <div 
         ref="localScrollContainerRef"
         class="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar w-full"
@@ -415,8 +204,8 @@
     </div>
 
     <div
-      v-if="!file.isSource && !isRawMode && !(isMobile && isMobileTocPage)"
-      class="fixed bottom-4 xl:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
+      v-show="showFloatingNav"
+      class="fixed bottom-4 lg:right-[19rem] 2xl:right-[21rem] z-50 flex flex-col gap-2"
       :class="floatingNavRightClass"
     >
       <button
@@ -462,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef, ref, watch, onMounted, onUnmounted, nextTick, type Ref } from 'vue';
+import { computed, toRef, ref, watch, onMounted, onUnmounted, nextTick, inject, type Ref } from 'vue';
 import type { FileNode } from '../types';
 import { useAppStore } from '../stores/appStore';
 import { useArticleStore } from '../stores/articleStore';
@@ -506,64 +295,27 @@ const articleStore = useArticleStore();
 const articleNavStore = useArticleNavStore();
 const markdownViewerRef = ref<HTMLElement | null>(null)
 const localScrollContainerRef = ref<HTMLElement | null>(null)
-const mobilePagerRef = ref<HTMLElement | null>(null)
-
-const isMobile = ref(false)
-const isMobileTocPage = ref(false)
-const checkMobile = () => {
-  const nextIsMobile = window.innerWidth < 768
-  if (isMobile.value && !nextIsMobile) {
-    isMobileTocPage.value = false
-  }
-  isMobile.value = nextIsMobile
-  if (nextIsMobile) {
-    nextTick(() => handleMobilePagerScroll())
-  }
-}
-
-const handleMobilePagerScroll = () => {
-  const el = mobilePagerRef.value
-  if (!el) return
-  isMobileTocPage.value = el.scrollLeft > el.clientWidth / 2
-}
-
-const scrollToArticlePage = (behavior: ScrollBehavior = getScrollBehavior()) => {
-  const el = mobilePagerRef.value
-  if (!el) return
-  el.scrollTo({ left: 0, behavior })
-}
-
-const scrollToTocPage = (behavior: ScrollBehavior = getScrollBehavior()) => {
-  const el = mobilePagerRef.value
-  if (!el) return
-  el.scrollTo({ left: el.clientWidth, behavior })
-}
-
-const handleMobileTocClick = (id: string) => {
-  scrollToArticlePage('auto')
-  nextTick(() => {
-    setTimeout(() => {
-      scrollToHeader(id)
-    }, 0)
-  })
-}
-
-onMounted(() => {
-  checkMobile()
-  window.addEventListener('resize', checkMobile)
+const layoutIsMobile = inject<Ref<boolean> | null>('layoutIsMobile', null)
+const layoutMobileShellPage = inject<Ref<number> | null>('mobileShellPage', null)
+const effectiveIsMobile = computed(() => {
+  if (layoutIsMobile) return layoutIsMobile.value
+  return typeof window !== 'undefined' ? window.innerWidth < 768 : false
 })
-
-onUnmounted(() => {
-  window.removeEventListener('resize', checkMobile)
+const effectiveMobileShellPage = computed(() => {
+  if (layoutMobileShellPage) return layoutMobileShellPage.value
+  return 1
 })
+const isOnMobileCenterPage = computed(() => !effectiveIsMobile.value || effectiveMobileShellPage.value === 1)
 
 const floatingNavRightClass = computed(() => {
-  if (isMobile.value && appStore.rightSidebarOpen) return 'right-[calc(1rem+3rem)]'
+  if (effectiveIsMobile.value && appStore.rightSidebarOpen) return 'right-[calc(1rem+3rem)]'
   return 'right-4'
 })
 
 const currentFile = toRef(props, 'file');
 const isRawMode = toRef(props, 'isRawMode');
+
+const showFloatingNav = computed(() => !currentFile.value.isSource && !isRawMode.value && isOnMobileCenterPage.value)
 
 // Navigation Logic
 const flatFiles = computed(() => appStore.flatFiles || []); 
