@@ -58,7 +58,6 @@
         :is-playing="musicStore.isPlaying"
         @update:isRawMode="$emit('update:isRawMode', $event)"
         @copy-link="$emit('copy-link')"
-        @download="$emit('download')"
         @toggle-dual-column="$emit('toggle-dual-column')"
         @open-search="$emit('open-search')"
         @open-music="$emit('open-music')"
@@ -133,7 +132,7 @@ const props = defineProps<{
   viewMode: string;
   currentTool: string | null;
   currentFile: FileNode | null;
-  getArticleViews: (path: string) => number;
+  getArticleViews: (path: string) => number | undefined;
   showParticles: boolean;
   isRawMode: boolean;
   isDark: boolean;
@@ -148,7 +147,6 @@ const emit = defineEmits([
   'update:showParticles', 
   'update:isRawMode',
   'copy-link',
-  'download',
   'open-settings',
   'open-search',
   'open-music',

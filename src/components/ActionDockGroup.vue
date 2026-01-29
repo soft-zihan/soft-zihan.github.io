@@ -24,7 +24,6 @@
     :show-settings="true"
     @update:isRawMode="emit('update:isRawMode', $event)"
     @copy-link="emit('copy-link')"
-    @download="emit('download')"
     @toggle-dual-column="emit('toggle-dual-column')"
     @open-search="emit('open-search')"
     @change-wallpaper="changeWallpaper"
@@ -71,7 +70,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits([
   'update:isRawMode',
   'copy-link',
-  'download',
   'toggle-dual-column',
   'open-search',
   'open-music',

@@ -10,11 +10,6 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
         <span v-if="showLabels" :class="labelClass">{{ t.copy_link }}</span>
       </button>
-      <button @click="$emit('download')" :class="iconButtonClass" :title="t.download">
-        <span class="text-sm">DL</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-        <span v-if="showLabels" :class="labelClass">{{ t.download }}</span>
-      </button>
     </template>
 
     <button v-if="showDualColumnToggle && viewMode === 'lab'" @click="$emit('toggle-dual-column')" :class="dualColumnClass" :title="lang === 'zh' ? '双栏阅读' : 'Dual Column'">
@@ -94,7 +89,7 @@
         <polyline points="7 10 12 15 17 10"/>
         <line x1="12" x2="12" y1="15" y2="3"/>
       </svg>
-      <span v-if="showLabels" :class="labelClass">{{ lang === 'zh' ? '批量下载' : 'Batch DL' }}</span>
+      <span v-if="showLabels" :class="labelClass">{{ lang === 'zh' ? '批量下载' : 'Batch Download' }}</span>
     </button>
 
     <button v-if="showSettings" @click="$emit('open-settings')" :class="iconButtonClass" :title="t.settings_title">
@@ -162,7 +157,6 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits([
   'update:isRawMode',
   'copy-link',
-  'download',
   'toggle-dual-column',
   'open-search',
   'change-wallpaper',

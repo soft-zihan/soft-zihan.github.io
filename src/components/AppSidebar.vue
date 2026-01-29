@@ -227,7 +227,7 @@ const props = defineProps<{
   currentTool: string | null;
   labTabs?: any[]; // Lab dashboard tabs from parent
   activeLabTab?: string; // Current active lab tab
-  getArticleViews: (path: string) => number;
+  getArticleViews: (path: string) => number | undefined;
   commentCounts: Record<string, number>;
 }>();
 

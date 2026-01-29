@@ -54,6 +54,7 @@
        :lang="lang"
        :t="t"
        :getArticleViews="getArticleViews"
+       :getArticleVisitors="getArticleVisitors"
        :getArticleComments="getArticleComments"
        :onContentClick="onContentClick"
        @scroll-container-change="handleScrollContainerFromArticleReader"
@@ -118,7 +119,8 @@ defineProps<{
   welcomePoemAuthorLine: string;
   welcomePoemLines: string[];
   welcomePoemDetails: Array<{ label: string; value: string }>;
-  getArticleViews: (path: string) => number;
+  getArticleViews: (path: string) => number | undefined;
+  getArticleVisitors: (path: string) => number | undefined;
   getArticleComments: (path: string) => number;
   onContentClick: (e: MouseEvent) => void;
 }>();

@@ -20,7 +20,6 @@
     @update:activeLabTab="handleLabTabChange"
     @navigate="navigateToBreadcrumb"
     @copy-link="copyLink"
-    @download="downloadSource"
     @open-theme-panel="handleThemePanelChange"
     @update:petal-speed="handlePetalSpeedChange"
     @toggle-dual-column="dualColumnMode = !dualColumnMode; if(dualColumnMode && !appStore.currentTool) appStore.currentTool = 'dashboard'"
@@ -56,6 +55,7 @@
       :welcome-poem-lines="welcomePoemLines"
       :welcome-poem-details="welcomePoemDetails"
       :get-article-views="getArticleViews"
+      :get-article-visitors="getArticleVisitors"
       :get-article-comments="getArticleComments"
       :on-content-click="handleContentClickEvent"
       @update:labDashboardTab="handleLabTabChange"
@@ -524,36 +524,18 @@ const handlePetalSpeedChange = (speed: 'off' | 'slow' | 'fast') => {
 
 const copyLink = () => navigator.clipboard.writeText(window.location.href).then(() => showToast(t.value.link_copied));
 
-const downloadSource = () => {
-  if (appStore.currentFile) {
-    const blob = new Blob([appStore.currentFile.content || ''], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = appStore.currentFile.name;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-};
-
 const handleCommentCountUpdate = (payload: { path: string; count: number }) => {
   commentCounts.value[payload.path] = payload.count;
 };
 
-const hashStringToUint32 = (input: string): number => {
-  let hash = 2166136261;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
+const getArticleViews = (path: string): number | undefined => {
+  const cached = articleStore.getCachedStats(path);
+  return cached ? cached.views : undefined;
 };
 
-const getArticleViews = (path: string): number => {
-  const hash = hashStringToUint32(`views:${path}`);
-  const minViews = 80;
-  const maxViews = 3200;
-  return minViews + (hash % (maxViews - minViews + 1));
+const getArticleVisitors = (path: string): number | undefined => {
+  const cached = articleStore.getCachedStats(path);
+  return cached ? cached.visitors : undefined;
 };
 
 const getArticleComments = (path: string): number => {

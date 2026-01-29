@@ -42,7 +42,7 @@
       </span>
 
       <span v-if="typeof viewCount === 'number'" class="text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1" :style="secondaryBadgeStyle">
-        <span class="text-[10px]">🧑‍🎓</span>
+        <span class="text-[10px]">📖</span>
         {{ formatNumber(viewCount) }}
       </span>
 

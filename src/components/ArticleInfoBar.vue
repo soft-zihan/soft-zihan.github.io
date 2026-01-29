@@ -64,8 +64,13 @@
         </button>
       </div>
 
-      <span class="text-xs text-gray-400 flex items-center gap-1">
-        <span class="text-sm">🧑‍🎓</span>
+      <span v-if="typeof visitors === 'number'" class="text-xs text-gray-400 flex items-center gap-1">
+        <span class="text-sm">👨‍💻</span>
+        {{ visitors }} {{ visitorsLabel }}
+      </span>
+
+      <span v-if="typeof views === 'number'" class="text-xs text-gray-400 flex items-center gap-1">
+        <span class="text-sm">📖</span>
         {{ views }} {{ viewsLabel }}
       </span>
 
@@ -125,7 +130,9 @@ const props = defineProps<{
   onToggleFavorite: () => void
   backgroundColor: string
   onResetBackgroundColor: () => void
-  views: number
+  visitors?: number
+  visitorsLabel: string
+  views?: number
   viewsLabel: string
   comments: number
   commentsLabel: string

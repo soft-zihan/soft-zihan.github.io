@@ -48,6 +48,8 @@ export const useArticleStore = defineStore('article', () => {
   // Liked fingerprints per article to prevent duplicate
   const likeFingerprints = ref<Record<string, string[]>>({})
   
+  const visitedArticles = ref<string[]>([])
+  
   // Tag 筛选相关
   const availableTags = ref<string[]>(['notag']) // 可用的 tag 列表，notag 表示无 tag 文章
   const selectedTags = ref<string[]>(['notag']) // 选中的 tag 列表，默认全选
@@ -180,6 +182,16 @@ export const useArticleStore = defineStore('article', () => {
     showFavoritesOnly.value = !showFavoritesOnly.value
   }
   
+  function hasVisited(path: string): boolean {
+    return visitedArticles.value.includes(path)
+  }
+  
+  function markVisited(path: string) {
+    if (!visitedArticles.value.includes(path)) {
+      visitedArticles.value.push(path)
+    }
+  }
+  
   // For Umami stats cache
   const umamiCache = ref<Record<string, { views: number; visitors: number; timestamp: number }>>({})
   const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
@@ -222,11 +234,13 @@ export const useArticleStore = defineStore('article', () => {
     deselectAllTags,
     isTagSelected,
     toggleShowFavoritesOnly,
+    hasVisited,
+    markVisited,
     getCachedStats,
     setCachedStats
   }
 }, {
   persist: {
-    pick: ['likedArticles', 'favorites', 'articleStats', 'likeFingerprints', 'userFingerprint', 'selectedTags', 'showFavoritesOnly']
+    pick: ['likedArticles', 'favorites', 'articleStats', 'likeFingerprints', 'userFingerprint', 'selectedTags', 'showFavoritesOnly', 'visitedArticles']
   }
 })

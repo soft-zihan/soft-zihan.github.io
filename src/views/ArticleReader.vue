@@ -32,8 +32,10 @@
             :on-toggle-favorite="() => articleStore.toggleFavorite(file.path)"
             v-model:backgroundColor="articleBackgroundColor"
             :on-reset-background-color="resetArticleBackgroundColor"
+            :visitors="getArticleVisitors(file.path)"
+            :visitors-label="lang === 'zh' ? '人' : 'readers'"
             :views="getArticleViews(file.path)"
-            :views-label="lang === 'zh' ? '人阅读' : 'views'"
+            :views-label="lang === 'zh' ? '次' : 'views'"
             :comments="getArticleComments(file.path)"
             :comments-label="lang === 'zh' ? '条评论' : 'comments'"
             :word-count="currentWordCount"
@@ -263,6 +265,7 @@ import { useLightbox } from '../composables/useLightbox';
 import { useSelectionMenu } from '../composables/useSelectionMenu';
 import { useContentClick } from '../composables/useContentClick';
 import { useSearchJump } from '../composables/useSearchJump';
+import { useViewCounter } from '../composables/useViewCounter';
 import GiscusComments from '../components/GiscusComments.vue';
 import ArticleInfoBar from '../components/ArticleInfoBar.vue';
 
@@ -272,7 +275,8 @@ const props = defineProps<{
   isRawMode: boolean;
   lang: 'en' | 'zh';
   t: any;
-  getArticleViews: (path: string) => number;
+  getArticleViews: (path: string) => number | undefined;
+  getArticleVisitors: (path: string) => number | undefined;
   getArticleComments: (path: string) => number;
   onContentClick: (e: MouseEvent) => void;
 }>();
@@ -293,6 +297,7 @@ const emit = defineEmits([
 const appStore = useAppStore();
 const articleStore = useArticleStore();
 const articleNavStore = useArticleNavStore();
+const { incrementAndGetViews } = useViewCounter();
 const markdownViewerRef = ref<HTMLElement | null>(null)
 const localScrollContainerRef = ref<HTMLElement | null>(null)
 const layoutIsMobile = inject<Ref<boolean> | null>('layoutIsMobile', null)
@@ -316,6 +321,18 @@ const currentFile = toRef(props, 'file');
 const isRawMode = toRef(props, 'isRawMode');
 
 const showFloatingNav = computed(() => !currentFile.value.isSource && !isRawMode.value && isOnMobileCenterPage.value)
+
+const lastTrackedPath = ref<string | null>(null);
+watch(
+  () => props.file.path,
+  (newPath) => {
+    if (!newPath || props.file.isSource) return;
+    if (lastTrackedPath.value === newPath) return;
+    lastTrackedPath.value = newPath;
+    void incrementAndGetViews(newPath);
+  },
+  { immediate: true }
+);
 
 // Navigation Logic
 const flatFiles = computed(() => appStore.flatFiles || []); 

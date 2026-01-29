@@ -22,7 +22,6 @@
           :download-toast="true"
           @update:isRawMode="emit('update:isRawMode', $event)"
           @copy-link="emit('copy-link')"
-          @download="emit('download')"
           @toggle-dual-column="emit('toggle-dual-column')"
           @open-search="emit('open-search')"
           @open-music="emit('open-music')"
@@ -60,7 +59,6 @@ const emit = defineEmits([
   'open-download',
   'update:isRawMode',
   'copy-link',
-  'download',
   'toggle-dual-column',
   'toggle-theme-panel'
 ]);

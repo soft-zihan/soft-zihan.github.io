@@ -7,10 +7,16 @@ export const GISCUS_CONFIG = {
   categoryId: import.meta.env.VITE_GISCUS_CATEGORY_ID || 'DIC_kwDOQ1b8-M4C1Ezk'
 }
 
-// Umami Configuration (optional)
+// Umami Configuration (optional, used for external analytics dashboards)
 export const UMAMI_CONFIG = {
-  websiteId: import.meta.env.VITE_UMAMI_WEBSITE_ID || '', // Fill from Umami dashboard
+  websiteId: import.meta.env.VITE_UMAMI_WEBSITE_ID || '',
   scriptUrl: import.meta.env.VITE_UMAMI_SCRIPT_URL || 'https://cloud.umami.is/script.js'
+}
+
+// View counter configuration (optional, for on-site reader counts)
+export const VIEW_COUNTER_CONFIG = {
+  provider: (import.meta.env.VITE_VIEW_COUNTER_PROVIDER || 'none') as 'none' | 'countapi',
+  countApiNamespace: import.meta.env.VITE_COUNTAPI_NAMESPACE || ''
 }
 
 export const THEME_COLORS = {

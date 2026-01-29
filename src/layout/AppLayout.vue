@@ -75,7 +75,6 @@
         @reset="$emit('reset')"
         @navigate="$emit('navigate', $event)"
         @copy-link="$emit('copy-link')"
-        @download="$emit('download')"
         @open-settings="appStore.showSettings = true; headerHidden = false; if (isMobile) appStore.sidebarOpen = false"
         @open-theme-panel="$emit('open-theme-panel', $event)"
         @open-search="appStore.showSearch = true; if (isMobile) appStore.sidebarOpen = false"
@@ -156,7 +155,6 @@
                 @reset="$emit('reset')"
                 @navigate="$emit('navigate', $event)"
                 @copy-link="$emit('copy-link')"
-                @download="$emit('download')"
                 @open-settings="appStore.showSettings = true; headerHidden = false"
                 @open-theme-panel="$emit('open-theme-panel', $event)"
                 @open-search="appStore.showSearch = true"
@@ -185,7 +183,6 @@
                   :dual-column-mode="dualColumnMode"
                   @update:isRawMode="appStore.isRawMode = $event"
                   @copy-link="$emit('copy-link')"
-                  @download="$emit('download')"
                   @toggle-dual-column="$emit('toggle-dual-column')"
                   @open-search="appStore.showSearch = true"
                   @open-settings="appStore.showSettings = true"
@@ -268,7 +265,7 @@ const props = defineProps<{
   labTabs: Array<{ id: string; shortLabel: string; icon: string; noteNum: number }>;
   labDashboardTab: string;
   commentCounts: Record<string, number>;
-  getArticleViews: (path: string) => number;
+  getArticleViews: (path: string) => number | undefined;
   currentPath: string;
   breadcrumbs: BreadcrumbItem[];
   dualColumnMode: boolean;
@@ -277,7 +274,7 @@ const props = defineProps<{
 
 const emit = defineEmits([
   'reset', 'select-tool', 'toggle-folder', 'select-file', 'select-folder',
-  'update:activeLabTab', 'navigate', 'copy-link', 'download',
+  'update:activeLabTab', 'navigate', 'copy-link',
   'open-theme-panel', 'update:petal-speed', 'toggle-dual-column'
 ]);
 
